@@ -1434,7 +1434,6 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 const DAYS    = ['monday','tuesday','wednesday','thursday','friday'];
 const DL      = {monday:'Monday',tuesday:'Tuesday',wednesday:'Wednesday',thursday:'Thursday',friday:'Friday'};
 const PER     = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
-const MAX_GOALS = 5;
 
 // Hero chips — matches components/students/StudentHero.tsx exactly.
 const GOLD_GRADES = new Set(['Pre-Kindergarten','Kindergarten','1st Grade','2nd Grade','3rd Grade','4th Grade','5th Grade']);
@@ -4280,7 +4279,7 @@ async function selectStu(id){
 // ═══════════════════════════════════════════════════════════════
 function openGoalsModal(){
   const s=stu(); if(!s){ alert('Select a student first.'); return; }
-  const sub = `Configure goals for ${s.name}. Up to ${MAX_GOALS} goals.`;
+  const sub = `Configure goals for ${s.name}.`;
   document.getElementById('goals-modal-sub').textContent = sub;
   const mobTitle = document.getElementById('mob-goals-title');
   if(mobTitle) mobTitle.textContent = s.name + '\u2019s Goals';
@@ -4309,9 +4308,6 @@ function confirmGoalDelete(){
 }
 function renderGoalsList(){
   const el  = document.getElementById('goals-list');
-  const btn = document.getElementById('add-goal-btn');
-  const atMax = tempGoals.length >= MAX_GOALS;
-  btn.style.display = atMax ? 'none' : 'inline-flex';
 
   const typeOpts = (cur) => `
     <option value="yn"   ${cur==='yn'   ?'selected':''}>Yes / No</option>
@@ -4435,7 +4431,6 @@ function renderGoalsList(){
   }).join('');
 }
 function addGoalRow(){
-  if(tempGoals.length>=MAX_GOALS) return;
   tempGoals.push({id:newGoalId(), name:'',type:'yn',tracking:'period'});
   _goalEditIndex=tempGoals.length-1;
   renderGoalsList();
