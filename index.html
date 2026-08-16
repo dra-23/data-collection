@@ -195,6 +195,10 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .roster-teacher-hdr.isolated .roster-teacher-icon { color: var(--brand); }
 .roster-hdr-count { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--brand-dim); color: var(--brand); flex-shrink: 0; }
 .roster-teacher-hdr.isolated .roster-hdr-count { background: var(--brand); color: #fff; }
+.roster-teacher-hdr.draggable-hdr { cursor: grab; }
+.roster-teacher-hdr.draggable-hdr.dragging { opacity: .4; cursor: grabbing; }
+.roster-teacher-grip { display: flex; align-items: center; color: var(--text-3); opacity: .5; flex-shrink: 0; }
+.roster-teacher-hdr.isolated .roster-teacher-grip { color: var(--brand); }
 
 /* PANE */
 .pane { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
@@ -1419,6 +1423,15 @@ let colSec       = {};
 let calViewMonth = null;
 let rosterFilter = { search:'', teacher:null };  // Left-pane roster search/filter
 let openFilterDropdown = null;  // id of the currently open campus/classroom dropdown, or null
+// User-defined order for roster teacher groups (drag-to-reorder headers) —
+// persisted locally since it's a personal display preference, not shared
+// data. Teachers not yet in this list fall back to alphabetical, always
+// after the ones the user has explicitly placed; "No Teacher" always last.
+let teacherOrder = [];
+try{ teacherOrder = JSON.parse(localStorage.getItem('ppdc_teacher_order')||'[]'); }catch(e){ teacherOrder = []; }
+function saveTeacherOrder(){ try{ localStorage.setItem('ppdc_teacher_order', JSON.stringify(teacherOrder)); }catch(e){} }
+let _renderedTeacherOrder = []; // teacher names (excluding "No Teacher") in the order last rendered
+let _dragTeacher = null;
 
 // ═══════════════════════════════════════════════════════════════
 // AUTH — email/password against a Supabase project with exactly two
@@ -2081,6 +2094,14 @@ function lastNameSort(a,b){
   return (a.lastName||a.name).localeCompare(b.lastName||b.name) || a.name.localeCompare(b.name);
 }
 
+// Ranked teachers (per the user's drag order) sort first in that order,
+// then any not-yet-ranked teacher alphabetically, then "No Teacher" last.
+function teacherSortIndex(name){
+  if(name==='No Teacher') return Infinity;
+  const i=teacherOrder.indexOf(name);
+  return i===-1 ? teacherOrder.length : i;
+}
+
 function renderStudentRows(filtered, mobile){
   if(!filtered.length){
     const msg = (rosterFilter.search||rosterFilter.teacher) ? 'No matches' : 'No students found.';
@@ -2092,22 +2113,65 @@ function renderStudentRows(filtered, mobile){
     if(!teachers.has(t)) teachers.set(t, []);
     teachers.get(t).push(s);
   });
-  // "No Teacher" always sorts last; everyone else alphabetically.
   const teacherEntries = Array.from(teachers.entries())
-    .sort(([a],[b])=>(a==='No Teacher')-(b==='No Teacher')||a.localeCompare(b));
+    .sort(([a],[b])=>teacherSortIndex(a)-teacherSortIndex(b)||a.localeCompare(b));
+  // Cache this render's visual order (minus the pinned "No Teacher" bucket)
+  // so a drop handler can compute a full reordering — see reorderTeachers().
+  _renderedTeacherOrder = teacherEntries.map(([t])=>t).filter(t=>t!=='No Teacher');
   return teacherEntries.map(([teacher,studs])=>{
     const isolated = rosterFilter.teacher === teacher;
+    const draggable = teacher!=='No Teacher'; // nothing meaningful to reorder for the catch-all bucket
     const icon = isolated
       ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
       : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-8 8-8s8 3.5 8 8"/></svg>`;
-    const teacherHdr = `<div class="roster-teacher-hdr${isolated?' isolated':''}" onclick="toggleTeacherIsolation('${esc(teacher)}')" title="${isolated?'Show all teachers':'Filter to this teacher'}">
-      ${esc(teacher)}
+    const grip = draggable ? `<span class="roster-teacher-grip" title="Drag to reorder">
+      <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.5"/><circle cx="7.5" cy="2.5" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13.5" r="1.5"/><circle cx="7.5" cy="13.5" r="1.5"/></svg>
+    </span>` : '';
+    const dragAttrs = draggable
+      ? `draggable="true" ondragstart="onTeacherDragStart(event,'${esc(teacher)}')" ondragover="onTeacherDragOver(event)" ondrop="onTeacherDrop(event,'${esc(teacher)}')" ondragend="onTeacherDragEnd(event)"`
+      : '';
+    const teacherHdr = `<div class="roster-teacher-hdr${isolated?' isolated':''}${draggable?' draggable-hdr':''}" ${dragAttrs} onclick="toggleTeacherIsolation('${esc(teacher)}')" title="${isolated?'Show all teachers':'Filter to this teacher'}">
+      ${grip}${esc(teacher)}
       <span class="roster-teacher-icon">${icon}</span>
       <span class="roster-hdr-count">${studs.length}</span>
     </div>`;
     const rows = [...studs].sort(lastNameSort).map(s=>studentRowHTML(s, mobile)).join('');
     return teacherHdr + rows;
   }).join('');
+}
+
+// ── Drag-to-reorder teacher groups (desktop mouse drag; native HTML5 DnD
+// doesn't fire reliably on touch, so mobile keeps the last-saved/alphabetical
+// order without being able to drag it itself) ──────────────────────────────
+function onTeacherDragStart(e, teacher){
+  _dragTeacher = teacher;
+  e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain', teacher); }catch(err){}
+  e.currentTarget.classList.add('dragging');
+}
+function onTeacherDragOver(e){
+  if(!_dragTeacher) return;
+  e.preventDefault(); // required for drop to fire
+  e.dataTransfer.dropEffect = 'move';
+}
+function onTeacherDrop(e, targetTeacher){
+  e.preventDefault();
+  if(!_dragTeacher || _dragTeacher===targetTeacher) return;
+  // Insert the dragged teacher immediately before the drop target within
+  // last render's full order, then persist that as the new explicit order.
+  const order = _renderedTeacherOrder.filter(t=>t!==_dragTeacher);
+  const idx = order.indexOf(targetTeacher);
+  if(idx>=0){
+    order.splice(idx, 0, _dragTeacher);
+    teacherOrder = order;
+    saveTeacherOrder();
+  }
+  _dragTeacher = null;
+  renderRoster();
+}
+function onTeacherDragEnd(){
+  _dragTeacher = null;
+  document.querySelectorAll('.roster-teacher-hdr.dragging').forEach(el=>el.classList.remove('dragging'));
 }
 
 function toggleTeacherIsolation(teacher){
@@ -3338,8 +3402,10 @@ function renderGlance(body){
       ${kpiStrip}
     </div>
     ${goalsSection}
-    ${partAvgCard}
-    ${pawsCard}
+    <div class="sum-row-2">
+      ${partAvgCard}
+      ${pawsCard}
+    </div>
     ${supportCard}
     <div class="sum-row-2">
       ${partSection}
