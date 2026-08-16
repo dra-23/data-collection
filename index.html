@@ -3423,6 +3423,10 @@ function renderGlance(body){
       ${supScored>0
         ? _yrBarChart(supCounts,SUPPORT_LEVELS.map(o=>o.v),SUPPORT_COLORS,160,null,'Support Level','')
         : `<div style="height:160px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:14px;font-style:italic">No data yet</div>`}
+      <div class="part-summary" style="margin-top:12px">
+        <div class="sum-item"><span class="sum-lbl">Independent</span><span class="sum-val">${supCounts[0]}</span></div>
+        <div class="sum-item"><span class="sum-lbl">Max Support</span><span class="sum-val">${supCounts[3]}</span></div>
+      </div>
     </div>
   </div>`;
 
