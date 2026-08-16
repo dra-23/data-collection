@@ -2920,7 +2920,7 @@ function _yrBarChart(data,labels,color,h=120,maxFmt=null,label='Chart',tooltipPr
   return `<div style="position:relative;height:${h}px">${_yrChartDlBtn(id)}<canvas id="${id}"></canvas></div>`;
 }
 
-function _yrDonutChart(values,labels,colors,label='Chart'){
+function _yrDonutChart(values,labels,colors,label='Chart',h=220){
   const total=values.reduce((a,v)=>a+v,0);
   if(!total) return `<div style="padding:24px;text-align:center;color:var(--text-3);font-size:14px;font-style:italic">No data recorded yet</div>`;
   const id='yr-ch-'+Math.random().toString(36).slice(2,9);
@@ -2968,7 +2968,7 @@ function _yrDonutChart(values,labels,colors,label='Chart'){
       }
     }
   }});
-  return `<div style="position:relative;height:220px">${_yrChartDlBtn(id)}<canvas id="${id}"></canvas></div>`;
+  return `<div style="position:relative;height:${h}px">${_yrChartDlBtn(id)}<canvas id="${id}"></canvas></div>`;
 }
 
 const _RTG_COLORS=['#dc2626','#ea580c','#d97706','#65a30d','#16a34a'];
@@ -3442,7 +3442,7 @@ function renderGlance(body){
   const locCard = `<div class="yr-card yr-exportable">
     <div class="yr-card-hdr"><span class="yr-card-title">Push-In vs Pull-Out</span><span class="yr-card-sub">${pushInCount+pullOutCount} period${(pushInCount+pullOutCount)!==1?'s':''} tracked</span></div>
     <div class="yr-card-body">
-      ${_yrDonutChart([pushInCount,pullOutCount],['Push-In','Pull-Out'],['#3b82f6','#f59e0b'],'Push-In vs Pull-Out')}
+      ${_yrDonutChart([pushInCount,pullOutCount],['Push-In','Pull-Out'],['#3b82f6','#f59e0b'],'Push-In vs Pull-Out',160)}
       <div class="part-summary" style="margin-top:12px">
         <div class="sum-item"><span class="sum-lbl">Push-In Minutes</span><span class="sum-val">${pushInMin}</span></div>
         <div class="sum-item"><span class="sum-lbl">Pull-Out Minutes</span><span class="sum-val">${pullOutMin}</span></div>
