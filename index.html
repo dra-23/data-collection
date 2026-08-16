@@ -329,12 +329,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .pct   { font-size: 12px; color: var(--text-3); white-space: nowrap; }
 .gt td.pct { font-weight: 700; color: var(--text-2); }
 
-/* quadrant row accents */
-.qr0 td:first-child { border-left: 3px solid #000000; }
-.qr1 td:first-child { border-left: 3px solid var(--brand); }
-.qr2 td:first-child { border-left: 3px solid #a8a29e; }
-.qr3 td:first-child { border-left: 3px solid #eab308; }
-
 /* TOGGLE BUTTON GROUPS — replaces all radio+label widgets */
 .tg { display: flex; gap: 8px; justify-content: center; }
 .tg-btn { min-width: 26px; height: 24px; padding: 0 5px; border-radius: 4px; border: 1.5px solid var(--border); background: var(--surface2); font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all .12s; color: var(--text-3); font-family: var(--sans); }
@@ -353,18 +347,30 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .cnt-inp::-webkit-outer-spin-button, .cnt-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
 .cnt-inp { -moz-appearance: textfield; }
 
-/* SCHEDULE TABLE */
-.sched-table { width: 100%; border-collapse: collapse; }
-.sched-table th { padding: 8px 10px; text-align: left; font-size: 12px; font-weight: 600; color: var(--text-3); background: var(--surface2); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); letter-spacing: .03em; white-space: nowrap; }
-.sched-table th:last-child { border-right: none; }
-.sched-table td { padding: 7px 9px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); vertical-align: middle; }
-.sched-table td:last-child { border-right: none; }
-.sched-table tr:last-child td { border-bottom: none; }
-.sched-table tr:hover td { background: #faf9f7; }
-.period-lbl { font-size: 13px; font-weight: 600; color: var(--text-3); white-space: nowrap; }
-.class-input { width: 100%; border: none; background: transparent; font-family: var(--sans); font-size: 14px; color: var(--text); padding: 2px 4px; border-radius: 4px; }
-.class-input:focus { outline: 1px solid var(--brand); background: #fff; }
-.class-input::placeholder { color: var(--text-3); font-style: italic; }
+/* PERIOD CARDS — one per period, shared by desktop (stacked list) and
+   mobile (single card for the currently-navigated period). */
+.period-card { border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; background: var(--surface); }
+.period-card:last-child { margin-bottom: 0; }
+.period-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.period-name-inp { flex: 1; min-width: 0; }
+.period-time-inp { width: 170px; flex-shrink: 0; }
+.period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.period-field { display: flex; align-items: center; gap: 8px; }
+.period-field-lbl { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); flex-shrink: 0; }
+.period-notes-field { flex: 1; min-width: 160px; }
+.period-notes-field .fin { width: 100%; }
+.star-row { display: flex; gap: 2px; }
+.star-btn { background: none; border: none; padding: 1px; cursor: pointer; color: var(--border-mid); display: flex; transition: color .12s; }
+.star-btn:hover { color: var(--accent-dark); }
+.star-btn.on { color: var(--accent); }
+.sup-row { display: flex; border: 1.5px solid var(--border-mid); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+.sup-btn { border: none; background: var(--surface2); color: var(--text-3); font-family: var(--sans); font-size: 11px; font-weight: 600; padding: 5px 8px; cursor: pointer; white-space: nowrap; transition: all .12s; }
+.sup-btn + .sup-btn { border-left: 1.5px solid var(--border-mid); }
+.sup-btn:hover { background: var(--surface); }
+.sup-btn.on.sup-independent { background: var(--green-bg); color: var(--green); }
+.sup-btn.on.sup-mostly      { background: var(--blue-bg);  color: var(--blue); }
+.sup-btn.on.sup-partial     { background: var(--amber-bg); color: var(--amber); }
+.sup-btn.on.sup-max         { background: var(--danger-bg); color: var(--danger); }
 
 /* SCHEDULE + NOTES two-column bottom layout */
 .sched-notes-row { display: flex; gap: 0; border-top: 1px solid var(--border); }
@@ -565,7 +571,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .glance-table { min-width: 340px; }
 .glance-grid { min-width: 0; }
 .glance-card { min-width: 0; overflow: hidden; }
-.sched-table { min-width: 340px; }
 .pane-body > * { flex-shrink: 0; }
 /* Allow pane-body to scroll fully on short viewports */
 .pane-body { min-height: 0; }
@@ -616,11 +621,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* BOLD TOTALS */
 .tot-row .pct { font-weight: 700; color: var(--text-2); font-size: 13px; }
 .tot-row .stat { font-weight: 700; }
-/* School Expectations — final % (per-row) and PERIOD % row read larger. */
-#sc-expectations .gt td.pct { font-size: 16px; }
-#sc-expectations .tot-row .pct { font-size: 16px; }
-#sc-expectations .tot-row .stat { font-size: 16px; }
-/* Goals — Total and % columns read larger, same treatment as Expectations. */
+/* Goals — Total and % columns read larger. */
 #sc-goals .gt td.pct { font-size: 16px; }
 #sc-goals .gt td.stat { font-size: 16px; }
 
@@ -654,14 +655,13 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .pane-body.is-absent .cnt-b,
 .pane-body.is-absent .cnt-inp,
 .pane-body.is-absent .acc-cell-btn,
-.pane-body.is-absent .sc-clear-btn,
-.pane-body.is-absent .sc-mark-btn { pointer-events: none; opacity: 0.4; }
+.pane-body.is-absent .sc-clear-btn { pointer-events: none; opacity: 0.4; }
 .pane-body.is-absent input[type=number],
 .pane-body.is-absent textarea { pointer-events: none; opacity: 0.4; }
 .pane-body.is-absent .absent-banner button { pointer-events: auto !important; opacity: 1 !important; }
 .glance-abs { font-size: 11px; font-weight: 700; color: #b45309; background: #fef3c7; border-radius: 3px; padding: 1px 4px; }
 
-/* NON-SCHOOL DAY (school_calendar.is_school_day = false) */
+/* NOT-STARTED DAY (before a 'Starting' student's date_of_placement) */
 .nonschool-banner { background: var(--blue-bg); border: 1px solid #93c5fd; border-radius: var(--r); padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .nonschool-banner-body { flex: 1; }
 .nonschool-banner-msg { font-size: 14px; font-weight: 600; color: var(--blue); }
@@ -670,15 +670,11 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .pane-body.is-nonschool .cnt-b,
 .pane-body.is-nonschool .cnt-inp,
 .pane-body.is-nonschool .acc-cell-btn,
-.pane-body.is-nonschool .sc-clear-btn,
-.pane-body.is-nonschool .sc-mark-btn { pointer-events: none; opacity: 0.4; }
+.pane-body.is-nonschool .sc-clear-btn { pointer-events: none; opacity: 0.4; }
 .pane-body.is-nonschool input[type=number],
 .pane-body.is-nonschool textarea { pointer-events: none; opacity: 0.4; }
 .sc-clear-btn { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-mid); background: var(--surface); color: var(--text-3); font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; flex-shrink: 0; }
 .sc-clear-btn:hover { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
-.sc-mark-btn { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-mid); background: var(--surface); color: var(--text-3); font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; flex-shrink: 0; }
-.sc-mark-btn:hover { border-color: #86efac; background: var(--green-bg); color: var(--green); }
-.sc-mark-btn + .sc-clear-btn { margin-left: 0; }
 .sc-goals-btn { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-mid); background: var(--surface); color: var(--text-3); font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; flex-shrink: 0; }
 .sc-goals-btn:hover { border-color: var(--brand); background: var(--brand-dim); color: var(--brand); }
 .sc-goals-btn + .sc-clear-btn { margin-left: 0; }
@@ -797,9 +793,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .mob-period-arrow:disabled { opacity: .3; pointer-events: none; }
   .mob-period-center { flex: 1; text-align: center; padding: 8px 2px; }
   .mob-period-lbl { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-  .mob-period-name-inp { width: 100%; border: none; background: transparent; text-align: center; font-family: var(--sans); font-size: 15px; color: var(--text-2); padding: 3px 8px; border-radius: 5px; outline: none; }
-  .mob-period-name-inp:focus { background: var(--surface2); color: var(--text); }
-  .mob-period-name-inp::placeholder { color: var(--text-3); }
   .mob-period-dots { display: flex; gap: 4px; justify-content: center; margin-top: 5px; }
   .mob-period-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border-mid); }
   .mob-period-dot.active { background: var(--brand); }
@@ -814,7 +807,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .mob-sec-meta  { font-size: 13px; color: var(--text-3); margin-left: 8px; }
   .mob-sec-hdr-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .mob-sec-hdr-actions .sc-clear-btn,
-  .mob-sec-hdr-actions .sc-mark-btn,
   .mob-sec-hdr-actions .sc-goals-btn { margin-left: 0; padding: 6px 12px; min-height: 32px; }
   .mob-sec-chev  { color: var(--text-3); transition: transform .2s; flex-shrink: 0; margin-left: 8px; }
   .mob-section.collapsed .mob-sec-chev { transform: rotate(-90deg); }
@@ -984,7 +976,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 @media print {
   .topbar, .sidebar, .mob-drawer, .mob-drawer-backdrop,
   .day-tabs, .stu-header-actions, .sum-hero-actions, .yr-hero-actions,
-  .sc-clear-btn, .sc-mark-btn, .sc-goals-btn, .yr-chart-dl-btn,
+  .sc-clear-btn, .sc-goals-btn, .yr-chart-dl-btn,
   .sc-chevron, .modal-bg, .cnt-b { display: none !important; }
 
   html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
@@ -1001,9 +993,9 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 
   .sc-head { padding: 8px 14px !important; }
   .stu-header { padding: 10px 14px !important; }
-  .gt, .sched-table { font-size: 11px !important; }
-  .gt th, .sched-table th { padding: 5px 7px !important; }
-  .gt td, .sched-table td { padding: 4px 7px !important; }
+  .gt { font-size: 11px !important; }
+  .gt th { padding: 5px 7px !important; }
+  .gt td { padding: 4px 7px !important; }
   .tg-btn { min-width: 20px !important; height: 20px !important; font-size: 10px !important; padding: 0 4px !important; }
   .tg { gap: 4px !important; }
   .notes-textarea { min-height: 50px !important; }
@@ -1142,18 +1134,6 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     <div class="modal-acts">
       <button class="mbtn mbtn-ghost" onclick="closeModal('clear-confirm-modal')">Cancel</button>
       <button class="mbtn" style="background:var(--danger);color:#fff" onclick="confirmClearSection()">Clear</button>
-    </div>
-  </div>
-</div>
-
-<!-- MARK ALL EXPECTATIONS CONFIRMATION -->
-<div class="modal-bg" id="markall-confirm-modal">
-  <div class="modal" style="width:400px">
-    <div class="modal-title" id="markall-confirm-title">Mark all as met?</div>
-    <div class="modal-sub" id="markall-confirm-sub"></div>
-    <div class="modal-acts">
-      <button class="mbtn mbtn-ghost" onclick="closeModal('markall-confirm-modal')">Cancel</button>
-      <button class="mbtn" style="background:var(--green);color:#fff" onclick="confirmMarkAllExpectations()">Mark All Met</button>
     </div>
   </div>
 </div>
@@ -1374,7 +1354,7 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 // ═══════════════════════════════════════════════════════════════
 const DAYS    = ['monday','tuesday','wednesday','thursday','friday'];
 const DL      = {monday:'Monday',tuesday:'Tuesday',wednesday:'Wednesday',thursday:'Thursday',friday:'Friday'};
-const PER     = ['1st','2nd','3rd','4th','5th','6th','7th','8th'];
+const PER     = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
 const MAX_GOALS = 5;
 const CAMPUS_ORDER = ['Bartlett','Oak Lawn','Plainfield','LITH','Morton Grove','Rockford','Virtual Academy'];
 const CLASSROOM_TYPE_ORDER = ['ELEM','MS','HS','LS'];
@@ -1418,19 +1398,12 @@ function metaChip(iconKey, text){
   if(!text) return '';
   return `<span class="meta-chip"><svg class="meta-chip-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${META_CHIP_ICONS[iconKey]}</svg>${esc(text)}</span>`;
 }
-// Standalone hero stat card for today's expectations/participation %.
-function scoreCardHTML(score, sc, partScore, psc){
+// Standalone hero stat card for today's participation %.
+function scoreCardHTML(partScore, psc){
   const item=(val,cls,lbl)=> val===null?'':`<div class="stu-header-score-item ${cls}"><div class="stu-header-score-val">${val}%</div><div class="stu-header-score-lbl">${lbl}</div></div>`;
-  const html = item(score,sc,'Expectations') + item(partScore,psc,'Participation');
+  const html = item(partScore,psc,'Participation');
   return html ? `<div class="stu-header-score">${html}</div>` : '';
 }
-
-const QUADS = [
-  {id:'respect',    label:'Respect Self & Others',             cls:'qr0'},
-  {id:'completing', label:'Completing Assignments / Tasks',    cls:'qr1'},
-  {id:'directions', label:'Follow Directions / Expectations',  cls:'qr2'},
-  {id:'calm',       label:'Contribute to Calm Environment',    cls:'qr3'},
-];
 
 // ═══════════════════════════════════════════════════════════════
 // AUTH STATE
@@ -1533,7 +1506,7 @@ async function runSync(){
 let _stuSyncTarget = null;
 function flushPendingSync(){
   if(_syncTimer){ clearTimeout(_syncTimer); runSync(); }
-  if(_stuSyncTimer){ clearTimeout(_stuSyncTimer); runStuPnSync(); }
+  if(_stuSyncTimer){ clearTimeout(_stuSyncTimer); runStuScheduleSync(); }
 }
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'hidden') flushPendingSync();
@@ -1571,7 +1544,7 @@ function parseJsonField(raw, fallback){
 async function loadStudents(){
   // RLS scopes rows to this account's own students (owner_id = auth.uid()).
   const { data, error } = await sb.from('students')
-    .select('id, first_name, last_name, grade, status, goals, pn, campus, classroom, teacher, date_of_placement')
+    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement')
     .order('last_name').order('first_name');
   if(error){ console.error('loadStudents:', error); return; }
 
@@ -1587,7 +1560,8 @@ async function loadStudents(){
     status:    r.status    || '',
     datePlacement: r.date_of_placement || '',
     goals:     parseJsonField(r.goals, []),
-    pn:        parseJsonField(r.pn, {})
+    pn:        parseJsonField(r.pn, {}),
+    pt:        parseJsonField(r.pt, {})
   }));
 }
 
@@ -1675,6 +1649,8 @@ function applyWeekRows(sid, week, rows){
       q:        cleanQ0,
       p:        row.participation_scores || {},
       pn:       row.period_names         || {},
+      sup:      row.support_scores       || {},
+      pNotes:   row.period_notes         || {},
       coupons:  row.coupons              ?? 0,
       comments: row.comments             || '',
       absent:   absent0
@@ -1749,6 +1725,8 @@ async function syncToSupabase(sid, day){
     goal_scores:          d.g,
     period_names:         s.pn || {},
     participation_scores: d.p,
+    support_scores:       d.sup || {},
+    period_notes:         d.pNotes || {},
     coupons:              typeof d.coupons === 'number' ? d.coupons : (parseInt(d.coupons) || 0),
     comments:             d.comments || ''
   };
@@ -1800,6 +1778,8 @@ function subscribeRealtime(sid){
           q:        cleanQrt,
           p:        row.participation_scores || {},
           pn:       row.period_names         || {},
+          sup:      row.support_scores       || {},
+          pNotes:   row.period_notes         || {},
           coupons:  row.coupons              ?? 0,
           comments: row.comments             || '',
           absent:   absentRt
@@ -1902,7 +1882,7 @@ function dd(day){
   if(!sid||!wk) return null;
   S.data[sid]=S.data[sid]||{};
   S.data[sid][wk]=S.data[sid][wk]||{};
-  S.data[sid][wk][day]=S.data[sid][wk][day]||{g:{},q:{},p:{},pn:{},coupons:0,comments:'',absent:false};
+  S.data[sid][wk][day]=S.data[sid][wk][day]||{g:{},q:{},p:{},pn:{},sup:{},pNotes:{},coupons:0,comments:'',absent:false};
   return S.data[sid][wk][day];
 }
 function initials(name){ return (name||'').split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase()||'?'; }
@@ -1988,29 +1968,6 @@ function gStats(day, gi, type, d){
   return { sum, scored, max, pct };
 }
 
-function qStats(qid, d){
-  let sum=0, scored=0;
-  PER.forEach((_,pi)=>{
-    const v = d.q[`${qid}_${pi}`];
-    if(v===undefined||v==='') return;
-    scored++;
-    sum += parseInt(v);
-  });
-  const pct = scored>0 ? (sum/scored)*100 : null;
-  return { sum, scored, pct };
-}
-
-// column stat for quadrant grid: % of all quads scored in this period
-function qColStat(pi, d){
-  let sum=0, scored=0;
-  QUADS.forEach(q=>{
-    const v=d.q[`${q.id}_${pi}`];
-    if(v===undefined||v==='') return;
-    scored++; sum+=parseInt(v);
-  });
-  return scored>0 ? Math.round((sum/scored)*100) : null;
-}
-
 function pStats(d){
   let sum=0, scored=0;
   PER.forEach((_,pi)=>{
@@ -2018,43 +1975,21 @@ function pStats(d){
     if(v===undefined||v==='') return;
     scored++; sum+=parseInt(v);
   });
-  const max=scored*2;
+  const max=scored*4; // 4-star scale
   const pct=max>0?(sum/max)*100:null;
   return {sum, scored, max, pct};
 }
 
-function dayScore(day){
-  const d=dd(day); if(!d||d.absent) return null;
-  let sum=0, max=0;
-  QUADS.forEach(q=>{ const {sum:s,scored}=qStats(q.id,d); sum+=s; max+=scored; });
-  return max>0?Math.round((sum/max)*100):null;
-}
-function stuDayScore(sid, day){
-  if(!sid||!S.week) return null;
-  const d=S.data[sid]?.[S.week]?.[day]||null; if(!d||d.absent) return null;
-  let sum=0, max=0;
-  QUADS.forEach(q=>{ const {sum:s,scored}=qStats(q.id,d); sum+=s; max+=scored; });
-  return max>0?Math.round((sum/max)*100):null;
-}
 function stuWeekScore(sid){
-  // Weekly average school expectations % across non-absent days
+  // Weekly average participation % across non-absent days
   if(!sid||!S.week) return null;
   let sum=0, max=0;
   DAYS.forEach(day=>{
     const d=S.data[sid]?.[S.week]?.[day]||null;
     if(!d||d.absent) return;
-    QUADS.forEach(q=>{ const{sum:s,scored}=qStats(q.id,d); sum+=s; max+=scored; });
+    const {sum:s,max:m}=pStats(d); sum+=s; max+=m;
   });
   return max>0?Math.round((sum/max)*100):null;
-}
-function stuYearScore(sid){
-  const rows=_yearData[sid];
-  if(!rows||!rows.length) return null;
-  let eSum=0, eMax=0;
-  rows.filter(r=>!r.absent).forEach(row=>{
-    QUADS.forEach(q=>{ const{sum,scored}=qStats(q.id,row); eSum+=sum; eMax+=scored; });
-  });
-  return eMax>0?Math.round((eSum/eMax)*100):null;
 }
 function dayPartScore(day){
   const d=dd(day); if(!d||d.absent) return null;
@@ -2287,8 +2222,6 @@ function renderPane(){
   const nonSchool=!!lock;
   body.classList.toggle('is-absent', !!(d && d.absent) && !nonSchool);
   body.classList.toggle('is-nonschool', nonSchool);
-  const score=dayScore(curDay);
-  const sc=score===null?'none':score>=80?'ok':score>=50?'mid':'low';
   const partScore=dayPartScore(curDay);
   const psc=partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
   const chips=[metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
@@ -2319,7 +2252,7 @@ function renderPane(){
           </button>
         </div>
       </div>
-      ${scoreCardHTML(score,sc,partScore,psc)}
+      ${scoreCardHTML(partScore,psc)}
     </div>`+
     (lock?`<div class="nonschool-banner">
       ${lock.kind==='notstarted'
@@ -2338,7 +2271,6 @@ function renderPane(){
       </div>
     </div>`:'')+
     goalsHTML(curDay,d,gs)+
-    quadHTML(curDay,d)+
     schedHTML(curDay,d);
 }
 
@@ -2505,78 +2437,73 @@ function gCell(day,gi,pi,type,d){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SCHOOL EXPECTATIONS SECTION
+// SCHEDULE & PARTICIPATION SECTION
 // ═══════════════════════════════════════════════════════════════
-function quadHTML(day, d){
-  // dynamic period columns
-  let thead=`<tr><th style="min-width:220px">Quadrant</th>${PER.map((p,i)=>`<th class="stat-th">${i+1}</th>`).join('')}<th class="stat-th">%</th></tr>`;
+const SUPPORT_LEVELS = [
+  {v:'Independent',        cls:'sup-independent'},
+  {v:'Mostly Independent', cls:'sup-mostly'},
+  {v:'Partial Support',    cls:'sup-partial'},
+  {v:'Max Support',        cls:'sup-max'},
+];
+const STAR_SVG_ON  = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+const STAR_SVG_OFF = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 
-  let tbody=QUADS.map(q=>{
-    const {sum,scored,pct}=qStats(q.id,d);
-    return `<tr class="${q.cls}">
-      <td><div class="row-lbl">${q.label}</div></td>
-      ${PER.map((_,pi)=>`<td>${qCell(day,q.id,pi,d)}</td>`).join('')}
-      <td class="pct">${fmtPct(pct)}</td>
-    </tr>`;
+// One period's row: name/time + 1-4 star Participation + Support level +
+// Notes. Shared by desktop (stacked list, one per period) and mobile (one
+// card for whichever period is currently navigated to).
+function periodCardHTML(day, pi, d){
+  const s = stu();
+  const name = (s?.pn?.[pi]) || (d.pn?.[pi]) || '';
+  const time = (s?.pt?.[pi]) || '';
+  const pVal = d.p[pi]!==undefined ? d.p[pi] : '';
+  const supVal = d.sup?.[pi] || '';
+  const note = d.pNotes?.[pi] || '';
+
+  const stars = [1,2,3,4].map(n=>{
+    const on = pVal!=='' && parseInt(pVal)>=n;
+    const fn = String(pVal)===String(n) ? `setP('${day}',${pi},'')` : `setP('${day}',${pi},'${n}')`;
+    return `<button type="button" class="star-btn${on?' on':''}" onclick="${fn}" title="${n} star${n!==1?'s':''}">${on?STAR_SVG_ON:STAR_SVG_OFF}</button>`;
   }).join('');
 
-  // column totals: % of quads scored in each period
-  const colPcts=PER.map((_,pi)=>{ const p=qColStat(pi,d); return p===null?'—':p+'%'; });
-  // overall daily %
-  let allSum=0,allScored=0;
-  QUADS.forEach(q=>{ const{sum,scored}=qStats(q.id,d); allSum+=sum; allScored+=scored; });
-  const dailyPct=allScored>0?Math.round((allSum/allScored)*100):null;
+  const supBtns = SUPPORT_LEVELS.map(o=>{
+    const on = supVal===o.v;
+    return `<button type="button" class="sup-btn ${o.cls}${on?' on':''}" onclick="setSup('${day}',${pi},'${o.v}')">${o.v}</button>`;
+  }).join('');
 
-  tbody+=`<tr class="tot-row">
-    <td><span style="font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.03em">PERIOD %</span></td>
-    ${colPcts.map(p=>`<td class="pct">${p}</td>`).join('')}
-    <td class="stat">${fmtPct(dailyPct)}</td>
-  </tr>`;
-
-  const chevron=`<svg class="sc-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
-  return `<div class="section-card${colSec.expectations?' sec-collapsed':''}" id="sc-expectations">
-    <div class="sc-head" onclick="toggleSection('expectations')"><span class="sc-title">School Expectations</span><span class="sc-meta">0 or 1 · blanks excluded from %</span>${markAllBtnHTML(`openMarkAllConfirm('${day}', undefined, event)`, 'Mark every quadrant/period as met (1) for this day')}${clearBtnHTML('expectations')}${chevron}</div>
-    <div class="section-card-scroll"><table class="gt"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>
+  return `<div class="period-card">
+    <div class="period-card-top">
+      <div class="goal-num-badge">${pi+1}</div>
+      <input class="fin period-name-inp" placeholder="Class or subject…" value="${esc(name)}" onchange="setPn('${day}',${pi},this.value)">
+      <input class="fin period-time-inp" placeholder="8:00am – 8:40am" value="${esc(time)}" onchange="setPt('${day}',${pi},this.value)">
+    </div>
+    <div class="period-card-bottom">
+      <div class="period-field">
+        <span class="period-field-lbl">Participation</span>
+        <div class="star-row">${stars}</div>
+      </div>
+      <div class="period-field">
+        <span class="period-field-lbl">Support</span>
+        <div class="sup-row">${supBtns}</div>
+      </div>
+      <div class="period-field period-notes-field">
+        <span class="period-field-lbl">Notes</span>
+        <input class="fin" placeholder="Notes…" value="${esc(note)}" onchange="setPeriodNote('${day}',${pi},this.value)">
+      </div>
+    </div>
   </div>`;
 }
 
-function qCell(day,qid,pi,d){
-  const val=d.q[`${qid}_${pi}`];
-  const tb=(v)=>{
-    const on=String(val)===String(v);
-    const fn=on?`setQ('${day}','${qid}',${pi},'')`:`setQ('${day}','${qid}',${pi},'${v}')`;
-    return `<button type="button" class="tg-btn${on?(v==1?' sel-y':' sel-n'):''}" onclick="${fn}">${v}</button>`;
-  };
-  return `<div class="tg">${[0,1].map(tb).join('')}</div>`;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SCHEDULE & PARTICIPATION SECTION
-// ═══════════════════════════════════════════════════════════════
 function schedHTML(day, d){
-  const stuObj=stu();
-  let tbody=PER.map((p,pi)=>{
-    const uid=`${day}_p${pi}`, val=d.p[pi]!==undefined?d.p[pi]:'';
-    const name=(stuObj?.pn?.[pi])||(d.pn?.[pi])||'';
-    return `<tr>
-      <td style="width:52px"><span class="period-lbl">${p}</span></td>
-      <td><input class="class-input" placeholder="Class or subject…" value="${esc(name)}" onchange="setPn('${day}',${pi},this.value)"></td>
-      <td style="width:184px"><div class="tg">${[0,1,2].map(v=>{const on=String(val)===String(v);const fn=on?`setP('${day}',${pi},'')`:`setP('${day}',${pi},'${v}')`;const cls=v===2?'sel-y':v===1?'sel-a':'sel-n';return `<button type="button" class="tg-btn${on?' '+cls:''}" onclick="${fn}">${v}</button>`;}).join('')}</div></td>
-    </tr>`;
-  }).join('');
-
+  const cards = PER.map((_,pi)=>periodCardHTML(day,pi,d)).join('');
   const {sum,scored,max,pct}=pStats(d);
   const coupons = parseInt(d.coupons)||0;
 
   const chevron=`<svg class="sc-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
   return `<div class="section-card${colSec.schedule?' sec-collapsed':''}" id="sc-schedule">
-    <div class="sc-head" onclick="toggleSection('schedule')"><span class="sc-title">Schedule &amp; Participation</span><span class="sc-meta">0 · 1 · 2 per period · blanks excluded</span>${clearBtnHTML('schedule')}${chevron}</div>
+    <div class="sc-head" onclick="toggleSection('schedule')"><span class="sc-title">Schedule &amp; Participation</span><span class="sc-meta">1–4 stars per period · blanks excluded</span>${clearBtnHTML('schedule')}${chevron}</div>
     <div class="sched-notes-row">
       <div class="sched-col">
-        <table class="sched-table">
-          <thead><tr><th style="width:52px">Period</th><th>Class / Subject</th><th style="width:184px">Participation</th></tr></thead>
-          <tbody>${tbody}</tbody>
-        </table>
+        ${cards}
         <div class="part-summary">
           <div class="sum-item"><span class="sum-lbl">Total</span><span class="sum-val">${sum} / ${max}</span></div>
           <div class="sum-item"><span class="sum-lbl">Score</span><span class="sum-val accent">${fmtPct(pct)}</span></div>
@@ -2912,21 +2839,18 @@ function _buildYearlyView(body,s){
   const wkStats=bucketKeys.map(bk=>{
     const wr=bucketMap[bk].rows;
     const present=wr.filter(r=>!r.absent);
-    let eSum=0,eMax=0,pSum=0,pMax=0,coup=0;
+    let pSum=0,pMax=0,coup=0;
     present.forEach(row=>{
-      QUADS.forEach(q=>{ const{sum,scored}=qStats(q.id,row); eSum+=sum; eMax+=scored; });
-      const{sum:ps,scored:psc}=pStats(row); pSum+=ps; pMax+=psc*2;
+      const{sum:ps,max:pm}=pStats(row); pSum+=ps; pMax+=pm;
       coup+=parseInt(row.coupons||0);
     });
     const shortLbl=useMonthly
       ? new Date(bk+'-01T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'})
       : new Date(bk+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    return { wk:bk, shortLbl, expPct:eMax>0?Math.round((eSum/eMax)*100):null, partPct:pMax>0?Math.round((pSum/pMax)*100):null, coupons:coup, present:present.length, absent:wr.filter(r=>r.absent).length };
+    return { wk:bk, shortLbl, partPct:pMax>0?Math.round((pSum/pMax)*100):null, coupons:coup, present:present.length, absent:wr.filter(r=>r.absent).length };
   });
 
   // Overall KPIs
-  const expWks=wkStats.filter(w=>w.expPct!==null);
-  const avgExp=expWks.length?Math.round(expWks.reduce((a,w)=>a+w.expPct,0)/expWks.length):null;
   const partWks=wkStats.filter(w=>w.partPct!==null);
   const avgPart=partWks.length?Math.round(partWks.reduce((a,w)=>a+w.partPct,0)/partWks.length):null;
   const totalCoupons=wkStats.reduce((a,w)=>a+w.coupons,0);
@@ -2935,7 +2859,6 @@ function _buildYearlyView(body,s){
 
   // Chart data
   const wkLabels=wkStats.map(w=>w.shortLbl);
-  const expData=wkStats.map(w=>w.expPct);
   const partData=wkStats.map(w=>w.partPct);
   const coupData=wkStats.map(w=>w.coupons);
 
@@ -3005,7 +2928,6 @@ function _buildYearlyView(body,s){
       </div>
     </div>
     <div class="yr-kpi-strip">
-      <div class="yr-kpi">${kpiVal(avgExp,'g','%')}<div class="yr-kpi-lbl">Avg Expectations</div></div>
       <div class="yr-kpi">${kpiVal(avgPart,'b','%')}<div class="yr-kpi-lbl">Avg Participation</div></div>
       <div class="yr-kpi">${kpiVal(totalCoupons,'a')}<div class="yr-kpi-lbl">Total Coupons</div></div>
       <div class="yr-kpi">${kpiVal(totalPresent,'t')}<div class="yr-kpi-lbl">Total Days Attended / ${totalDays}</div></div>
@@ -3019,10 +2941,6 @@ function _buildYearlyView(body,s){
     <div class="yr-card-hdr"><span class="yr-card-title">${useMonthly?'Monthly':'Weekly'} Trends</span><span class="yr-card-sub">${wkStats.length} ${periodNoun}${wkStats.length!==1?'s':''}</span></div>
     <div class="yr-card-body">
       <div class="yr-chart-row">
-        <div class="yr-chart-col yr-exportable">
-          <div class="yr-chart-lbl" style="color:#15803d">▲ School Expectations %</div>
-          ${_yrLineChart(expData,wkLabels,'#16a34a',160,'School Expectations %',tooltipPrefix)}
-        </div>
         <div class="yr-chart-col yr-exportable">
           <div class="yr-chart-lbl" style="color:var(--blue)">▲ Participation %</div>
           ${_yrLineChart(partData,wkLabels,'#3b82f6',160,'Participation %',tooltipPrefix)}
@@ -3184,7 +3102,7 @@ function _buildYearlyView(body,s){
 function renderGlance(body){
   const s=stu(), gs=goals();
   if(!s){ body.innerHTML=''; return; }
-  function d(day){ const sid=S.cur,wk=S.week; return S.data[sid]?.[wk]?.[day]||{g:{},q:{},p:{},pn:{},coupons:0,comments:'',absent:false}; }
+  function d(day){ const sid=S.cur,wk=S.week; return S.data[sid]?.[wk]?.[day]||{g:{},q:{},p:{},pn:{},sup:{},pNotes:{},coupons:0,comments:'',absent:false}; }
 
   // ── colour helpers ──────────────────────────────────────────
   function pctCls(n){ return n===null?'':n>=80?'pct-hi':n>=50?'pct-mid':'pct-lo'; }
@@ -3192,19 +3110,14 @@ function renderGlance(body){
   const absCell=`<td><span class="sum-abs-pill">Abs</span></td>`;
 
   // ── KPI strip numbers ───────────────────────────────────────
-  let wqs=0,wqsc=0;
-  DAYS.forEach(day=>{ if(d(day).absent) return; QUADS.forEach(q=>{ const{sum,scored}=qStats(q.id,d(day));wqs+=sum;wqsc+=scored; }); });
-  const wExpPct=wqsc>0?Math.round((wqs/wqsc)*100):null;
-
   let tpW=0,tsW=0;
   DAYS.forEach(day=>{ if(d(day).absent) return; const{sum,scored}=pStats(d(day));tpW+=sum;tsW+=scored; });
-  const wpmW=tsW*2, wppW=wpmW>0?Math.round((tpW/wpmW)*100):null;
+  const wpmW=tsW*4, wppW=wpmW>0?Math.round((tpW/wpmW)*100):null;
 
   const tc=DAYS.reduce((a,day)=>a+parseInt(d(day).coupons||0),0);
   const daysPresent=DAYS.filter(day=>!d(day).absent).length;
 
   const kpiStrip=`<div class="sum-kpi-strip">
-    <div class="sum-kpi"><div class="sum-kpi-val g">${wExpPct!==null?wExpPct+'%':'—'}</div><div class="sum-kpi-lbl">Expectations</div></div>
     <div class="sum-kpi"><div class="sum-kpi-val b">${wppW!==null?wppW+'%':'—'}</div><div class="sum-kpi-lbl">Participation</div></div>
     <div class="sum-kpi"><div class="sum-kpi-val a">${tc}</div><div class="sum-kpi-lbl">Coupons Earned</div></div>
     <div class="sum-kpi"><div class="sum-kpi-val t">${daysPresent} / 5</div><div class="sum-kpi-lbl">Days Present</div></div>
@@ -3290,39 +3203,9 @@ function renderGlance(body){
     <div style="padding:20px;color:var(--text-3);font-style:italic;font-size:14px">No goals configured.</div>
   </div>`;
 
-  // ── School Expectations section ──────────────────────────────
-  let qRows='';
-  QUADS.forEach(q=>{
-    let qws=0,qwsc=0;
-    qRows+=`<tr class="${q.cls}"><td>${q.label}</td>`;
-    DAYS.forEach(day=>{
-      if(d(day).absent){ qRows+=absCell; return; }
-      const{sum,scored}=qStats(q.id,d(day));qws+=sum;qwsc+=scored;
-      qRows+=`<td>${pctSpan(scored>0?(sum/scored)*100:null)}</td>`;
-    });
-    qRows+=`<td>${pctSpan(qwsc>0?(qws/qwsc)*100:null)}</td></tr>`;
-  });
-  const dayTots=DAYS.map(day=>{
-    if(d(day).absent) return null;
-    let s2=0,sc2=0;
-    QUADS.forEach(q=>{ const{sum,scored}=qStats(q.id,d(day));s2+=sum;sc2+=scored; });
-    return sc2>0?Math.round((s2/sc2)*100):null;
-  });
-  qRows+=`<tr class="sum-tot-row"><td><strong>Daily Total</strong></td>${DAYS.map((day,i)=>d(day).absent?absCell:`<td>${pctSpan(dayTots[i])}</td>`).join('')}<td>${pctSpan(wqsc>0?Math.round((wqs/wqsc)*100):null)}</td></tr>`;
-
-  const expSection=`
-  <div class="sum-section">
-    <div class="sum-sec-hdr"><span class="sum-sec-title">School Expectations</span></div>
-    <div style="overflow-x:auto">
-      <table class="sum-table" style="min-width:520px">
-        <thead><tr><th>Quadrant</th>${thD}<th>Weekly</th></tr></thead>
-        <tbody>${qRows}</tbody>
-      </table>
-    </div>
-  </div>`;
-
   // ── Participation section ────────────────────────────────────
-  function dotCls(v){ if(v===undefined||v==='') return 'sum-per-blank'; const n=parseInt(v); return n>=2?'sum-per-full':n===1?'sum-per-half':'sum-per-zero'; }
+  // 1-4 star scale: 4 = full, 2-3 = half, 1 = zero (weakest scored value), blank = unscored.
+  function dotCls(v){ if(v===undefined||v==='') return 'sum-per-blank'; const n=parseInt(v); return n>=4?'sum-per-full':n>=2?'sum-per-half':'sum-per-zero'; }
 
   let tp=0,ts=0;
   const partRows=DAYS.map(day=>{
@@ -3416,7 +3299,6 @@ function renderGlance(body){
       ${kpiStrip}
     </div>
     ${goalsSection}
-    ${expSection}
     <div class="sum-row-2">
       ${partSection}
       ${ccSection}
@@ -3428,24 +3310,47 @@ function renderGlance(body){
 // SETTERS
 // ═══════════════════════════════════════════════════════════════
 function setG(day,gi,pi,val){ gWrite(dd(day), goals()[gi], gi, pi, val); persist(); refreshData(); }
-function setQ(day,qid,pi,val){ dd(day).q[`${qid}_${pi}`]=val; persist(); refreshData(); }
 function setP(day,pi,val){ dd(day).p[pi]=val; persist(); refreshData(); }
+function setSup(day,pi,val){
+  const d=dd(day);
+  if(!d.sup) d.sup={};
+  const cur=d.sup[pi];
+  d.sup[pi]=(cur===val)?'':val; // clicking the active option again clears it
+  persist(); refreshData();
+}
+function setPeriodNote(day,pi,val){
+  const d=dd(day);
+  if(!d.pNotes) d.pNotes={};
+  d.pNotes[pi]=val;
+  persist();
+}
 function setPn(day,pi,val){
   const s=stu(); if(!s) return;
   if(!s.pn) s.pn={};
   s.pn[pi]=val;
   persist(); // queues syncToSupabase which includes s.pn as period_names
-  // Debounce-update student record so period names carry forward across days/weeks
+  queueStuScheduleSync(s);
+}
+function setPt(day,pi,val){
+  const s=stu(); if(!s) return;
+  if(!s.pt) s.pt={};
+  s.pt[pi]=val;
+  queueStuScheduleSync(s);
+}
+// Debounce-update the student record so period names/times carry forward
+// across days/weeks — shared by setPn/setPt since they're edited together
+// and both live on the same `students` row.
+function queueStuScheduleSync(s){
   clearTimeout(_stuSyncTimer);
   _stuSyncTarget = s;
-  _stuSyncTimer = setTimeout(runStuPnSync, 2000);
+  _stuSyncTimer = setTimeout(runStuScheduleSync, 2000);
 }
-async function runStuPnSync(){
+async function runStuScheduleSync(){
   _stuSyncTimer = null;
   const s = _stuSyncTarget; _stuSyncTarget = null;
   if(!s) return;
-  const { error } = await sb.from('students').update({ pn: s.pn }).eq('id', s.id);
-  if(error) console.error('setPn student sync:', error);
+  const { error } = await sb.from('students').update({ pn: s.pn, pt: s.pt || {} }).eq('id', s.id);
+  if(error) console.error('schedule student sync:', error);
 }
 function setCoupons(day,v){ dd(day).coupons=v; persist(); }
 function adjCoupons(day,delta){
@@ -3894,9 +3799,6 @@ function renderPaneMobile(body){
 
   const pi   = curPeriod;
   const pLbl = PER[pi];
-  const name = s.pn?.[pi] || d?.pn?.[pi] || '';
-  const score     = dayScore(curDay);
-  const sc        = score===null?'none':score>=80?'ok':score>=50?'mid':'low';
   const partScore = dayPartScore(curDay);
   const psc       = partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
   const chips     = [metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
@@ -3934,7 +3836,7 @@ function renderPaneMobile(body){
         </div>
       </div>
     </div>
-    ${scoreCardHTML(score,sc,partScore,psc)}
+    ${scoreCardHTML(partScore,psc)}
   </div>`;
 
   // ── Non-school-day / not-started / absent banner ──
@@ -3962,36 +3864,12 @@ function renderPaneMobile(body){
     </button>
     <div class="mob-period-center">
       <div class="mob-period-lbl">${pLbl} Period</div>
-      <input class="mob-period-name-inp" placeholder="Class name…" value="${esc(name)}"
-        onchange="setPn('${curDay}',${pi},this.value)">
       <div class="mob-period-dots">${dots}</div>
     </div>
     <button class="mob-period-arrow" onclick="navPeriod(1)" ${pi===PER.length-1?'disabled':''}
       aria-label="Next period">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
-  </div>`;
-
-  // ── School Expectations ──
-  const quadRows = QUADS.map(q=>{
-    const val = d.q[`${q.id}_${pi}`];
-    const tb  = v => {
-      const on = String(val)===String(v);
-      const fn = on ? `setQ('${curDay}','${q.id}',${pi},'')` : `setQ('${curDay}','${q.id}',${pi},'${v}')`;
-      return `<button type="button" class="tg-btn mob-score-btn${on?(v==1?' sel-y':' sel-n'):''}" onclick="${fn}">${v}</button>`;
-    };
-    return `<div class="mob-score-row">
-      <div class="mob-score-lbl">${q.label}</div>
-      <div class="tg">${[0,1].map(tb).join('')}</div>
-    </div>`;
-  }).join('');
-
-  const expectSec = `<div class="mob-section${_mobCollapsed.expect?' collapsed':''}" id="mob-sec-expect">
-    <div class="mob-sec-hdr" onclick="toggleMobSection('expect')">
-      <span class="mob-sec-title">School Expectations</span>
-      <div class="mob-sec-hdr-actions">${markAllBtnHTML(`openMarkAllConfirm('${curDay}', ${pi}, event)`, 'Mark every quadrant as met (1) for this period')}${clearBtnHTML('expectations')}${chevSVG}</div>
-    </div>
-    <div class="mob-sec-body">${quadRows}</div>
   </div>`;
 
   // ── Goals (by period) ──
@@ -4016,25 +3894,13 @@ function renderPaneMobile(body){
     <div class="mob-sec-body">${goalRows}</div>
   </div>`;
 
-  // ── Participation ──
-  const pVal   = d.p[pi]!==undefined ? d.p[pi] : '';
-  const partBtns = [0,1,2].map(v=>{
-    const on = String(pVal)===String(v);
-    const fn = on ? `setP('${curDay}',${pi},'')` : `setP('${curDay}',${pi},'${v}')`;
-    const cls=v===2?'sel-y':v===1?'sel-a':'sel-n';
-    return `<button type="button" class="tg-btn mob-score-btn${on?' '+cls:''}" onclick="${fn}">${v}</button>`;
-  }).join('');
+  // ── Schedule & Participation (this period) ──
   const partSec = `<div class="mob-section${_mobCollapsed.part?' collapsed':''}" id="mob-sec-part">
     <div class="mob-sec-hdr" onclick="toggleMobSection('part')">
-      <span class="mob-sec-title">Participation</span>
+      <span class="mob-sec-title">Schedule &amp; Participation</span>
       <div class="mob-sec-hdr-actions">${clearBtnHTML('schedule')}${chevSVG}</div>
     </div>
-    <div class="mob-sec-body">
-      <div class="mob-score-row">
-        <div class="mob-score-lbl">${pLbl} Period</div>
-        <div class="tg">${partBtns}</div>
-      </div>
-    </div>
+    <div class="mob-sec-body">${periodCardHTML(curDay,pi,d)}</div>
   </div>`;
 
   // ── On-demand goals ──
@@ -4087,7 +3953,7 @@ function renderPaneMobile(body){
     </div>
   </div>`;
 
-  body.innerHTML = header + absentBanner + periodNav + expectSec + goalSec + odSec + partSec + notesSec;
+  body.innerHTML = header + absentBanner + periodNav + goalSec + odSec + partSec + notesSec;
 }
 
 
@@ -4380,13 +4246,12 @@ function toggleSection(id){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CLEAR SECTION (Goals / School Expectations / Schedule & Participation)
+// CLEAR SECTION (Goals / Schedule & Participation)
 // ═══════════════════════════════════════════════════════════════
 let _clearSectionTarget = null; // { key, day }
 const CLEAR_SECTION_META = {
   goals:        { label:'Goals',                   desc:'goal scores' },
-  expectations: { label:'School Expectations',      desc:'expectation scores' },
-  schedule:     { label:'Schedule & Participation',  desc:'participation scores' },
+  schedule:     { label:'Schedule & Participation',  desc:'schedule, participation, support, and notes' },
 };
 function clearBtnHTML(key){
   return `<button type="button" class="sc-clear-btn" onclick="openClearConfirm('${key}', event)" title="Clear ${CLEAR_SECTION_META[key].desc} for this day">
@@ -4399,29 +4264,6 @@ function goalsBtnHTML(){
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
     Goals
   </button>`;
-}
-function markAllBtnHTML(fn, title){
-  return `<button type="button" class="sc-mark-btn" onclick="${fn}" title="${title}">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-    Mark All Met
-  </button>`;
-}
-let _markAllTarget = null; // { day, pi }
-function openMarkAllConfirm(day, pi, evt){
-  if(evt) evt.stopPropagation(); // don't also trigger the section's collapse toggle
-  const s=stu(); if(!s) return;
-  _markAllTarget = { day, pi };
-  const scope = pi===undefined ? `every quadrant and period for ${dayDate(day)}` : `every quadrant for this period`;
-  document.getElementById('markall-confirm-title').textContent = 'Mark all as met?';
-  document.getElementById('markall-confirm-sub').textContent = `This will set ${scope} to 1 (met), overwriting any scores already entered. This can't be undone.`;
-  openModal('markall-confirm-modal');
-}
-function confirmMarkAllExpectations(){
-  if(!_markAllTarget) return;
-  const { day, pi } = _markAllTarget;
-  _markAllTarget = null;
-  closeModal('markall-confirm-modal');
-  markAllExpectations(day, pi);
 }
 // ═══════════════════════════════════════════════════════════════
 // DAY-AT-A-GLANCE PRINT / PDF EXPORT
@@ -4474,15 +4316,6 @@ document.addEventListener('click', e=>{
   if(menu && menu.classList.contains('open') && !e.target.closest('.mob-fab-wrap')) closeMobActionsMenu();
 });
 
-function markAllExpectations(day, pi){
-  const s=stu(); if(!s) return;
-  const d=dd(day);
-  QUADS.forEach(q=>{
-    if(pi===undefined){ PER.forEach((_,i)=>{ d.q[`${q.id}_${i}`]=1; }); }
-    else { d.q[`${q.id}_${pi}`]=1; }
-  });
-  persist(); refreshData();
-}
 function openClearConfirm(key, evt){
   if(evt) evt.stopPropagation(); // don't also trigger the section's collapse toggle
   const s=stu(); if(!s) return;
@@ -4500,8 +4333,7 @@ function confirmClearSection(){
   closeModal('clear-confirm-modal');
   if(!d) return;
   if(key==='goals') d.g = {};
-  else if(key==='expectations') d.q = {};
-  else if(key==='schedule') d.p = {};
+  else if(key==='schedule'){ d.p = {}; d.sup = {}; d.pNotes = {}; }
   persist(); refreshData();
 }
 
