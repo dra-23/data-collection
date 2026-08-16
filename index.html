@@ -418,7 +418,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .pct-mid { color: var(--amber);  font-weight: 700; }
 .pct-lo  { color: #991b1b;       font-weight: 700; }
 .sum-page { display: flex; flex-direction: column; margin: -18px -20px -20px; padding: 12px; gap: 12px; }
-/* Participation + Coupons & Comments share a row to save vertical space;
+/* Participation + PAWS & Notes share a row to save vertical space;
    items-start keeps each card its natural height instead of stretching to
    match the taller one. Collapses to a single column on mobile (see the
    768px block). */
@@ -3211,19 +3211,17 @@ function renderGlance(body){
   });
   const SUPPORT_COLORS = ['#16a34a','#3b82f6','#d97706','#dc2626']; // Independent / Mostly Independent / Partial Support / Max Support
 
-  const trendsCard = `<div class="yr-card">
-    <div class="yr-card-hdr"><span class="yr-card-title">Weekly Trends</span><span class="yr-card-sub">${dayLabels[0]}–${dayLabels[dayLabels.length-1]}</span></div>
+  const partAvgCard = `<div class="yr-card yr-exportable">
+    <div class="yr-card-hdr"><span class="yr-card-title">Avg Participation</span><span class="yr-card-sub">${dayLabels[0]}–${dayLabels[dayLabels.length-1]}</span></div>
     <div class="yr-card-body">
-      <div class="yr-chart-row">
-        <div class="yr-chart-col yr-exportable">
-          <div class="yr-chart-lbl" style="color:var(--accent-dark)">★ Avg Participation</div>
-          ${_yrLineChart(partAvgData,dayLabels,'#F7BD00',160,'Avg Participation','',{yMax:4,valFmt:v=>v.toFixed(1)+' ★'})}
-        </div>
-        <div class="yr-chart-col yr-exportable">
-          <div class="yr-chart-lbl" style="color:var(--amber)">▲ PAWS Earned</div>
-          ${_yrLineChart(pawsData,dayLabels,'#f59e0b',160,'PAWS Earned','',{yMax:null,valFmt:v=>v+' PAWS'})}
-        </div>
-      </div>
+      ${_yrLineChart(partAvgData,dayLabels,'#F7BD00',160,'Avg Participation','',{yMax:4,valFmt:v=>v.toFixed(1)+' ★'})}
+    </div>
+  </div>`;
+
+  const pawsCard = `<div class="yr-card yr-exportable">
+    <div class="yr-card-hdr"><span class="yr-card-title">PAWS Earned</span><span class="yr-card-sub">${dayLabels[0]}–${dayLabels[dayLabels.length-1]}</span></div>
+    <div class="yr-card-body">
+      ${_yrLineChart(pawsData,dayLabels,'#f59e0b',160,'PAWS Earned','',{yMax:null,valFmt:v=>v+' PAWS'})}
     </div>
   </div>`;
 
@@ -3240,6 +3238,8 @@ function renderGlance(body){
   // 1-4 star scale — each value gets its own dot shade (dim to full gold),
   // blank = unscored.
   function dotCls(v){ if(v===undefined||v==='') return 'sum-per-blank'; const n=parseInt(v); return n>=1&&n<=4?'sum-per-'+n:'sum-per-blank'; }
+  // Quarters of the 1-4 star scale: <25%≈1 star, <50%≈2, <75%≈3, else 4.
+  function fillColor(pct){ if(pct===null) return 'var(--border-mid)'; if(pct<25) return '#dc2626'; if(pct<50) return '#f97316'; if(pct<75) return '#eab308'; return '#16a34a'; }
 
   let tp=0,ts=0;
   const partRows=DAYS.map(day=>{
@@ -3259,7 +3259,7 @@ function renderGlance(body){
       <div class="sum-part-row">
         <div class="sum-part-day">${DL[day].slice(0,3)}</div>
         <div class="sum-part-bar-wrap">
-          <div class="sum-part-bar"><div class="sum-part-fill" style="width:${pct!==null?Math.round(pct):0}%"></div></div>
+          <div class="sum-part-bar"><div class="sum-part-fill" style="width:${pct!==null?Math.round(pct):0}%;background:${fillColor(pct)}"></div></div>
           <div class="sum-part-dots">${dots}</div>
         </div>
         <div class="sum-part-score">
@@ -3288,7 +3288,7 @@ function renderGlance(body){
     </div>
   </div>`;
 
-  // ── Coupons & Comments section ───────────────────────────────
+  // ── PAWS & Notes section ─────────────────────────────────────
   const couponDays=DAYS.map(day=>{
     const cv=parseInt(d(day).coupons||0);
     const absMark=d(day).absent?`<span class="sum-abs-pill" style="font-size:10px;margin-left:4px">Abs</span>`:'';
@@ -3297,16 +3297,16 @@ function renderGlance(body){
 
   let cmts='';
   DAYS.forEach(day=>{ if(d(day).comments) cmts+=`<div class="sum-comment-item"><div class="sum-comment-day-lbl">${DL[day]}</div><div class="sum-comment-text">${esc(d(day).comments)}</div></div>`; });
-  if(!cmts) cmts=`<p class="sum-no-comments">No comments recorded this week.</p>`;
+  if(!cmts) cmts=`<p class="sum-no-comments">No notes recorded this week.</p>`;
 
   const ccSection=`
   <div class="sum-section">
-    <div class="sum-sec-hdr"><span class="sum-sec-title">Coupons &amp; Comments</span></div>
+    <div class="sum-sec-hdr"><span class="sum-sec-title">PAWS &amp; Notes</span></div>
     <div class="sum-bottom">
       <div class="sum-coupons">
         <div class="sum-coupon-hero">
           <div class="sum-coupon-total">${tc}</div>
-          <div class="sum-coupon-lbl">Coupons This Week</div>
+          <div class="sum-coupon-lbl">PAWS This Week</div>
         </div>
         <div class="sum-coupon-days">${couponDays}</div>
       </div>
@@ -3338,7 +3338,8 @@ function renderGlance(body){
       ${kpiStrip}
     </div>
     ${goalsSection}
-    ${trendsCard}
+    ${partAvgCard}
+    ${pawsCard}
     ${supportCard}
     <div class="sum-row-2">
       ${partSection}
