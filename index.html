@@ -466,9 +466,10 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .sum-part-fill { height: 100%; border-radius: 6px; background: #16a34a; }
 .sum-part-dots { display: flex; gap: 3px; flex-wrap: wrap; }
 .sum-per-dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; }
-.sum-per-full  { background: #16a34a; }
-.sum-per-half  { background: #fbbf24; }
-.sum-per-zero  { background: #dc2626; }
+.sum-per-1     { background: rgba(247,189,0,.28); }
+.sum-per-2     { background: rgba(247,189,0,.52); }
+.sum-per-3     { background: rgba(247,189,0,.76); }
+.sum-per-4     { background: rgba(247,189,0,1); }
 .sum-per-blank { background: var(--border); }
 .sum-part-score { width: 90px; padding-right: 20px; text-align: right; flex-shrink: 0; }
 .sum-part-score-val { font-size: 19px; font-weight: 700; }
@@ -2653,8 +2654,8 @@ function _yrLineChart(data,labels,color,h=160,label='Chart',tooltipPrefix='Week 
         pointBackgroundColor:color,
         pointBorderColor:'#fff',
         pointBorderWidth:2,
-        pointRadius:data.length>24?2:4,
-        pointHoverRadius:7,
+        pointRadius:data.length>24?3:6,
+        pointHoverRadius:9,
         pointHoverBackgroundColor:color,
         pointHoverBorderColor:'#fff',
         pointHoverBorderWidth:2.5,
@@ -3229,8 +3230,9 @@ function renderGlance(body){
   </div>`;
 
   // ── Participation section ────────────────────────────────────
-  // 1-4 star scale: 4 = full, 2-3 = half, 1 = zero (weakest scored value), blank = unscored.
-  function dotCls(v){ if(v===undefined||v==='') return 'sum-per-blank'; const n=parseInt(v); return n>=4?'sum-per-full':n>=2?'sum-per-half':'sum-per-zero'; }
+  // 1-4 star scale — each value gets its own dot shade (dim to full gold),
+  // blank = unscored.
+  function dotCls(v){ if(v===undefined||v==='') return 'sum-per-blank'; const n=parseInt(v); return n>=1&&n<=4?'sum-per-'+n:'sum-per-blank'; }
 
   let tp=0,ts=0;
   const partRows=DAYS.map(day=>{
@@ -3240,7 +3242,11 @@ function renderGlance(body){
         <div class="sum-part-bar-wrap" style="padding-top:4px"><span class="sum-abs-pill">Absent</span></div>
       </div>`;
     const{sum,scored,max,pct}=pStats(d(day)); tp+=sum; ts+=scored;
-    const dots=PER.map((_,pi)=>`<span class="sum-per-dot ${dotCls(d(day).p[pi])}" title="Period ${pi+1}"></span>`).join('');
+    const dots=PER.map((_,pi)=>{
+      const v=d(day).p[pi];
+      const title=v!==undefined&&v!==''?`Period ${pi+1}: ${v} star${v!=1?'s':''}`:`Period ${pi+1}: not scored`;
+      return `<span class="sum-per-dot ${dotCls(v)}" title="${title}"></span>`;
+    }).join('');
     const pctN=pct!==null?Math.round(pct):null;
     return `
       <div class="sum-part-row">
@@ -3255,16 +3261,17 @@ function renderGlance(body){
         </div>
       </div>`;
   }).join('');
-  const wpm=ts*2, wpp=wpm>0?Math.round((tp/wpm)*100):null;
+  const wpm=ts*4, wpp=wpm>0?Math.round((tp/wpm)*100):null;
 
   const partSection=`
   <div class="sum-section">
     <div class="sum-sec-hdr">
       <span class="sum-sec-title">Participation</span>
-      <span style="font-size:13px;color:var(--text-3)">
-        <span class="sum-per-dot" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#16a34a;vertical-align:middle;margin-right:3px"></span>Full
-        <span class="sum-per-dot" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#fbbf24;vertical-align:middle;margin-left:8px;margin-right:3px"></span>Partial
-        <span class="sum-per-dot" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#dc2626;vertical-align:middle;margin-left:8px;margin-right:3px"></span>Missed
+      <span style="font-size:13px;color:var(--text-3);display:inline-flex;align-items:center;gap:3px">
+        <span class="sum-per-dot sum-per-1" style="vertical-align:middle"></span>1
+        <span class="sum-per-dot sum-per-2" style="vertical-align:middle;margin-left:6px"></span>2
+        <span class="sum-per-dot sum-per-3" style="vertical-align:middle;margin-left:6px"></span>3
+        <span class="sum-per-dot sum-per-4" style="vertical-align:middle;margin-left:6px"></span>4 ★
       </span>
     </div>
     ${partRows}
