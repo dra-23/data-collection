@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Data Collection</title>
+<title>SPEDsheet</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23323B87'/%3E%3Cpath d='M8 12l3 3 5-6' stroke='%23F7BD00' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#323B87">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Data Collection">
+<meta name="apple-mobile-web-app-title" content="SPEDsheet">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1016,7 +1016,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 <div id="login-overlay" class="login-overlay">
   <div class="login-card">
     <div class="login-logo">
-      <div><div class="login-logo-name">Data Collection</div><div class="login-logo-sub">Point Sheets</div></div>
+      <div><div class="login-logo-name">SPEDsheet</div><div class="login-logo-sub">Point Sheets</div></div>
     </div>
     <div class="login-title">Sign In</div>
     <div class="login-sub">Enter your email and password.</div>
@@ -1038,7 +1038,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     <span style="width:32px;height:32px;border-radius:7px;background:#fff;color:var(--accent-dark);display:flex;align-items:center;justify-content:center;flex-shrink:0">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
     </span>
-    Data Collection
+    SPEDsheet
   </div>
   <!-- Mobile: student selector button -->
   <button class="mob-stu-btn" id="mob-stu-btn" onclick="openStuDrawer()">
@@ -1190,7 +1190,11 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
         <option>10th Grade</option><option>11th Grade</option><option>12th Grade</option>
       </select>
     </div>
-    <div class="fi"><label class="fl">Teacher</label><input class="fin" id="stu-teacher" placeholder="Teacher name"></div>
+    <div class="fi">
+      <label class="fl">Teacher</label>
+      <input class="fin" id="stu-teacher" placeholder="Teacher name" list="teacher-datalist" autocomplete="off">
+      <datalist id="teacher-datalist"></datalist>
+    </div>
     <div class="modal-acts" style="justify-content:space-between">
       <button class="mbtn mbtn-ghost" id="stu-delete-btn" style="display:none;color:var(--danger)" onclick="openStudentDeleteConfirm()">Delete Student</button>
       <div style="display:flex;gap:8px;margin-left:auto">
@@ -1585,6 +1589,33 @@ async function loadStudents(){
     goals:     parseJsonField(r.goals, []),
     pn:        parseJsonField(r.pn, {})
   }));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUPABASE — TEACHERS (autocomplete helper list)
+// Grows automatically as teacher names are entered on the student modal —
+// see saveStudent() — so retyping the same name later just picks it from
+// the list instead of free-typing it again.
+// ═══════════════════════════════════════════════════════════════
+let teacherNames = [];
+
+async function loadTeachers(){
+  const { data, error } = await sb.from('teachers').select('name').order('name');
+  if(error){ console.error('loadTeachers:', error); return; }
+  teacherNames = (data || []).map(r => r.name);
+  renderTeacherDatalist();
+}
+function renderTeacherDatalist(){
+  const el = document.getElementById('teacher-datalist');
+  if(el) el.innerHTML = teacherNames.map(n => `<option value="${esc(n)}">`).join('');
+}
+async function rememberTeacher(name){
+  if(!name || teacherNames.includes(name)) return;
+  const { error } = await sb.from('teachers').upsert({ name }, { onConflict: 'owner_id,name', ignoreDuplicates: true });
+  if(error){ console.error('rememberTeacher:', error); return; }
+  teacherNames.push(name);
+  teacherNames.sort();
+  renderTeacherDatalist();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2197,7 +2228,7 @@ function renderRoster(){
   const cCounts=new Map();
   pre.forEach(s=>{ const c=s.campus||'No Campus'; cCounts.set(c,(cCounts.get(c)||0)+1); });
   const campusList=Array.from(cCounts.entries()).sort(([a],[b])=>campusSortIndex(a)-campusSortIndex(b)||a.localeCompare(b));
-  renderFilterDropdown(mobile?'mob-campus-sel':'desk-campus-sel', 'All Campuses', campusList, rosterFilter.campus, pre.length, 'setRosterCampus');
+  renderFilterDropdown(mobile?'mob-campus-sel':'desk-campus-sel', 'Eastview Caseload', campusList, rosterFilter.campus, pre.length, 'setRosterCampus');
 
   // Classroom isolation (if any) is triggered by clicking a room's sticky
   // header — see toggleClassroomIsolation() — not a separate dropdown.
@@ -4300,6 +4331,7 @@ async function saveStudent(){
     error = res.error; newId = res.data?.id;
   }
   if(error){ alert('Could not save student: ' + error.message); return; }
+  if(payload.teacher) rememberTeacher(payload.teacher);
   closeModal('student-modal');
   await loadStudents();
   if(newId){
@@ -4639,7 +4671,7 @@ document.addEventListener('click',e=>{
 async function init(){
   S.week = S.week || monday(new Date());
 
-  await loadStudents();
+  await Promise.all([loadStudents(), loadTeachers()]);
 
   const fullName = currentUser.email;
   const avatarEl = document.getElementById('topbar-avatar-btn');
