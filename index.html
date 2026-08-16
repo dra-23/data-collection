@@ -3093,7 +3093,14 @@ function renderGlance(body){
   const wpmW=tsW*4, wppW=wpmW>0?Math.round((tpW/wpmW)*100):null;
 
   const tc=DAYS.reduce((a,day)=>a+parseInt(d(day).coupons||0),0);
-  const daysPresent=DAYS.filter(day=>!d(day).absent).length;
+  // d(day) falls back to {absent:false,...} for a day with no saved row at
+  // all, which would otherwise silently count an untouched day as present —
+  // require an actual row (S.data[...][day] is only set once something was
+  // recorded/synced for that date, see applyWeekRows) and not absent.
+  const daysPresent=DAYS.filter(day=>{
+    const row=S.data[S.cur]?.[S.week]?.[day];
+    return !!row && !row.absent;
+  }).length;
 
   const kpiStrip=`<div class="sum-kpi-strip">
     <div class="sum-kpi"><div class="sum-kpi-val b">${wppW!==null?wppW+'%':'—'}</div><div class="sum-kpi-lbl">Participation</div></div>
