@@ -357,6 +357,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .period-time-inp { width: 122px; flex-shrink: 0; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
 .period-time-inp:focus { outline: none; border-color: var(--brand); }
 .period-time-sep { color: var(--text-3); font-weight: 600; flex-shrink: 0; }
+.period-subject-inp { flex: 1; min-width: 90px; }
 .period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .period-field { display: flex; align-items: center; gap: 8px; }
 .period-field-lbl { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); flex-shrink: 0; }
@@ -2488,6 +2489,7 @@ const STAR_SVG_OFF = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none
 function periodCardHTML(day, pi, d){
   const s = stu();
   const time = (s?.pt?.[pi]) || {};
+  const subject = (s?.pn?.[pi]) || (d.pn?.[pi]) || '';
   const pVal = d.p[pi]!==undefined ? d.p[pi] : '';
   const supVal = d.sup?.[pi] || '';
   const note = d.pNotes?.[pi] || '';
@@ -2509,6 +2511,7 @@ function periodCardHTML(day, pi, d){
       <input class="period-time-inp" type="time" value="${esc(time.start||'')}" onchange="setPt('${day}',${pi},'start',this.value)">
       <span class="period-time-sep">–</span>
       <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
+      <input class="fin period-subject-inp" placeholder="Subject…" value="${esc(subject)}" onchange="setPn('${day}',${pi},this.value)">
     </div>
     <div class="period-card-bottom">
       <div class="period-field">
@@ -3432,6 +3435,12 @@ function setPeriodNote(day,pi,val){
   if(!d.pNotes) d.pNotes={};
   d.pNotes[pi]=val;
   persist();
+}
+function setPn(day,pi,val){
+  const s=stu(); if(!s) return;
+  if(!s.pn) s.pn={};
+  s.pn[pi]=val;
+  queueStuScheduleSync(s);
 }
 function setPt(day,pi,field,val){
   const s=stu(); if(!s) return;
