@@ -1179,34 +1179,16 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <div class="fi"><label class="fl">First Name</label><input class="fin" id="stu-first-name" placeholder="First name"></div>
       <div class="fi"><label class="fl">Last Name</label><input class="fin" id="stu-last-name" placeholder="Last name"></div>
     </div>
-    <div class="fi-row">
-      <div class="fi">
-        <label class="fl">Grade</label>
-        <select class="fsel" id="stu-grade">
-          <option value=""></option>
-          <option>Pre-Kindergarten</option><option>Kindergarten</option>
-          <option>1st Grade</option><option>2nd Grade</option><option>3rd Grade</option>
-          <option>4th Grade</option><option>5th Grade</option><option>6th Grade</option>
-          <option>7th Grade</option><option>8th Grade</option><option>9th Grade</option>
-          <option>10th Grade</option><option>11th Grade</option><option>12th Grade</option>
-        </select>
-      </div>
-      <div class="fi">
-        <label class="fl">Status</label>
-        <select class="fsel" id="stu-status" onchange="onStuStatusChange()">
-          <option value=""></option>
-          <option>Full-Time</option><option>Part-Time Transition</option>
-          <option>Starting</option><option>Exiting</option>
-        </select>
-      </div>
-    </div>
-    <div class="fi" id="stu-placement-row" style="display:none">
-      <label class="fl">Start Date</label>
-      <input class="fin" type="date" id="stu-placement">
-    </div>
-    <div class="fi-row">
-      <div class="fi"><label class="fl">Campus</label><input class="fin" id="stu-campus" placeholder="e.g. Bartlett"></div>
-      <div class="fi"><label class="fl">Classroom</label><input class="fin" id="stu-classroom" placeholder="e.g. Room 4"></div>
+    <div class="fi">
+      <label class="fl">Grade</label>
+      <select class="fsel" id="stu-grade">
+        <option value=""></option>
+        <option>Pre-Kindergarten</option><option>Kindergarten</option>
+        <option>1st Grade</option><option>2nd Grade</option><option>3rd Grade</option>
+        <option>4th Grade</option><option>5th Grade</option><option>6th Grade</option>
+        <option>7th Grade</option><option>8th Grade</option><option>9th Grade</option>
+        <option>10th Grade</option><option>11th Grade</option><option>12th Grade</option>
+      </select>
     </div>
     <div class="fi"><label class="fl">Teacher</label><input class="fin" id="stu-teacher" placeholder="Teacher name"></div>
     <div class="modal-acts" style="justify-content:space-between">
@@ -1379,8 +1361,8 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 // Fill these in from your own Supabase project (Project Settings → API) —
 // see SETUP.md. The anon key is safe to ship in this public page; row-level
 // security (not this key) is what keeps each account's students private.
-const SB_URL = https://owuqtnapskzionawmjkm.supabase.co/rest/v1/;
-const SB_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93dXF0bmFwc2t6aW9uYXdtamttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4OTEyNjcsImV4cCI6MjEwMjQ2NzI2N30.9CyuI3kiDHVqy6pNr1CuAKdqCzYBhzrmy7bTI1X3ACo;
+const SB_URL = 'https://owuqtnapskzionawmjkm.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93dXF0bmFwc2t6aW9uYXdtamttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4OTEyNjcsImV4cCI6MjEwMjQ2NzI2N30.9CyuI3kiDHVqy6pNr1CuAKdqCzYBhzrmy7bTI1X3ACo';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 // ═══════════════════════════════════════════════════════════════
@@ -4295,18 +4277,9 @@ function openStudentModal(id){
   document.getElementById('stu-first-name').value = s?.firstName || '';
   document.getElementById('stu-last-name').value  = s?.lastName  || '';
   document.getElementById('stu-grade').value      = s?.grade     || '';
-  document.getElementById('stu-status').value     = s?.status    || '';
-  document.getElementById('stu-placement').value  = s?.datePlacement || '';
-  document.getElementById('stu-campus').value     = s?.campus    || '';
-  document.getElementById('stu-classroom').value  = s?.room      || '';
   document.getElementById('stu-teacher').value    = s?.teacher   || '';
   document.getElementById('stu-delete-btn').style.display = s ? 'inline-flex' : 'none';
-  onStuStatusChange();
   openModal('student-modal');
-}
-function onStuStatusChange(){
-  document.getElementById('stu-placement-row').style.display =
-    document.getElementById('stu-status').value === 'Starting' ? '' : 'none';
 }
 async function saveStudent(){
   const firstName = document.getElementById('stu-first-name').value.trim();
@@ -4316,10 +4289,6 @@ async function saveStudent(){
     first_name: firstName,
     last_name:  lastName,
     grade:      document.getElementById('stu-grade').value,
-    status:     document.getElementById('stu-status').value,
-    date_of_placement: document.getElementById('stu-placement').value || null,
-    campus:     document.getElementById('stu-campus').value.trim(),
-    classroom:  document.getElementById('stu-classroom').value.trim(),
     teacher:    document.getElementById('stu-teacher').value.trim()
   };
   let error, newId;
