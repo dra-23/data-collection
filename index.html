@@ -2624,7 +2624,12 @@ function _yrChartDlBtn(id){
   </button>`;
 }
 
-function _yrLineChart(data,labels,color,h=160,label='Chart',tooltipPrefix='Week of '){
+// opts.yMax: fixed y-axis ceiling (default 100, matching the historical
+// percentage-only callers below); pass null to auto-scale from zero instead
+// (e.g. a raw count with no natural ceiling). opts.valFmt formats both the
+// axis ticks and the tooltip value — defaults to the original '%' suffix.
+function _yrLineChart(data,labels,color,h=160,label='Chart',tooltipPrefix='Week of ',opts={}){
+  const {yMax=100, valFmt=v=>v+'%'} = opts;
   const valid=data.filter(v=>v!==null);
   if(!valid.length) return `<div style="height:${h}px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:14px;font-style:italic">No data yet</div>`;
   const id='yr-ch-'+Math.random().toString(36).slice(2,9);
@@ -2664,12 +2669,12 @@ function _yrLineChart(data,labels,color,h=160,label='Chart',tooltipPrefix='Week 
         legend:{display:false},
         tooltip:{..._ttBase, callbacks:{
           title:items=>`${tooltipPrefix}${items[0].label}`,
-          label:ctx=>` ${ctx.parsed.y!==null?ctx.parsed.y+'%':'No data'}`
+          label:ctx=>` ${ctx.parsed.y!==null?valFmt(ctx.parsed.y):'No data'}`
         }}
       },
       scales:{
-        y:{..._axBase, min:0, max:100,
-          ticks:{..._axBase.ticks, callback:v=>v+'%', stepSize:25}},
+        y:{..._axBase, min:0, ...(yMax!==null?{max:yMax}:{beginAtZero:true}),
+          ticks:{..._axBase.ticks, callback:v=>valFmt(v), ...(yMax!==null?{stepSize:yMax/4}:{maxTicksLimit:5})}},
         x:{..._axBase, grid:{display:false},
           ticks:{..._axBase.ticks, maxRotation:0, autoSkip:true, maxTicksLimit:8}}
       }
@@ -2678,19 +2683,21 @@ function _yrLineChart(data,labels,color,h=160,label='Chart',tooltipPrefix='Week 
   return `<div style="position:relative;height:${h}px">${_yrChartDlBtn(id)}<canvas id="${id}"></canvas></div>`;
 }
 
+// `color` may be a single hex string (existing behavior) or an array of hex
+// strings, one per bar — used for categorical data like Support levels
+// where each bar has its own fixed semantic color.
 function _yrBarChart(data,labels,color,h=120,maxFmt=null,label='Chart',tooltipPrefix='Week of '){
   if(!data.length) return '';
   const id='yr-ch-'+Math.random().toString(36).slice(2,9);
-  // Build semi-transparent fill & full on hover
-  const hex=color;
+  const perBar=Array.isArray(color);
   _pendingYrCharts.push({id, label, cfg:{
     type:'bar',
     data:{
       labels,
       datasets:[{
         data,
-        backgroundColor:hex+'bb',
-        hoverBackgroundColor:hex,
+        backgroundColor:perBar?color.map(c=>c+'bb'):color+'bb',
+        hoverBackgroundColor:perBar?color:color,
         borderColor:'transparent',
         borderWidth:0,
         borderRadius:5,
@@ -3069,6 +3076,7 @@ function _buildYearlyView(body,s){
 // WEEK AT A GLANCE
 // ═══════════════════════════════════════════════════════════════
 function renderGlance(body){
+  _destroyYrCharts(); // clean up any previous Chart.js instances (Yearly tab or a prior Glance render)
   const s=stu(), gs=goals();
   if(!s){ body.innerHTML=''; return; }
   function d(day){ const sid=S.cur,wk=S.week; return S.data[sid]?.[wk]?.[day]||{g:{},q:{},p:{},pn:{},sup:{},pNotes:{},coupons:0,comments:'',absent:false}; }
@@ -3172,6 +3180,54 @@ function renderGlance(body){
     <div style="padding:20px;color:var(--text-3);font-style:italic;font-size:14px">No goals configured.</div>
   </div>`;
 
+  // ── Trends charts (daily avg Participation, PAWS earned, Support levels) ──
+  // Same _yrLineChart/_yrBarChart charting used by the Yearly Summary's Goals
+  // trends — just fed this week's 5 days instead of the year's weeks/months.
+  const dayLabels = DAYS.map(day=>DL[day].slice(0,3));
+  const partAvgData = DAYS.map(day=>{
+    if(d(day).absent) return null;
+    const {sum,scored} = pStats(d(day));
+    return scored>0 ? +(sum/scored).toFixed(2) : null;
+  });
+  const pawsData = DAYS.map(day=>parseInt(d(day).coupons)||0);
+
+  const supCounts = SUPPORT_LEVELS.map(()=>0);
+  let supScored=0;
+  DAYS.forEach(day=>{
+    if(d(day).absent) return;
+    PER.forEach((_,pi)=>{
+      const v = d(day).sup?.[pi];
+      const idx = v ? SUPPORT_LEVELS.findIndex(o=>o.v===v) : -1;
+      if(idx>=0){ supCounts[idx]++; supScored++; }
+    });
+  });
+  const SUPPORT_COLORS = ['#16a34a','#3b82f6','#d97706','#dc2626']; // Independent / Mostly Independent / Partial Support / Max Support
+
+  const trendsCard = `<div class="yr-card">
+    <div class="yr-card-hdr"><span class="yr-card-title">Weekly Trends</span><span class="yr-card-sub">${dayLabels[0]}–${dayLabels[dayLabels.length-1]}</span></div>
+    <div class="yr-card-body">
+      <div class="yr-chart-row">
+        <div class="yr-chart-col yr-exportable">
+          <div class="yr-chart-lbl" style="color:var(--accent-dark)">★ Avg Participation</div>
+          ${_yrLineChart(partAvgData,dayLabels,'#F7BD00',160,'Avg Participation','',{yMax:4,valFmt:v=>v.toFixed(1)+' ★'})}
+        </div>
+        <div class="yr-chart-col yr-exportable">
+          <div class="yr-chart-lbl" style="color:var(--amber)">▲ PAWS Earned</div>
+          ${_yrLineChart(pawsData,dayLabels,'#f59e0b',160,'PAWS Earned','',{yMax:null,valFmt:v=>v+' PAWS'})}
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  const supportCard = `<div class="yr-card yr-exportable">
+    <div class="yr-card-hdr"><span class="yr-card-title">Support Level</span><span class="yr-card-sub">${supScored} period${supScored!==1?'s':''} scored</span></div>
+    <div class="yr-card-body">
+      ${supScored>0
+        ? _yrBarChart(supCounts,SUPPORT_LEVELS.map(o=>o.v),SUPPORT_COLORS,160,null,'Support Level','')
+        : `<div style="height:160px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:14px;font-style:italic">No data yet</div>`}
+    </div>
+  </div>`;
+
   // ── Participation section ────────────────────────────────────
   // 1-4 star scale: 4 = full, 2-3 = half, 1 = zero (weakest scored value), blank = unscored.
   function dotCls(v){ if(v===undefined||v==='') return 'sum-per-blank'; const n=parseInt(v); return n>=4?'sum-per-full':n>=2?'sum-per-half':'sum-per-zero'; }
@@ -3268,11 +3324,14 @@ function renderGlance(body){
       ${kpiStrip}
     </div>
     ${goalsSection}
+    ${trendsCard}
+    ${supportCard}
     <div class="sum-row-2">
       ${partSection}
       ${ccSection}
     </div>
   </div>`;
+  _initYrCharts(); // initialize Chart.js after DOM is ready
 }
 
 // ═══════════════════════════════════════════════════════════════
