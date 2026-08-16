@@ -360,6 +360,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .period-subject-inp { flex: 1; min-width: 90px; }
 .period-top-loc { flex-shrink: 0; }
 .period-top-loc .tg-btn { padding: 0 10px; font-size: 12px; white-space: nowrap; }
+.period-top-loc .tg-btn.sel-b { background: var(--accent-dim); color: var(--accent-dark); }
 .period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .period-field { display: flex; align-items: center; gap: 8px; }
 .period-field-divided { padding-left: 16px; border-left: 1.5px solid var(--border); }
@@ -557,7 +558,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
    fragile and breaks the moment any gap gets added between the buttons. */
 .tg-seg { display: flex; border: 1.5px solid var(--border-mid); border-radius: 4px; overflow: hidden; }
 .tg-seg .tg-btn { border: none !important; border-radius: 0 !important; flex: 1; height: 100% !important; }
-.tg-seg .tg-btn + .tg-btn { border-left: 1.5px solid var(--border-mid); }
+.tg-seg .tg-btn + .tg-btn { border-left: 1.5px solid var(--border-mid) !important; }
 .mbtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-family: var(--sans); font-size: 15px; font-weight: 500; cursor: pointer; border: none; transition: all .15s; }
 .mbtn-ghost  { background: var(--surface2); color: var(--text-2); border: 1px solid var(--border-mid); }
 .mbtn-ghost:hover { background: var(--border); }
@@ -3556,8 +3557,10 @@ function renderGlance(body){
       ${partAvgCard}
       ${pawsCard}
     </div>
-    ${supportCard}
-    ${locCard}
+    <div class="sum-row-2">
+      ${supportCard}
+      ${locCard}
+    </div>
     <div class="sum-row-2">
       ${partSection}
       ${ccSection}
