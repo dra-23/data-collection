@@ -352,8 +352,9 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .period-card { border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; background: var(--surface); }
 .period-card:last-child { margin-bottom: 0; }
 .period-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.period-name-inp { flex: 1; min-width: 0; }
-.period-time-inp { width: 170px; flex-shrink: 0; }
+.period-time-inp { width: 122px; flex-shrink: 0; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
+.period-time-inp:focus { outline: none; border-color: var(--brand); }
+.period-time-sep { color: var(--text-3); font-weight: 600; flex-shrink: 0; }
 .period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .period-field { display: flex; align-items: center; gap: 8px; }
 .period-field-lbl { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); flex-shrink: 0; }
@@ -1498,7 +1499,7 @@ async function runSync(){
   } catch(e){ showSaveStatus('error'); console.error('sync error', e); }
 }
 
-// A debounced save queued by persist()/setPn() is silently dropped if the
+// A debounced save queued by persist()/setPt() is silently dropped if the
 // tab closes/backgrounds before its timer fires — the edit right before
 // closing never reaches Supabase even though everything earlier did.
 // visibilitychange fires reliably (including on mobile) before that
@@ -2453,8 +2454,7 @@ const STAR_SVG_OFF = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none
 // card for whichever period is currently navigated to).
 function periodCardHTML(day, pi, d){
   const s = stu();
-  const name = (s?.pn?.[pi]) || (d.pn?.[pi]) || '';
-  const time = (s?.pt?.[pi]) || '';
+  const time = (s?.pt?.[pi]) || {};
   const pVal = d.p[pi]!==undefined ? d.p[pi] : '';
   const supVal = d.sup?.[pi] || '';
   const note = d.pNotes?.[pi] || '';
@@ -2473,8 +2473,9 @@ function periodCardHTML(day, pi, d){
   return `<div class="period-card">
     <div class="period-card-top">
       <div class="goal-num-badge">${pi+1}</div>
-      <input class="fin period-name-inp" placeholder="Class or subject…" value="${esc(name)}" onchange="setPn('${day}',${pi},this.value)">
-      <input class="fin period-time-inp" placeholder="8:00am – 8:40am" value="${esc(time)}" onchange="setPt('${day}',${pi},this.value)">
+      <input class="period-time-inp" type="time" value="${esc(time.start||'')}" onchange="setPt('${day}',${pi},'start',this.value)">
+      <span class="period-time-sep">–</span>
+      <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
     </div>
     <div class="period-card-bottom">
       <div class="period-field">
@@ -2512,7 +2513,7 @@ function schedHTML(day, d){
       <div class="notes-col">
         <div class="notes-col-inner">
           <div class="notes-field">
-            <div class="notes-label">Coupons Earned</div>
+            <div class="notes-label">PAWS Earned</div>
             <div class="coupon-stepper">
               <button class="cnt-b" onclick="adjCoupons('${day}',-1)">−</button>
               <input class="cnt-inp" id="${day}-coupon-val" type="number" min="0" value="${coupons}" onchange="setCouponsVal('${day}',this.value)">
@@ -2951,10 +2952,10 @@ function _buildYearlyView(body,s){
 
   // Coupons card
   const couponsCard=wkStats.length&&totalCoupons>0?`<div class="yr-card yr-exportable">
-    <div class="yr-card-hdr"><span class="yr-card-title">Coupons Earned</span><span class="yr-card-sub">${totalCoupons} total</span></div>
+    <div class="yr-card-hdr"><span class="yr-card-title">PAWS Earned</span><span class="yr-card-sub">${totalCoupons} total</span></div>
     <div class="yr-card-body">
-      <div class="yr-chart-lbl" style="color:var(--amber)">${useMonthly?'Monthly':'Weekly'} coupon count</div>
-      ${_yrBarChart(coupData,wkLabels,'#f59e0b',160,null,'Coupons Earned',tooltipPrefix)}
+      <div class="yr-chart-lbl" style="color:var(--amber)">${useMonthly?'Monthly':'Weekly'} PAWS count</div>
+      ${_yrBarChart(coupData,wkLabels,'#f59e0b',160,null,'PAWS Earned',tooltipPrefix)}
     </div>
   </div>`:'';
 
@@ -3119,7 +3120,7 @@ function renderGlance(body){
 
   const kpiStrip=`<div class="sum-kpi-strip">
     <div class="sum-kpi"><div class="sum-kpi-val b">${wppW!==null?wppW+'%':'—'}</div><div class="sum-kpi-lbl">Participation</div></div>
-    <div class="sum-kpi"><div class="sum-kpi-val a">${tc}</div><div class="sum-kpi-lbl">Coupons Earned</div></div>
+    <div class="sum-kpi"><div class="sum-kpi-val a">${tc}</div><div class="sum-kpi-lbl">PAWS Earned</div></div>
     <div class="sum-kpi"><div class="sum-kpi-val t">${daysPresent} / 5</div><div class="sum-kpi-lbl">Days Present</div></div>
   </div>`;
 
@@ -3324,17 +3325,11 @@ function setPeriodNote(day,pi,val){
   d.pNotes[pi]=val;
   persist();
 }
-function setPn(day,pi,val){
-  const s=stu(); if(!s) return;
-  if(!s.pn) s.pn={};
-  s.pn[pi]=val;
-  persist(); // queues syncToSupabase which includes s.pn as period_names
-  queueStuScheduleSync(s);
-}
-function setPt(day,pi,val){
+function setPt(day,pi,field,val){
   const s=stu(); if(!s) return;
   if(!s.pt) s.pt={};
-  s.pt[pi]=val;
+  if(!s.pt[pi]) s.pt[pi]={};
+  s.pt[pi][field]=val;
   queueStuScheduleSync(s);
 }
 // Debounce-update the student record so period names/times carry forward
@@ -3939,7 +3934,7 @@ function renderPaneMobile(body){
     </div>
     <div class="mob-notes">
       <div>
-        <div class="mob-field-lbl">Coupons Earned</div>
+        <div class="mob-field-lbl">PAWS Earned</div>
         <div class="coupon-stepper">
           <button class="cnt-b" onclick="adjCoupons('${curDay}',-1)">−</button>
           <input class="cnt-inp" id="${curDay}-coupon-val" type="number" min="0" value="${coupons}" onchange="setCouponsVal('${curDay}',this.value)">
