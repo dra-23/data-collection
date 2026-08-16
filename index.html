@@ -130,7 +130,8 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .sidebar.collapsed .student-item { justify-content: center; padding: 8px 4px; gap: 0; }
 .sidebar.collapsed .stu-info { display: none; }
 .sidebar.collapsed .stu-badge { display: none; }
-.sidebar.collapsed .roster-campus { display: none; }
+.sidebar.collapsed .roster-campus,
+.sidebar.collapsed .roster-teacher-hdr { display: none; }
 .search-wrap { position: relative; width: 100%; }
 .search-wrap > svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
 .search-input { width: 100%; padding: 7px 26px 7px 28px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
@@ -185,6 +186,15 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .roster-campus-btn .roster-campus-count { background: var(--brand-dim); color: var(--brand); }
 .roster-campus-opt-count { margin-left: auto; }
 .roster-campus-opt.active .roster-campus-opt-count { background: var(--brand); color: #fff; }
+
+.roster-teacher-hdr { position: sticky; top: 0; left: 0; z-index: 10; width: 100%; box-sizing: border-box; height: 38px; padding: 0 12px; font-size: 14px; font-weight: 700; color: var(--text-2); background: var(--surface2); display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s, color .12s; }
+.roster-teacher-hdr:hover { background: #f0ede9; }
+.roster-teacher-hdr.isolated { background: var(--brand-dim); color: var(--brand); }
+.roster-teacher-icon { margin-left: auto; display: flex; align-items: center; color: var(--text-3); flex-shrink: 0; }
+.roster-teacher-icon svg { width: 13px; height: 13px; }
+.roster-teacher-hdr.isolated .roster-teacher-icon { color: var(--brand); }
+.roster-hdr-count { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--brand-dim); color: var(--brand); flex-shrink: 0; }
+.roster-teacher-hdr.isolated .roster-hdr-count { background: var(--brand); color: #fff; }
 
 /* PANE */
 .pane { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
@@ -1016,9 +1026,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     <span class="material-symbols-outlined" id="topbar-hamburger-icon" style="font-size:26px;">menu_open</span>
   </button>
   <div class="topbar-brand">
-    <span style="width:32px;height:32px;border-radius:7px;background:#fff;color:var(--accent-dark);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-    </span>
+    <img src="icon.png" alt="" style="width:32px;height:32px;border-radius:7px;background:#fff;object-fit:contain;padding:3px;box-sizing:border-box;flex-shrink:0">
     SPEDsheet
   </div>
   <!-- Mobile: student selector button -->
@@ -1345,7 +1353,6 @@ const DAYS    = ['monday','tuesday','wednesday','thursday','friday'];
 const DL      = {monday:'Monday',tuesday:'Tuesday',wednesday:'Wednesday',thursday:'Thursday',friday:'Friday'};
 const PER     = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
 const MAX_GOALS = 5;
-const CAMPUS_ORDER = ['Bartlett','Oak Lawn','Plainfield','LITH','Morton Grove','Rockford','Virtual Academy'];
 
 // Hero chips — matches components/students/StudentHero.tsx exactly.
 const GOLD_GRADES = new Set(['Pre-Kindergarten','Kindergarten','1st Grade','2nd Grade','3rd Grade','4th Grade','5th Grade']);
@@ -1409,7 +1416,7 @@ let _goalEditIndex = null; // index into tempGoals currently expanded for editin
 let _goalDeleteIdx = null; // index pending delete confirmation
 let colSec       = {};
 let calViewMonth = null;
-let rosterFilter = { search:'', campus:null };  // Left-pane roster search/filter
+let rosterFilter = { search:'', teacher:null };  // Left-pane roster search/filter
 let openFilterDropdown = null;  // id of the currently open campus/classroom dropdown, or null
 
 // ═══════════════════════════════════════════════════════════════
@@ -1986,13 +1993,8 @@ function dayPartScore(day){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SIDEBAR / ROSTER — search + campus/classroom filter dropdowns
-// Mirrors the Students page list pane: search + Campus selector +
-// Classroom selector (scoped to the chosen campus), both full-width,
-// non-scrolling bars above a flat, plain student list.
+// SIDEBAR / ROSTER — search + teacher filter dropdown, grouped by teacher
 // ═══════════════════════════════════════════════════════════════
-function campusSortIndex(name){ const i=CAMPUS_ORDER.indexOf(name); return i===-1?CAMPUS_ORDER.length:i; }
-
 function rosterPreFiltered(){
   const q = rosterFilter.search.trim().toLowerCase();
   let list = S.students;
@@ -2026,7 +2028,7 @@ function clearRosterSearch(inputId){
 // returns null) and immediately treat it as an outside click, closing
 // the dropdown right after it opened.
 function toggleFilterDropdown(e, id){ if(e) e.stopPropagation(); openFilterDropdown = (openFilterDropdown===id ? null : id); renderRoster(); }
-function setRosterCampus(c){ rosterFilter.campus = c; openFilterDropdown = null; renderRoster(); }
+function setRosterTeacher(t){ rosterFilter.teacher = t; openFilterDropdown = null; renderRoster(); }
 
 document.addEventListener('click', e=>{
   if(openFilterDropdown && !e.target.closest('.roster-campus')){ openFilterDropdown=null; renderRoster(); }
@@ -2080,10 +2082,36 @@ function lastNameSort(a,b){
 
 function renderStudentRows(filtered, mobile){
   if(!filtered.length){
-    const msg = (rosterFilter.search||rosterFilter.campus) ? 'No matches' : 'No students found.';
+    const msg = (rosterFilter.search||rosterFilter.teacher) ? 'No matches' : 'No students found.';
     return `<div style="text-align:center;padding:22px 14px;color:var(--text-3);font-size:13px">${msg}</div>`;
   }
-  return [...filtered].sort(lastNameSort).map(s=>studentRowHTML(s, mobile)).join('');
+  const teachers = new Map(); // teacher -> students[]
+  filtered.forEach(s=>{
+    const t = s.teacher || 'No Teacher';
+    if(!teachers.has(t)) teachers.set(t, []);
+    teachers.get(t).push(s);
+  });
+  // "No Teacher" always sorts last; everyone else alphabetically.
+  const teacherEntries = Array.from(teachers.entries())
+    .sort(([a],[b])=>(a==='No Teacher')-(b==='No Teacher')||a.localeCompare(b));
+  return teacherEntries.map(([teacher,studs])=>{
+    const isolated = rosterFilter.teacher === teacher;
+    const icon = isolated
+      ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+      : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-8 8-8s8 3.5 8 8"/></svg>`;
+    const teacherHdr = `<div class="roster-teacher-hdr${isolated?' isolated':''}" onclick="toggleTeacherIsolation('${esc(teacher)}')" title="${isolated?'Show all teachers':'Filter to this teacher'}">
+      ${esc(teacher)}
+      <span class="roster-teacher-icon">${icon}</span>
+      <span class="roster-hdr-count">${studs.length}</span>
+    </div>`;
+    const rows = [...studs].sort(lastNameSort).map(s=>studentRowHTML(s, mobile)).join('');
+    return teacherHdr + rows;
+  }).join('');
+}
+
+function toggleTeacherIsolation(teacher){
+  rosterFilter.teacher = (rosterFilter.teacher===teacher ? null : teacher);
+  renderRoster();
 }
 
 function renderRoster(){
@@ -2101,13 +2129,15 @@ function renderRoster(){
   const mobCount=document.getElementById('mob-stu-count');
   if(mobCount) mobCount.textContent=S.students.length?`(${S.students.length})`:'';
 
-  // Campus dropdown — counts from the search-filtered set
-  const cCounts=new Map();
-  pre.forEach(s=>{ const c=s.campus||'No Campus'; cCounts.set(c,(cCounts.get(c)||0)+1); });
-  const campusList=Array.from(cCounts.entries()).sort(([a],[b])=>campusSortIndex(a)-campusSortIndex(b)||a.localeCompare(b));
-  renderFilterDropdown(mobile?'mob-campus-sel':'desk-campus-sel', 'Eastview Caseload', campusList, rosterFilter.campus, pre.length, 'setRosterCampus');
+  // Teacher dropdown — counts from the search-filtered set. (Still uses the
+  // "campus" element ids/CSS classes from before this was teacher-scoped —
+  // renderFilterDropdown itself is generic, only the data feeding it changed.)
+  const tCounts=new Map();
+  pre.forEach(s=>{ const t=s.teacher||'No Teacher'; tCounts.set(t,(tCounts.get(t)||0)+1); });
+  const teacherList=Array.from(tCounts.entries()).sort(([a],[b])=>(a==='No Teacher')-(b==='No Teacher')||a.localeCompare(b));
+  renderFilterDropdown(mobile?'mob-campus-sel':'desk-campus-sel', 'Eastview Caseload', teacherList, rosterFilter.teacher, pre.length, 'setRosterTeacher');
 
-  const filtered = rosterFilter.campus ? pre.filter(s=>(s.campus||'No Campus')===rosterFilter.campus) : pre;
+  const filtered = rosterFilter.teacher ? pre.filter(s=>(s.teacher||'No Teacher')===rosterFilter.teacher) : pre;
   if(mobile){
     const m=document.getElementById('mob-student-list');
     if(m) m.innerHTML = renderStudentRows(filtered, true);
@@ -4459,20 +4489,20 @@ async function init(){
   // Deep link support: /pointsheet.html?student=<id> (e.g. linked from a
   // student's Incident Reports tab in ParkSIS) selects that student
   // directly, overriding the default selection below — and syncs the
-  // roster filter to their own campus so they still show up if the
+  // roster filter to their own teacher so they still show up if the
   // sidebar drawer is opened.
   const deepLinkId = new URLSearchParams(location.search).get('student');
   const deepLinkStudent = deepLinkId ? S.students.find(s=>s.id===deepLinkId) : null;
 
   if(deepLinkStudent){
-    rosterFilter.campus = deepLinkStudent.campus || null;
+    rosterFilter.teacher = deepLinkStudent.teacher || null;
     S.cur = deepLinkStudent.id;
     if(!S.data[S.cur]?.[S.week]) await loadWeekData(S.cur, S.week);
     subscribeRealtime(S.cur);
   } else {
     // Select the first student within that default scope (falls back to
-    // the full roster when there's no campus filter).
-    const scoped = rosterFilter.campus ? S.students.filter(s=>(s.campus||'No Campus')===rosterFilter.campus) : S.students;
+    // the full roster when there's no teacher filter).
+    const scoped = rosterFilter.teacher ? S.students.filter(s=>(s.teacher||'No Teacher')===rosterFilter.teacher) : S.students;
     const first = scoped[0] || S.students[0];
     if(first){
       S.cur = first.id;
