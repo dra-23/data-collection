@@ -1220,6 +1220,11 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
         <input class="fin" type="date" id="stu-iep-end">
       </div>
     </div>
+    <div class="fi">
+      <label class="fl">Contacts</label>
+      <div id="contacts-list"></div>
+      <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
+    </div>
     <div class="modal-acts" style="justify-content:space-between">
       <button class="mbtn mbtn-ghost" id="stu-delete-btn" style="display:none;color:var(--danger)" onclick="openStudentDeleteConfirm()">Delete Student</button>
       <div style="display:flex;gap:8px;margin-left:auto">
@@ -1242,19 +1247,6 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
   </div>
 </div>
 
-<!-- CONTACTS MODAL -->
-<div class="modal-bg" id="contacts-modal">
-  <div class="modal modal-wide">
-    <div class="modal-title">Contacts</div>
-    <div class="modal-sub" id="contacts-modal-sub">Contacts for this student.</div>
-    <div id="contacts-list"></div>
-    <button class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
-    <div class="modal-acts">
-      <button class="mbtn mbtn-ghost" onclick="cancelContacts()">Cancel</button>
-      <button class="mbtn mbtn-brand" onclick="saveContacts()">Save Contacts</button>
-    </div>
-  </div>
-</div>
 
 <!-- GOALS MODAL -->
 <div class="modal-bg" id="goals-modal">
@@ -1447,9 +1439,10 @@ function statusChipHTML(status, datePlacement){
   return `<span class="status-chip" style="${style}">${esc(status)}${esc(dateSuffix)}</span>`;
 }
 const META_CHIP_ICONS = {
-  campus:    '<path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
-  classroom: '<path d="M5 21V5a2 2 0 0 1 2-2h6l6 3v15"/><path d="M13 3v18"/><circle cx="10" cy="12" r="1"/>',
-  teacher:   '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-8 8-8s8 3.5 8 8"/>',
+  campus:      '<path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  classroom:   '<path d="M5 21V5a2 2 0 0 1 2-2h6l6 3v15"/><path d="M13 3v18"/><circle cx="10" cy="12" r="1"/>',
+  teacher:     '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-8 8-8s8 3.5 8 8"/>',
+  eligibility: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 3h6v2H9z"/><path d="M9 12l2 2 4-4"/>',
 };
 function metaChip(iconKey, text){
   if(!text) return '';
@@ -1706,6 +1699,10 @@ function renderEligibilityOptions(){
   const el = document.getElementById('stu-eligibility');
   if(el) el.innerHTML = '<option value=""></option>' + eligibilityOptions.map(o => `<option value="${o.id}">${esc(o.eligibility)}</option>`).join('');
 }
+function eligibilityLabel(id){
+  if(!id) return '';
+  return eligibilityOptions.find(o => o.id === id)?.eligibility || '';
+}
 
 // ═══════════════════════════════════════════════════════════════
 // SUPABASE — LOAD / SAVE DAILY DATA
@@ -1766,6 +1763,7 @@ function applyWeekRows(sid, week, rows){
       pn:       row.period_names         || {},
       sup:      row.support_scores       || {},
       pNotes:   row.period_notes         || {},
+      loc:      row.location_type        || {},
       coupons:  row.coupons              ?? 0,
       comments: row.comments             || '',
       absent:   absent0
@@ -1842,6 +1840,7 @@ async function syncToSupabase(sid, day){
     participation_scores: d.p,
     support_scores:       d.sup || {},
     period_notes:         d.pNotes || {},
+    location_type:        d.loc || {},
     coupons:              typeof d.coupons === 'number' ? d.coupons : (parseInt(d.coupons) || 0),
     comments:             d.comments || ''
   };
@@ -1895,6 +1894,7 @@ function subscribeRealtime(sid){
           pn:       row.period_names         || {},
           sup:      row.support_scores       || {},
           pNotes:   row.period_notes         || {},
+          loc:      row.location_type        || {},
           coupons:  row.coupons              ?? 0,
           comments: row.comments             || '',
           absent:   absentRt
@@ -1932,6 +1932,17 @@ function weekLabel(m){
 // ═══════════════════════════════════════════════════════════════
 function stu(id=S.cur){ return S.students.find(s=>s.id===(id||S.cur)); }
 function goals(){ return stu()?.goals||[]; }
+
+// Minutes between two "HH:MM" period-time-picker values (native <input
+// type="time"> format) — 0 if either is blank or the range is reversed.
+function minutesBetween(start, end){
+  if(!start || !end) return 0;
+  const [sh,sm] = start.split(':').map(Number);
+  const [eh,em] = end.split(':').map(Number);
+  if([sh,sm,eh,em].some(n=>Number.isNaN(n))) return 0;
+  const mins = (eh*60+em) - (sh*60+sm);
+  return mins>0 ? mins : 0;
+}
 
 // ── Duration helpers ──────────────────────────────────────────
 function parseDur(v){
@@ -1997,7 +2008,7 @@ function dd(day){
   if(!sid||!wk) return null;
   S.data[sid]=S.data[sid]||{};
   S.data[sid][wk]=S.data[sid][wk]||{};
-  S.data[sid][wk][day]=S.data[sid][wk][day]||{g:{},q:{},p:{},pn:{},sup:{},pNotes:{},coupons:0,comments:'',absent:false};
+  S.data[sid][wk][day]=S.data[sid][wk][day]||{g:{},q:{},p:{},pn:{},sup:{},pNotes:{},loc:{},coupons:0,comments:'',absent:false};
   return S.data[sid][wk][day];
 }
 function initials(name){ return (name||'').split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase()||'?'; }
@@ -2364,7 +2375,7 @@ function renderPane(){
   body.classList.toggle('is-nonschool', nonSchool);
   const partScore=dayPartScore(curDay);
   const psc=partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
-  const chips=[gradeChipHTML(s.grade),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
   body.innerHTML=
     `<div class="stu-header">
       <div class="stu-header-avatar">${initials(s.name)}</div>
@@ -2388,10 +2399,6 @@ function renderPane(){
           <button class="pane-btn" onclick="openStudentModal('${s.id}')" title="Edit student info">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
             Edit
-          </button>
-          <button class="pane-btn" onclick="openContactsModal('${s.id}')" title="View or edit this student's contacts">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 17c0-1.8 1.3-3 3-3s3 1.2 3 3"/><path d="M14 9h4M14 13h4"/></svg>
-            Contacts
           </button>
         </div>
       </div>
@@ -2601,6 +2608,7 @@ function periodCardHTML(day, pi, d){
   const pVal = d.p[pi]!==undefined ? d.p[pi] : '';
   const supVal = d.sup?.[pi] || '';
   const note = d.pNotes?.[pi] || '';
+  const locVal = d.loc?.[pi] || '';
 
   const stars = [1,2,3,4].map(n=>{
     const on = pVal!=='' && parseInt(pVal)>=n;
@@ -2611,6 +2619,11 @@ function periodCardHTML(day, pi, d){
   const supBtns = SUPPORT_LEVELS.map(o=>{
     const on = supVal===o.v;
     return `<button type="button" class="sup-btn ${o.cls}${on?' on':''}" onclick="setSup('${day}',${pi},'${o.v}')">${o.v}</button>`;
+  }).join('');
+
+  const locBtns = ['Push-In','Pull-Out'].map(v=>{
+    const on = locVal===v;
+    return `<button type="button" class="tg-btn${on?' sel-b':''}" onclick="setLoc('${day}',${pi},'${v}')">${v}</button>`;
   }).join('');
 
   return `<div class="period-card">
@@ -2629,6 +2642,10 @@ function periodCardHTML(day, pi, d){
       <div class="period-field">
         <span class="period-field-lbl">Support</span>
         <div class="sup-row">${supBtns}</div>
+      </div>
+      <div class="period-field">
+        <span class="period-field-lbl">Location</span>
+        <div class="tg-seg" style="height:30px">${locBtns}</div>
       </div>
       <div class="period-field period-notes-field">
         <span class="period-field-lbl">Notes</span>
@@ -3060,7 +3077,7 @@ function _buildYearlyView(body,s){
   // are available from the top of the function, so there's no actual reason
   // chips can't be built right here and included inline, matching Week's
   // structure (.stu-header-right nested inside the profile block) exactly.
-  const chips=[gradeChipHTML(s.grade),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
   const kpiVal=(v,cls,suffix='')=>v!==null?`<div class="yr-kpi-val ${cls}">${v}${suffix}</div>`:`<div class="yr-kpi-val t">—</div>`;
   const hero=`<div class="yr-hero">
     <div class="yr-hero-profile">
@@ -3254,7 +3271,7 @@ function renderGlance(body){
   _destroyYrCharts(); // clean up any previous Chart.js instances (Yearly tab or a prior Glance render)
   const s=stu(), gs=goals();
   if(!s){ body.innerHTML=''; return; }
-  function d(day){ const sid=S.cur,wk=S.week; return S.data[sid]?.[wk]?.[day]||{g:{},q:{},p:{},pn:{},sup:{},pNotes:{},coupons:0,comments:'',absent:false}; }
+  function d(day){ const sid=S.cur,wk=S.week; return S.data[sid]?.[wk]?.[day]||{g:{},q:{},p:{},pn:{},sup:{},pNotes:{},loc:{},coupons:0,comments:'',absent:false}; }
 
   // ── colour helpers ──────────────────────────────────────────
   function pctCls(n){ return n===null?'':n>=80?'pct-hi':n>=50?'pct-mid':'pct-lo'; }
@@ -3408,6 +3425,30 @@ function renderGlance(body){
     </div>
   </div>`;
 
+  // ── Push-In / Pull-Out breakdown (period counts + minutes, from each
+  // period's start/end time picker on the student record) ──────────────
+  let pushInCount=0, pullOutCount=0, pushInMin=0, pullOutMin=0;
+  DAYS.forEach(day=>{
+    if(d(day).absent) return;
+    PER.forEach((_,pi)=>{
+      const loc = d(day).loc?.[pi];
+      if(loc!=='Push-In' && loc!=='Pull-Out') return;
+      const mins = minutesBetween(s.pt?.[pi]?.start, s.pt?.[pi]?.end);
+      if(loc==='Push-In'){ pushInCount++; pushInMin+=mins; }
+      else { pullOutCount++; pullOutMin+=mins; }
+    });
+  });
+  const locCard = `<div class="yr-card yr-exportable">
+    <div class="yr-card-hdr"><span class="yr-card-title">Push-In vs Pull-Out</span><span class="yr-card-sub">${pushInCount+pullOutCount} period${(pushInCount+pullOutCount)!==1?'s':''} tracked</span></div>
+    <div class="yr-card-body">
+      ${_yrDonutChart([pushInCount,pullOutCount],['Push-In','Pull-Out'],['#3b82f6','#f59e0b'],'Push-In vs Pull-Out')}
+      <div class="part-summary" style="margin-top:12px">
+        <div class="sum-item"><span class="sum-lbl">Push-In Minutes</span><span class="sum-val">${pushInMin}</span></div>
+        <div class="sum-item"><span class="sum-lbl">Pull-Out Minutes</span><span class="sum-val">${pullOutMin}</span></div>
+      </div>
+    </div>
+  </div>`;
+
   // ── Participation section ────────────────────────────────────
   // 1-4 star scale — each value gets its own dot shade (dim to full gold),
   // blank = unscored.
@@ -3489,7 +3530,7 @@ function renderGlance(body){
   </div>`;
 
   // ── Render ───────────────────────────────────────────────────
-  const chips=[gradeChipHTML(s.grade),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
   body.innerHTML=`
   <div class="sum-page">
     <div class="sum-hero">
@@ -3516,6 +3557,7 @@ function renderGlance(body){
       ${pawsCard}
     </div>
     ${supportCard}
+    ${locCard}
     <div class="sum-row-2">
       ${partSection}
       ${ccSection}
@@ -3534,6 +3576,13 @@ function setSup(day,pi,val){
   if(!d.sup) d.sup={};
   const cur=d.sup[pi];
   d.sup[pi]=(cur===val)?'':val; // clicking the active option again clears it
+  persist(); refreshData();
+}
+function setLoc(day,pi,val){
+  const d=dd(day);
+  if(!d.loc) d.loc={};
+  const cur=d.loc[pi];
+  d.loc[pi]=(cur===val)?'':val; // clicking the active option again clears it
   persist(); refreshData();
 }
 function setPeriodNote(day,pi,val){
@@ -4020,7 +4069,7 @@ function renderPaneMobile(body){
   const pLbl = PER[pi];
   const partScore = dayPartScore(curDay);
   const psc       = partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
-  const chips     = [gradeChipHTML(s.grade),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips     = [gradeChipHTML(s.grade),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
   const chevSVG   = `<svg class="mob-sec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
 
   // ── Student header ──
@@ -4050,10 +4099,6 @@ function renderPaneMobile(body){
           <button type="button" onclick="closeMobActionsMenu();openStudentModal('${s.id}')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
             Edit Student
-          </button>
-          <button type="button" onclick="closeMobActionsMenu();openContactsModal('${s.id}')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 17c0-1.8 1.3-3 3-3s3 1.2 3 3"/><path d="M14 9h4M14 13h4"/></svg>
-            Contacts
           </button>
         </div>
       </div>
@@ -4389,7 +4434,7 @@ async function saveGoals(){
 // ═══════════════════════════════════════════════════════════════
 let _editingStudentId = null; // id being edited, or null while adding a new student
 
-function openStudentModal(id){
+async function openStudentModal(id){
   _editingStudentId = id || null;
   const s = id ? S.students.find(x=>x.id===id) : null;
   document.getElementById('student-modal-title').textContent = s ? 'Edit Student' : 'Add Student';
@@ -4404,6 +4449,7 @@ function openStudentModal(id){
   document.getElementById('stu-iep-start').value          = s?.iepStartDate    || '';
   document.getElementById('stu-iep-end').value            = s?.iepEndDate      || '';
   document.getElementById('stu-delete-btn').style.display = s ? 'inline-flex' : 'none';
+  await loadContactsForModal(id);
   openModal('student-modal');
 }
 async function saveStudent(){
@@ -4433,6 +4479,10 @@ async function saveStudent(){
   }
   if(error){ alert('Could not save student: ' + error.message); return; }
   if(payload.teacher) rememberTeacher(payload.teacher);
+  if(newId){
+    const contactsError = await saveContactsForStudent(newId);
+    if(contactsError) alert('Student saved, but contacts failed to save: ' + contactsError.message);
+  }
   closeModal('student-modal');
   await loadStudents();
   if(newId){
@@ -4479,20 +4529,19 @@ async function confirmStudentDelete(){
 // avoiding per-row diff/update bookkeeping.
 // ═══════════════════════════════════════════════════════════════
 let tempContacts = [];
-let _contactsStudentId = null;
 
-async function openContactsModal(id){
-  const s = S.students.find(x=>x.id===id); if(!s) return;
-  _contactsStudentId = id;
-  document.getElementById('contacts-modal-sub').textContent = `Contacts for ${s.name}.`;
+// Loads the given student's contacts into tempContacts for editing inline
+// in the student modal — id is null while adding a new student, so it just
+// starts empty (there's no student_id to load against yet).
+async function loadContactsForModal(id){
+  if(!id){ tempContacts = []; renderContactsList(); return; }
   const { data, error } = await sb.from('student_contacts').select('*').eq('student_id', id).order('created_at');
-  if(error){ console.error('openContactsModal:', error); alert('Could not load contacts: ' + error.message); return; }
+  if(error){ console.error('loadContactsForModal:', error); tempContacts = []; renderContactsList(); return; }
   tempContacts = (data || []).map(r => ({
     firstName: r.first_name || '', lastName: r.last_name || '',
     relationship: r.relationship || '', email: r.email || '', phone: r.phone || ''
   }));
   renderContactsList();
-  openModal('contacts-modal');
 }
 function addContactRow(){
   tempContacts.push({ firstName:'', lastName:'', relationship:'', email:'', phone:'' });
@@ -4525,13 +4574,12 @@ function renderContactsList(){
     <div class="fi"><label class="fl">Email</label><input class="fin" type="email" value="${esc(c.email)}" oninput="tempContacts[${i}].email=this.value"></div>
   </div>`).join('');
 }
-function cancelContacts(){
-  closeModal('contacts-modal');
-}
-async function saveContacts(){
-  const id = _contactsStudentId; if(!id) return;
+// Replaces this student's stored contacts with the current tempContacts —
+// called from saveStudent() once an id is known (existing or newly
+// inserted). Returns the Supabase error object on failure, or null.
+async function saveContactsForStudent(id){
   const { error: delError } = await sb.from('student_contacts').delete().eq('student_id', id);
-  if(delError){ alert('Could not save contacts: ' + delError.message); return; }
+  if(delError) return delError;
   const rows = tempContacts
     .filter(c => c.firstName || c.lastName || c.relationship || c.email || c.phone)
     .map(c => ({
@@ -4542,11 +4590,9 @@ async function saveContacts(){
       email: c.email.trim(),
       phone: c.phone.trim()
     }));
-  if(rows.length){
-    const { error: insError } = await sb.from('student_contacts').insert(rows);
-    if(insError){ alert('Could not save contacts: ' + insError.message); return; }
-  }
-  closeModal('contacts-modal');
+  if(!rows.length) return null;
+  const { error: insError } = await sb.from('student_contacts').insert(rows);
+  return insError || null;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4646,7 +4692,7 @@ function confirmClearSection(){
   closeModal('clear-confirm-modal');
   if(!d) return;
   if(key==='goals') d.g = {};
-  else if(key==='schedule'){ d.p = {}; d.sup = {}; d.pNotes = {}; }
+  else if(key==='schedule'){ d.p = {}; d.sup = {}; d.pNotes = {}; d.loc = {}; }
   persist(); refreshData();
 }
 
