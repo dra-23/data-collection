@@ -1230,7 +1230,9 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
     </div>
     <div class="modal-acts" style="justify-content:space-between">
-      <button class="mbtn mbtn-ghost" id="stu-delete-btn" style="display:none;color:var(--danger)" onclick="openStudentDeleteConfirm()">Delete Student</button>
+      <div style="display:flex;gap:8px">
+        <button class="mbtn mbtn-ghost" id="stu-deactivate-btn" style="display:none;color:var(--amber)" onclick="openStudentDeactivateConfirm()">Deactivate Student</button>
+      </div>
       <div style="display:flex;gap:8px;margin-left:auto">
         <button class="mbtn mbtn-ghost" onclick="closeModal('student-modal')">Cancel</button>
         <button class="mbtn mbtn-brand" onclick="saveStudent()">Save</button>
@@ -1239,18 +1241,32 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
   </div>
 </div>
 
-<!-- DELETE STUDENT CONFIRMATION -->
-<div class="modal-bg" id="student-delete-confirm-modal">
+<!-- DEACTIVATE STUDENT CONFIRMATION -->
+<div class="modal-bg" id="student-deactivate-confirm-modal">
   <div class="modal" style="width:400px">
-    <div class="modal-title">Delete this student?</div>
-    <div class="modal-sub" id="student-delete-confirm-sub">This permanently removes the student and all of their recorded daily points. This cannot be undone.</div>
+    <div class="modal-title">Deactivate this student?</div>
+    <div class="modal-sub" id="student-deactivate-confirm-sub">This removes the student from your list. Their goals, daily records, and contacts are kept, not deleted.</div>
     <div class="modal-acts">
-      <button class="mbtn mbtn-ghost" onclick="closeModal('student-delete-confirm-modal')">Cancel</button>
-      <button class="mbtn" style="background:var(--danger);color:#fff" onclick="confirmStudentDelete()">Delete</button>
+      <button class="mbtn mbtn-ghost" onclick="closeModal('student-deactivate-confirm-modal')">Cancel</button>
+      <button class="mbtn" style="background:var(--amber);color:#fff" onclick="confirmStudentDeactivate()">Deactivate</button>
     </div>
   </div>
 </div>
 
+<!-- WELCOME / GET STARTED (shown whenever the caseload is empty) -->
+<div class="modal-bg" id="welcome-modal">
+  <div class="modal" style="width:420px;text-align:center">
+    <img src="icon.png" alt="" style="width:56px;height:56px;margin:0 auto 14px;display:block">
+    <div class="modal-title" style="margin-bottom:8px">Welcome to SPEDsheet!</div>
+    <div class="modal-sub" style="border-bottom:none;padding-bottom:0">
+      Your caseload is empty right now — this is your own private list, separate from anyone else's. Click the <strong>+</strong> button next to the search bar (top left) any time to add a student, or use the button below to add your first one now.
+    </div>
+    <div class="modal-acts" style="justify-content:center;margin-top:20px">
+      <button class="mbtn mbtn-ghost" onclick="closeModal('welcome-modal')">Maybe Later</button>
+      <button class="mbtn mbtn-brand" onclick="closeModal('welcome-modal');openStudentModal(null)">+ Add Your First Student</button>
+    </div>
+  </div>
+</div>
 
 <!-- GOALS MODAL -->
 <div class="modal-bg" id="goals-modal">
@@ -1606,8 +1622,11 @@ function parseJsonField(raw, fallback){
 
 async function loadStudents(){
   // RLS scopes rows to this account's own students (owner_id = auth.uid()).
+  // Deactivated students are excluded — their data stays in the database
+  // (goals, daily records, contacts), they just no longer show up here.
   const { data, error } = await sb.from('students')
     .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement, eligibility_id, related_service_minutes, related_service_frequency, iep_meeting_date, iep_start_date, iep_end_date')
+    .eq('active', true)
     .order('last_name').order('first_name');
   if(error){ console.error('loadStudents:', error); return; }
 
@@ -4455,7 +4474,7 @@ async function openStudentModal(id){
   document.getElementById('stu-iep-meeting').value        = s?.iepMeetingDate  || '';
   document.getElementById('stu-iep-start').value          = s?.iepStartDate    || '';
   document.getElementById('stu-iep-end').value            = s?.iepEndDate      || '';
-  document.getElementById('stu-delete-btn').style.display = s ? 'inline-flex' : 'none';
+  document.getElementById('stu-deactivate-btn').style.display = s ? 'inline-flex' : 'none';
   await loadContactsForModal(id);
   openModal('student-modal');
 }
@@ -4500,19 +4519,19 @@ async function saveStudent(){
   await loadWeekDataForRoster(S.week);
   refresh();
 }
-function openStudentDeleteConfirm(){
+function openStudentDeactivateConfirm(){
   if(!_editingStudentId) return;
   const s = S.students.find(x=>x.id===_editingStudentId);
-  document.getElementById('student-delete-confirm-sub').textContent =
-    `This permanently removes ${s?.name || 'this student'} and all of their recorded daily points. This cannot be undone.`;
-  openModal('student-delete-confirm-modal');
+  document.getElementById('student-deactivate-confirm-sub').textContent =
+    `This removes ${s?.name || 'this student'} from your list. Their goals, daily records, and contacts are kept, not deleted.`;
+  openModal('student-deactivate-confirm-modal');
 }
-async function confirmStudentDelete(){
+async function confirmStudentDeactivate(){
   if(!_editingStudentId) return;
   const id = _editingStudentId;
-  const { error } = await sb.from('students').delete().eq('id', id);
-  if(error){ alert('Could not delete student: ' + error.message); return; }
-  closeModal('student-delete-confirm-modal');
+  const { error } = await sb.from('students').update({ active: false }).eq('id', id);
+  if(error){ alert('Could not deactivate student: ' + error.message); return; }
+  closeModal('student-deactivate-confirm-modal');
   closeModal('student-modal');
   if(S.cur === id){
     S.cur = null;
@@ -4527,7 +4546,6 @@ async function confirmStudentDelete(){
   }
   refresh();
 }
-
 // ═══════════════════════════════════════════════════════════════
 // STUDENT CONTACTS
 // tempContacts is edited in memory (mirrors tempGoals); Save replaces all
@@ -4914,6 +4932,11 @@ async function init(){
     }
   }
   refresh();
+
+  // Empty caseload — whether this is truly the account's first login or
+  // every student has since been deactivated/removed, either way there's
+  // nothing to work with yet, so point them at the "+ Add" button.
+  if(S.students.length === 0) openModal('welcome-modal');
 }
 
 // Bootstrap: onAuthStateChange fires once with INITIAL_SESSION on load
