@@ -522,6 +522,8 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .modal-bg.open .modal { transform: translateY(0); }
 .modal-title { font-family: var(--sans); font-size: 19px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
 .modal-sub   { font-size: 14px; color: var(--text-2); margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-section-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin: 22px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.modal-section-title:first-of-type { margin-top: 0; }
 .modal-acts  { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .desk-goals-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .modal-help-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface2); color: var(--text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
@@ -1165,6 +1167,8 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
   <div class="modal">
     <div class="modal-title" id="student-modal-title">Add Student</div>
     <div class="modal-sub">Only visible to you.</div>
+
+    <div class="modal-section-title">Student Information</div>
     <div class="fi-row">
       <div class="fi"><label class="fl">First Name</label><input class="fin" id="stu-first-name" placeholder="First name"></div>
       <div class="fi"><label class="fl">Last Name</label><input class="fin" id="stu-last-name" placeholder="Last name"></div>
@@ -1186,6 +1190,8 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <datalist id="teacher-datalist"></datalist>
     </div>
     <datalist id="subject-datalist"></datalist>
+
+    <div class="modal-section-title">Special Education</div>
     <div class="fi">
       <label class="fl">Eligibility</label>
       <select class="fsel" id="stu-eligibility">
@@ -1224,14 +1230,16 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
         <input class="fin" type="date" id="stu-iep-end">
       </div>
     </div>
+
+    <div class="modal-section-title">Contacts</div>
     <div class="fi">
-      <label class="fl">Contacts</label>
       <div id="contacts-list"></div>
       <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
     </div>
+
     <div class="modal-acts" style="justify-content:space-between">
       <div style="display:flex;gap:8px">
-        <button class="mbtn mbtn-ghost" id="stu-deactivate-btn" style="display:none;color:var(--amber)" onclick="openStudentDeactivateConfirm()">Deactivate Student</button>
+        <button class="mbtn mbtn-ghost" id="stu-deactivate-btn" style="display:none;color:var(--danger)" onclick="openStudentDeactivateConfirm()">Deactivate Student</button>
       </div>
       <div style="display:flex;gap:8px;margin-left:auto">
         <button class="mbtn mbtn-ghost" onclick="closeModal('student-modal')">Cancel</button>
