@@ -360,9 +360,10 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .period-subject-inp { flex: 1; min-width: 90px; }
 .period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .period-field { display: flex; align-items: center; gap: 8px; }
+.period-field-divided { padding-left: 16px; border-left: 1.5px solid var(--border); }
 .period-field-lbl { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); flex-shrink: 0; }
-.period-notes-field { flex: 1; min-width: 160px; }
-.period-notes-field .fin { width: 100%; }
+.period-card-notes { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.period-card-notes .fin { flex: 1; min-width: 0; }
 .star-row { display: flex; gap: 2px; }
 .star-btn { background: none; border: none; padding: 1px; cursor: pointer; color: var(--border-mid); display: flex; transition: color .12s; }
 .star-btn:hover { color: var(--accent-dark); }
@@ -2639,18 +2640,18 @@ function periodCardHTML(day, pi, d){
         <span class="period-field-lbl">Participation</span>
         <div class="star-row">${stars}</div>
       </div>
-      <div class="period-field">
+      <div class="period-field period-field-divided">
         <span class="period-field-lbl">Support</span>
         <div class="sup-row">${supBtns}</div>
       </div>
-      <div class="period-field">
+      <div class="period-field period-field-divided">
         <span class="period-field-lbl">Location</span>
         <div class="tg-seg" style="height:30px">${locBtns}</div>
       </div>
-      <div class="period-field period-notes-field">
-        <span class="period-field-lbl">Notes</span>
-        <input class="fin" placeholder="Notes…" value="${esc(note)}" onchange="setPeriodNote('${day}',${pi},this.value)">
-      </div>
+    </div>
+    <div class="period-card-notes">
+      <span class="period-field-lbl">Notes</span>
+      <input class="fin" placeholder="Notes…" value="${esc(note)}" onchange="setPeriodNote('${day}',${pi},this.value)">
     </div>
   </div>`;
 }
