@@ -544,6 +544,9 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .goal-edit-block { border: 1.5px solid var(--brand); border-radius: 10px; padding: 14px; margin-bottom: 8px; background: var(--surface); }
 .goal-edit-block-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .goal-edit-block-title { flex: 1; font-size: 12px; font-weight: 700; color: var(--text-3); letter-spacing: .06em; text-transform: uppercase; }
+.contact-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; background: var(--surface); }
+.contact-card-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.contact-card-title { flex: 1; font-size: 12px; font-weight: 700; color: var(--text-3); letter-spacing: .06em; text-transform: uppercase; }
 .goal-edit-block-ftr { display: flex; justify-content: flex-end; margin-top: 10px; }
 .mob-goal-card.editing { border-color: var(--brand); }
 /* Joined segmented toggle (Tracking, Daily/Weekly Total) — a single shared
@@ -1178,6 +1181,45 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <input class="fin" id="stu-teacher" placeholder="Teacher name" list="teacher-datalist" autocomplete="off">
       <datalist id="teacher-datalist"></datalist>
     </div>
+    <datalist id="subject-datalist"></datalist>
+    <div class="fi">
+      <label class="fl">Eligibility</label>
+      <select class="fsel" id="stu-eligibility">
+        <option value=""></option>
+      </select>
+    </div>
+    <div class="fi-row">
+      <div class="fi">
+        <label class="fl">Related Service Minutes</label>
+        <input class="fin" type="number" min="0" id="stu-service-minutes" placeholder="e.g. 30">
+      </div>
+      <div class="fi">
+        <label class="fl">Frequency</label>
+        <select class="fsel" id="stu-service-frequency">
+          <option value=""></option>
+          <option value="week">Per Week</option>
+          <option value="month">Per Month</option>
+          <option value="quarter">Per Quarter</option>
+          <option value="trimester">Per Trimester</option>
+          <option value="semester">Per Semester</option>
+          <option value="year">Per Year</option>
+        </select>
+      </div>
+    </div>
+    <div class="fi">
+      <label class="fl">IEP Meeting Date</label>
+      <input class="fin" type="date" id="stu-iep-meeting">
+    </div>
+    <div class="fi-row">
+      <div class="fi">
+        <label class="fl">IEP Start Date</label>
+        <input class="fin" type="date" id="stu-iep-start">
+      </div>
+      <div class="fi">
+        <label class="fl">IEP End Date</label>
+        <input class="fin" type="date" id="stu-iep-end">
+      </div>
+    </div>
     <div class="modal-acts" style="justify-content:space-between">
       <button class="mbtn mbtn-ghost" id="stu-delete-btn" style="display:none;color:var(--danger)" onclick="openStudentDeleteConfirm()">Delete Student</button>
       <div style="display:flex;gap:8px;margin-left:auto">
@@ -1196,6 +1238,20 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     <div class="modal-acts">
       <button class="mbtn mbtn-ghost" onclick="closeModal('student-delete-confirm-modal')">Cancel</button>
       <button class="mbtn" style="background:var(--danger);color:#fff" onclick="confirmStudentDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACTS MODAL -->
+<div class="modal-bg" id="contacts-modal">
+  <div class="modal modal-wide">
+    <div class="modal-title">Contacts</div>
+    <div class="modal-sub" id="contacts-modal-sub">Contacts for this student.</div>
+    <div id="contacts-list"></div>
+    <button class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
+    <div class="modal-acts">
+      <button class="mbtn mbtn-ghost" onclick="cancelContacts()">Cancel</button>
+      <button class="mbtn mbtn-brand" onclick="saveContacts()">Save Contacts</button>
     </div>
   </div>
 </div>
@@ -1554,7 +1610,7 @@ function parseJsonField(raw, fallback){
 async function loadStudents(){
   // RLS scopes rows to this account's own students (owner_id = auth.uid()).
   const { data, error } = await sb.from('students')
-    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement')
+    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement, eligibility_id, related_service_minutes, related_service_frequency, iep_meeting_date, iep_start_date, iep_end_date')
     .order('last_name').order('first_name');
   if(error){ console.error('loadStudents:', error); return; }
 
@@ -1571,7 +1627,13 @@ async function loadStudents(){
     datePlacement: r.date_of_placement || '',
     goals:     parseJsonField(r.goals, []),
     pn:        parseJsonField(r.pn, {}),
-    pt:        parseJsonField(r.pt, {})
+    pt:        parseJsonField(r.pt, {}),
+    eligibilityId:    r.eligibility_id || '',
+    serviceMinutes:   r.related_service_minutes ?? '',
+    serviceFrequency: r.related_service_frequency || '',
+    iepMeetingDate:   r.iep_meeting_date || '',
+    iepStartDate:     r.iep_start_date   || '',
+    iepEndDate:       r.iep_end_date     || ''
   }));
 }
 
@@ -1600,6 +1662,49 @@ async function rememberTeacher(name){
   teacherNames.push(name);
   teacherNames.sort();
   renderTeacherDatalist();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUPABASE — SUBJECTS (autocomplete helper list)
+// Grows automatically as subject names are entered on a period card — see
+// setPn() — so retyping the same subject later just picks it from the list.
+// ═══════════════════════════════════════════════════════════════
+let subjectNames = [];
+
+async function loadSubjects(){
+  const { data, error } = await sb.from('subjects').select('name').order('name');
+  if(error){ console.error('loadSubjects:', error); return; }
+  subjectNames = (data || []).map(r => r.name);
+  renderSubjectDatalist();
+}
+function renderSubjectDatalist(){
+  const el = document.getElementById('subject-datalist');
+  if(el) el.innerHTML = subjectNames.map(n => `<option value="${esc(n)}">`).join('');
+}
+async function rememberSubject(name){
+  if(!name || subjectNames.includes(name)) return;
+  const { error } = await sb.from('subjects').upsert({ name }, { onConflict: 'owner_id,name', ignoreDuplicates: true });
+  if(error){ console.error('rememberSubject:', error); return; }
+  subjectNames.push(name);
+  subjectNames.sort();
+  renderSubjectDatalist();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUPABASE — SPED ELIGIBILITIES (shared reference list, not owner-scoped —
+// same options for both accounts, so it's just loaded once and cached).
+// ═══════════════════════════════════════════════════════════════
+let eligibilityOptions = [];
+
+async function loadEligibilities(){
+  const { data, error } = await sb.from('sped_eligibilities').select('id, eligibility').order('display_order');
+  if(error){ console.error('loadEligibilities:', error); return; }
+  eligibilityOptions = data || [];
+  renderEligibilityOptions();
+}
+function renderEligibilityOptions(){
+  const el = document.getElementById('stu-eligibility');
+  if(el) el.innerHTML = '<option value=""></option>' + eligibilityOptions.map(o => `<option value="${o.id}">${esc(o.eligibility)}</option>`).join('');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2259,14 +2364,13 @@ function renderPane(){
   body.classList.toggle('is-nonschool', nonSchool);
   const partScore=dayPartScore(curDay);
   const psc=partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
-  const chips=[metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
   body.innerHTML=
     `<div class="stu-header">
       <div class="stu-header-avatar">${initials(s.name)}</div>
       <div class="stu-header-info">
         <div class="stu-header-name-row">
           <div class="stu-header-name">${esc(s.name)}</div>
-          ${gradeChipHTML(s.grade)}
         </div>
         ${chips.length?`<div class="stu-meta-fields">${chips.join('')}</div>`:''}
       </div>
@@ -2284,6 +2388,10 @@ function renderPane(){
           <button class="pane-btn" onclick="openStudentModal('${s.id}')" title="Edit student info">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
             Edit
+          </button>
+          <button class="pane-btn" onclick="openContactsModal('${s.id}')" title="View or edit this student's contacts">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 17c0-1.8 1.3-3 3-3s3 1.2 3 3"/><path d="M14 9h4M14 13h4"/></svg>
+            Contacts
           </button>
         </div>
       </div>
@@ -2511,7 +2619,7 @@ function periodCardHTML(day, pi, d){
       <input class="period-time-inp" type="time" value="${esc(time.start||'')}" onchange="setPt('${day}',${pi},'start',this.value)">
       <span class="period-time-sep">–</span>
       <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
-      <input class="fin period-subject-inp" placeholder="Subject…" value="${esc(subject)}" onchange="setPn('${day}',${pi},this.value)">
+      <input class="fin period-subject-inp" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
     </div>
     <div class="period-card-bottom">
       <div class="period-field">
@@ -2952,7 +3060,7 @@ function _buildYearlyView(body,s){
   // are available from the top of the function, so there's no actual reason
   // chips can't be built right here and included inline, matching Week's
   // structure (.stu-header-right nested inside the profile block) exactly.
-  const chips=[metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
   const kpiVal=(v,cls,suffix='')=>v!==null?`<div class="yr-kpi-val ${cls}">${v}${suffix}</div>`:`<div class="yr-kpi-val t">—</div>`;
   const hero=`<div class="yr-hero">
     <div class="yr-hero-profile">
@@ -2960,7 +3068,6 @@ function _buildYearlyView(body,s){
       <div class="stu-header-info">
         <div class="stu-header-name-row">
           <div class="stu-header-name">${esc(s.name)}</div>
-          ${gradeChipHTML(s.grade)}
         </div>
         ${chips.length?`<div class="stu-meta-fields">${chips.join('')}</div>`:''}
       </div>
@@ -3382,7 +3489,7 @@ function renderGlance(body){
   </div>`;
 
   // ── Render ───────────────────────────────────────────────────
-  const chips=[metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
   body.innerHTML=`
   <div class="sum-page">
     <div class="sum-hero">
@@ -3391,7 +3498,6 @@ function renderGlance(body){
         <div class="stu-header-info">
           <div class="stu-header-name-row">
             <div class="stu-header-name">${esc(s.name)}</div>
-            ${gradeChipHTML(s.grade)}
           </div>
           ${chips.length?`<div class="stu-meta-fields">${chips.join('')}</div>`:''}
         </div>
@@ -3441,6 +3547,7 @@ function setPn(day,pi,val){
   if(!s.pn) s.pn={};
   s.pn[pi]=val;
   queueStuScheduleSync(s);
+  if(val) rememberSubject(val);
 }
 function setPt(day,pi,field,val){
   const s=stu(); if(!s) return;
@@ -3913,7 +4020,7 @@ function renderPaneMobile(body){
   const pLbl = PER[pi];
   const partScore = dayPartScore(curDay);
   const psc       = partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
-  const chips     = [metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips     = [gradeChipHTML(s.grade),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
   const chevSVG   = `<svg class="mob-sec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
 
   // ── Student header ──
@@ -3922,7 +4029,6 @@ function renderPaneMobile(body){
     <div class="stu-header-info">
       <div class="stu-header-name-row">
         <div class="stu-header-name">${esc(s.name)}</div>
-        ${gradeChipHTML(s.grade)}
       </div>
       ${chips.length?`<div class="stu-meta-fields">${chips.join('')}</div>`:''}
     </div>
@@ -3944,6 +4050,10 @@ function renderPaneMobile(body){
           <button type="button" onclick="closeMobActionsMenu();openStudentModal('${s.id}')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
             Edit Student
+          </button>
+          <button type="button" onclick="closeMobActionsMenu();openContactsModal('${s.id}')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 17c0-1.8 1.3-3 3-3s3 1.2 3 3"/><path d="M14 9h4M14 13h4"/></svg>
+            Contacts
           </button>
         </div>
       </div>
@@ -4287,6 +4397,12 @@ function openStudentModal(id){
   document.getElementById('stu-last-name').value  = s?.lastName  || '';
   document.getElementById('stu-grade').value      = s?.grade     || '';
   document.getElementById('stu-teacher').value    = s?.teacher   || '';
+  document.getElementById('stu-eligibility').value       = s?.eligibilityId    || '';
+  document.getElementById('stu-service-minutes').value   = s?.serviceMinutes  ?? '';
+  document.getElementById('stu-service-frequency').value = s?.serviceFrequency || '';
+  document.getElementById('stu-iep-meeting').value        = s?.iepMeetingDate  || '';
+  document.getElementById('stu-iep-start').value          = s?.iepStartDate    || '';
+  document.getElementById('stu-iep-end').value            = s?.iepEndDate      || '';
   document.getElementById('stu-delete-btn').style.display = s ? 'inline-flex' : 'none';
   openModal('student-modal');
 }
@@ -4294,11 +4410,18 @@ async function saveStudent(){
   const firstName = document.getElementById('stu-first-name').value.trim();
   const lastName  = document.getElementById('stu-last-name').value.trim();
   if(!firstName && !lastName){ alert('Enter at least a first or last name.'); return; }
+  const serviceMinutesVal = document.getElementById('stu-service-minutes').value;
   const payload = {
     first_name: firstName,
     last_name:  lastName,
     grade:      document.getElementById('stu-grade').value,
-    teacher:    document.getElementById('stu-teacher').value.trim()
+    teacher:    document.getElementById('stu-teacher').value.trim(),
+    eligibility_id:             document.getElementById('stu-eligibility').value || null,
+    related_service_minutes:    serviceMinutesVal ? parseInt(serviceMinutesVal) : null,
+    related_service_frequency:  document.getElementById('stu-service-frequency').value || null,
+    iep_meeting_date:           document.getElementById('stu-iep-meeting').value || null,
+    iep_start_date:             document.getElementById('stu-iep-start').value || null,
+    iep_end_date:               document.getElementById('stu-iep-end').value || null
   };
   let error, newId;
   if(_editingStudentId){
@@ -4346,6 +4469,84 @@ async function confirmStudentDelete(){
     subscribeRealtime(S.cur);
   }
   refresh();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STUDENT CONTACTS
+// tempContacts is edited in memory (mirrors tempGoals); Save replaces all
+// of this student's student_contacts rows in one delete-then-insert —
+// simple and safe at the scale of a handful of contacts per student,
+// avoiding per-row diff/update bookkeeping.
+// ═══════════════════════════════════════════════════════════════
+let tempContacts = [];
+let _contactsStudentId = null;
+
+async function openContactsModal(id){
+  const s = S.students.find(x=>x.id===id); if(!s) return;
+  _contactsStudentId = id;
+  document.getElementById('contacts-modal-sub').textContent = `Contacts for ${s.name}.`;
+  const { data, error } = await sb.from('student_contacts').select('*').eq('student_id', id).order('created_at');
+  if(error){ console.error('openContactsModal:', error); alert('Could not load contacts: ' + error.message); return; }
+  tempContacts = (data || []).map(r => ({
+    firstName: r.first_name || '', lastName: r.last_name || '',
+    relationship: r.relationship || '', email: r.email || '', phone: r.phone || ''
+  }));
+  renderContactsList();
+  openModal('contacts-modal');
+}
+function addContactRow(){
+  tempContacts.push({ firstName:'', lastName:'', relationship:'', email:'', phone:'' });
+  renderContactsList();
+}
+function removeContactRow(i){
+  tempContacts.splice(i,1);
+  renderContactsList();
+}
+function renderContactsList(){
+  const el = document.getElementById('contacts-list');
+  if(!tempContacts.length){
+    el.innerHTML = `<div style="color:var(--text-3);font-size:14px;padding:12px 4px">No contacts yet — click <strong>+ Add Contact</strong> to get started.</div>`;
+    return;
+  }
+  const delIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
+  el.innerHTML = tempContacts.map((c,i)=>`<div class="contact-card">
+    <div class="contact-card-hdr">
+      <span class="contact-card-title">Contact ${i+1}</span>
+      <button type="button" class="del-b" onclick="removeContactRow(${i})" title="Delete contact">${delIcon}</button>
+    </div>
+    <div class="fi-row">
+      <div class="fi"><label class="fl">First Name</label><input class="fin" value="${esc(c.firstName)}" oninput="tempContacts[${i}].firstName=this.value"></div>
+      <div class="fi"><label class="fl">Last Name</label><input class="fin" value="${esc(c.lastName)}" oninput="tempContacts[${i}].lastName=this.value"></div>
+    </div>
+    <div class="fi-row">
+      <div class="fi"><label class="fl">Relationship</label><input class="fin" placeholder="e.g. Mother, Guardian" value="${esc(c.relationship)}" oninput="tempContacts[${i}].relationship=this.value"></div>
+      <div class="fi"><label class="fl">Phone</label><input class="fin" type="tel" value="${esc(c.phone)}" oninput="tempContacts[${i}].phone=this.value"></div>
+    </div>
+    <div class="fi"><label class="fl">Email</label><input class="fin" type="email" value="${esc(c.email)}" oninput="tempContacts[${i}].email=this.value"></div>
+  </div>`).join('');
+}
+function cancelContacts(){
+  closeModal('contacts-modal');
+}
+async function saveContacts(){
+  const id = _contactsStudentId; if(!id) return;
+  const { error: delError } = await sb.from('student_contacts').delete().eq('student_id', id);
+  if(delError){ alert('Could not save contacts: ' + delError.message); return; }
+  const rows = tempContacts
+    .filter(c => c.firstName || c.lastName || c.relationship || c.email || c.phone)
+    .map(c => ({
+      student_id: id,
+      first_name: c.firstName.trim(),
+      last_name: c.lastName.trim(),
+      relationship: c.relationship.trim(),
+      email: c.email.trim(),
+      phone: c.phone.trim()
+    }));
+  if(rows.length){
+    const { error: insError } = await sb.from('student_contacts').insert(rows);
+    if(insError){ alert('Could not save contacts: ' + insError.message); return; }
+  }
+  closeModal('contacts-modal');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4615,7 +4816,7 @@ document.addEventListener('click',e=>{
 async function init(){
   S.week = S.week || monday(new Date());
 
-  await Promise.all([loadStudents(), loadTeachers()]);
+  await Promise.all([loadStudents(), loadTeachers(), loadSubjects(), loadEligibilities()]);
 
   const fullName = currentUser.email;
   const avatarEl = document.getElementById('topbar-avatar-btn');
