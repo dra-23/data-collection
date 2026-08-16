@@ -130,8 +130,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .sidebar.collapsed .student-item { justify-content: center; padding: 8px 4px; gap: 0; }
 .sidebar.collapsed .stu-info { display: none; }
 .sidebar.collapsed .stu-badge { display: none; }
-.sidebar.collapsed .roster-campus,
-.sidebar.collapsed .roster-room-hdr { display: none; }
+.sidebar.collapsed .roster-campus { display: none; }
 .search-wrap { position: relative; width: 100%; }
 .search-wrap > svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
 .search-input { width: 100%; padding: 7px 26px 7px 28px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
@@ -186,17 +185,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .roster-campus-btn .roster-campus-count { background: var(--brand-dim); color: var(--brand); }
 .roster-campus-opt-count { margin-left: auto; }
 .roster-campus-opt.active .roster-campus-opt-count { background: var(--brand); color: #fff; }
-
-.roster-room-hdr { position: sticky; top: 0; left: 0; z-index: 10; width: 100%; box-sizing: border-box; height: 38px; padding: 0 12px; font-size: 14px; font-weight: 700; color: var(--text-2); background: var(--surface2); display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s, color .12s; }
-.roster-room-hdr:hover { background: #f0ede9; }
-.roster-room-hdr.isolated { background: var(--brand-dim); color: var(--brand); }
-.roster-room-teacher { font-weight: 500; color: var(--text-3); }
-.roster-room-hdr.isolated .roster-room-teacher { color: var(--brand); opacity: .75; }
-.roster-room-icon { margin-left: auto; display: flex; align-items: center; color: var(--text-3); flex-shrink: 0; }
-.roster-room-icon svg { width: 13px; height: 13px; }
-.roster-room-hdr.isolated .roster-room-icon { color: var(--brand); }
-.roster-hdr-count { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--brand-dim); color: var(--brand); flex-shrink: 0; }
-.roster-room-hdr.isolated .roster-hdr-count { background: var(--brand); color: #fff; }
 
 /* PANE */
 .pane { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
@@ -1358,7 +1346,6 @@ const DL      = {monday:'Monday',tuesday:'Tuesday',wednesday:'Wednesday',thursda
 const PER     = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
 const MAX_GOALS = 5;
 const CAMPUS_ORDER = ['Bartlett','Oak Lawn','Plainfield','LITH','Morton Grove','Rockford','Virtual Academy'];
-const CLASSROOM_TYPE_ORDER = ['ELEM','MS','HS','LS'];
 
 // Hero chips — matches components/students/StudentHero.tsx exactly.
 const GOLD_GRADES = new Set(['Pre-Kindergarten','Kindergarten','1st Grade','2nd Grade','3rd Grade','4th Grade','5th Grade']);
@@ -1422,7 +1409,7 @@ let _goalEditIndex = null; // index into tempGoals currently expanded for editin
 let _goalDeleteIdx = null; // index pending delete confirmation
 let colSec       = {};
 let calViewMonth = null;
-let rosterFilter = { search:'', campus:null, classroom:null };  // Left-pane roster search/filter
+let rosterFilter = { search:'', campus:null };  // Left-pane roster search/filter
 let openFilterDropdown = null;  // id of the currently open campus/classroom dropdown, or null
 
 // ═══════════════════════════════════════════════════════════════
@@ -2005,7 +1992,6 @@ function dayPartScore(day){
 // non-scrolling bars above a flat, plain student list.
 // ═══════════════════════════════════════════════════════════════
 function campusSortIndex(name){ const i=CAMPUS_ORDER.indexOf(name); return i===-1?CAMPUS_ORDER.length:i; }
-function classroomSortIndex(name){ const upper=(name||'').toUpperCase(); const i=CLASSROOM_TYPE_ORDER.findIndex(t=>upper.includes(t)); return i===-1?CLASSROOM_TYPE_ORDER.length:i; }
 
 function rosterPreFiltered(){
   const q = rosterFilter.search.trim().toLowerCase();
@@ -2040,7 +2026,7 @@ function clearRosterSearch(inputId){
 // returns null) and immediately treat it as an outside click, closing
 // the dropdown right after it opened.
 function toggleFilterDropdown(e, id){ if(e) e.stopPropagation(); openFilterDropdown = (openFilterDropdown===id ? null : id); renderRoster(); }
-function setRosterCampus(c){ rosterFilter.campus = c; rosterFilter.classroom = null; openFilterDropdown = null; savePinnedClassroom(); renderRoster(); }
+function setRosterCampus(c){ rosterFilter.campus = c; openFilterDropdown = null; renderRoster(); }
 
 document.addEventListener('click', e=>{
   if(openFilterDropdown && !e.target.closest('.roster-campus')){ openFilterDropdown=null; renderRoster(); }
@@ -2094,55 +2080,10 @@ function lastNameSort(a,b){
 
 function renderStudentRows(filtered, mobile){
   if(!filtered.length){
-    const msg = (rosterFilter.search||rosterFilter.campus||rosterFilter.classroom) ? 'No matches' : 'No students found.';
+    const msg = (rosterFilter.search||rosterFilter.campus) ? 'No matches' : 'No students found.';
     return `<div style="text-align:center;padding:22px 14px;color:var(--text-3);font-size:13px">${msg}</div>`;
   }
-  const rooms = new Map(); // room -> students[]
-  filtered.forEach(s=>{
-    const room = s.room || 'No Classroom';
-    if(!rooms.has(room)) rooms.set(room, []);
-    rooms.get(room).push(s);
-  });
-  const roomEntries = Array.from(rooms.entries()).sort(([a],[b])=>classroomSortIndex(a)-classroomSortIndex(b)||a.localeCompare(b));
-  return roomEntries.map(([room,studs])=>{
-    const teacher = studs[0].teacher ? `<span class="roster-room-teacher">· ${esc(studs[0].teacher)}</span>` : '';
-    const isolated = rosterFilter.classroom === room;
-    const icon = isolated
-      ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
-      : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>`;
-    const roomHdr = `<div class="roster-room-hdr${isolated?' isolated':''}" onclick="toggleClassroomIsolation('${esc(room)}')" title="${isolated?'Show all classrooms':'Pin this classroom'}">
-      ${esc(room)}${teacher}
-      <span class="roster-room-icon">${icon}</span>
-      <span class="roster-hdr-count">${studs.length}</span>
-    </div>`;
-    const rows = [...studs].sort(lastNameSort).map(s=>studentRowHTML(s, mobile)).join('');
-    return roomHdr + rows;
-  }).join('');
-}
-
-function toggleClassroomIsolation(room){
-  rosterFilter.classroom = (rosterFilter.classroom===room ? null : room);
-  savePinnedClassroom();
-  renderRoster();
-}
-
-// Pinning a classroom is a deliberate choice, not just the session's default
-// scope — persist it so it survives a close/refresh instead of silently
-// reverting to the classroom_staff-based default every load.
-function savePinnedClassroom(){
-  try{
-    if(rosterFilter.classroom){
-      localStorage.setItem('ppdc_pinned_room', JSON.stringify({campus:rosterFilter.campus, classroom:rosterFilter.classroom}));
-    } else {
-      localStorage.removeItem('ppdc_pinned_room');
-    }
-  }catch(e){}
-}
-function loadPinnedClassroom(){
-  try{
-    const raw=localStorage.getItem('ppdc_pinned_room');
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){ return null; }
+  return [...filtered].sort(lastNameSort).map(s=>studentRowHTML(s, mobile)).join('');
 }
 
 function renderRoster(){
@@ -2166,10 +2107,7 @@ function renderRoster(){
   const campusList=Array.from(cCounts.entries()).sort(([a],[b])=>campusSortIndex(a)-campusSortIndex(b)||a.localeCompare(b));
   renderFilterDropdown(mobile?'mob-campus-sel':'desk-campus-sel', 'Eastview Caseload', campusList, rosterFilter.campus, pre.length, 'setRosterCampus');
 
-  // Classroom isolation (if any) is triggered by clicking a room's sticky
-  // header — see toggleClassroomIsolation() — not a separate dropdown.
-  const campusScoped = rosterFilter.campus ? pre.filter(s=>(s.campus||'No Campus')===rosterFilter.campus) : pre;
-  const filtered = rosterFilter.classroom ? campusScoped.filter(s=>(s.room||'No Classroom')===rosterFilter.classroom) : campusScoped;
+  const filtered = rosterFilter.campus ? pre.filter(s=>(s.campus||'No Campus')===rosterFilter.campus) : pre;
   if(mobile){
     const m=document.getElementById('mob-student-list');
     if(m) m.innerHTML = renderStudentRows(filtered, true);
@@ -4506,21 +4444,6 @@ async function init(){
   const acctNameEl = document.getElementById('topbar-account-name');
   if(acctNameEl) acctNameEl.textContent = fullName;
 
-  // A classroom the user explicitly pinned (via the room header) sets the
-  // initial roster filter. Validate it still matches a real room (renamed/
-  // removed since) before trusting it, and drop the stale pin rather than
-  // leaving the roster filtered to nothing.
-  const pinned = loadPinnedClassroom();
-  const pinnedStillValid = pinned?.classroom &&
-    S.students.some(s => s.room === pinned.classroom && (s.campus || null) === (pinned.campus || null));
-
-  if(pinnedStillValid){
-    rosterFilter.campus    = pinned.campus;
-    rosterFilter.classroom = pinned.classroom;
-  } else if(pinned){
-    savePinnedClassroom(); // rosterFilter.classroom is still null here, so this clears the stale entry
-  }
-
   // Restore sidebar collapsed state
   try{
     const sidebarCollapsed = localStorage.getItem('ppdc_sidebar')==='true';
@@ -4535,23 +4458,21 @@ async function init(){
 
   // Deep link support: /pointsheet.html?student=<id> (e.g. linked from a
   // student's Incident Reports tab in ParkSIS) selects that student
-  // directly, overriding the default classroom-scoped selection below —
-  // and syncs the roster filter to their own campus/classroom so they
-  // still show up if the sidebar drawer is opened.
+  // directly, overriding the default selection below — and syncs the
+  // roster filter to their own campus so they still show up if the
+  // sidebar drawer is opened.
   const deepLinkId = new URLSearchParams(location.search).get('student');
   const deepLinkStudent = deepLinkId ? S.students.find(s=>s.id===deepLinkId) : null;
 
   if(deepLinkStudent){
-    rosterFilter.campus    = deepLinkStudent.campus || null;
-    rosterFilter.classroom = deepLinkStudent.room    || null;
+    rosterFilter.campus = deepLinkStudent.campus || null;
     S.cur = deepLinkStudent.id;
     if(!S.data[S.cur]?.[S.week]) await loadWeekData(S.cur, S.week);
     subscribeRealtime(S.cur);
   } else {
-    // Select the first student within that default scope (falls back to the
-    // full roster when there's no classroom assignment).
-    const campusScoped = rosterFilter.campus ? S.students.filter(s=>(s.campus||'No Campus')===rosterFilter.campus) : S.students;
-    const scoped = rosterFilter.classroom ? campusScoped.filter(s=>(s.room||'No Classroom')===rosterFilter.classroom) : campusScoped;
+    // Select the first student within that default scope (falls back to
+    // the full roster when there's no campus filter).
+    const scoped = rosterFilter.campus ? S.students.filter(s=>(s.campus||'No Campus')===rosterFilter.campus) : S.students;
     const first = scoped[0] || S.students[0];
     if(first){
       S.cur = first.id;
