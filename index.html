@@ -351,13 +351,15 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 
 /* PERIOD CARDS — one per period, shared by desktop (stacked list) and
    mobile (single card for the currently-navigated period). */
-.period-card { border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; background: var(--surface); }
-.period-card:last-child { margin-bottom: 0; }
+.period-card { border: 1px solid var(--border); padding: 10px 12px; margin-bottom: 0; background: var(--surface); }
+.period-card:not(:last-child) { border-bottom: none; }
 .period-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .period-time-inp { width: 122px; flex-shrink: 0; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
 .period-time-inp:focus { outline: none; border-color: var(--brand); }
 .period-time-sep { color: var(--text-3); font-weight: 600; flex-shrink: 0; }
 .period-subject-inp { flex: 1; min-width: 90px; }
+.period-top-loc { flex-shrink: 0; }
+.period-top-loc .tg-btn { padding: 0 10px; font-size: 12px; white-space: nowrap; }
 .period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .period-field { display: flex; align-items: center; gap: 8px; }
 .period-field-divided { padding-left: 16px; border-left: 1.5px solid var(--border); }
@@ -2634,6 +2636,7 @@ function periodCardHTML(day, pi, d){
       <span class="period-time-sep">–</span>
       <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
       <input class="fin period-subject-inp" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
+      <div class="tg-seg period-top-loc" style="height:30px">${locBtns}</div>
     </div>
     <div class="period-card-bottom">
       <div class="period-field">
@@ -2643,10 +2646,6 @@ function periodCardHTML(day, pi, d){
       <div class="period-field period-field-divided">
         <span class="period-field-lbl">Support</span>
         <div class="sup-row">${supBtns}</div>
-      </div>
-      <div class="period-field period-field-divided">
-        <span class="period-field-lbl">Location</span>
-        <div class="tg-seg" style="height:30px">${locBtns}</div>
       </div>
     </div>
     <div class="period-card-notes">
