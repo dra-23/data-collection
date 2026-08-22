@@ -374,11 +374,11 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .pf-time, .pf-location { flex-shrink: 0; }
 .pf-subject { flex: 1; min-width: 110px; }
 .period-time-row { display: flex; align-items: center; gap: 6px; }
-.period-time-inp { width: 116px; flex-shrink: 0; padding: 7px 9px; border: 1.5px solid var(--border-mid); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--text); }
+.period-time-inp { width: 116px; height: 34px; flex-shrink: 0; padding: 0 9px; border: 1.5px solid var(--border-mid); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--text); }
 .period-time-inp:focus { outline: none; border-color: var(--brand); }
 .period-time-sep { color: var(--text-3); font-weight: 600; flex-shrink: 0; }
-.fin.period-subject-inp { width: 100%; background: var(--surface); border-color: var(--border-mid); }
-.period-top-loc { flex-shrink: 0; }
+.fin.period-subject-inp { width: 100%; height: 34px; background: var(--surface); border-color: var(--border-mid); }
+.period-top-loc { flex-shrink: 0; height: 34px; }
 .period-top-loc .tg-btn { padding: 0 10px; font-size: 12px; white-space: nowrap; }
 .period-top-loc .tg-btn.sel-b { background: var(--accent-dim); color: var(--accent-dark); }
 .period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 12px 0; }
@@ -407,9 +407,9 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .notes-field { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow-card); }
 .notes-field:focus-within { border-color: var(--brand); }
 .notes-label { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); }
-.coupon-stepper { display: flex; align-items: center; justify-content: center; gap: 16px; flex: 1; padding: 6px 0; }
-.coupon-stepper .cnt-b { width: 46px; height: 46px; font-size: 24px; }
-.coupon-stepper .cnt-inp { width: 70px; font-size: 34px; font-weight: 800; padding: 4px 0; }
+.coupon-stepper { display: flex; align-items: center; justify-content: center; gap: 14px; flex: 1; padding: 6px 0; }
+.coupon-stepper .cnt-b { width: 26px; height: 26px; font-size: 15px; }
+.coupon-stepper .cnt-inp { width: 76px; font-size: 38px; font-weight: 800; padding: 4px 0; }
 .notes-textarea { width: 100%; flex: 1; min-height: 80px; resize: vertical; border: 1.5px solid var(--border); border-radius: 7px; padding: 8px 10px; font-family: var(--sans); font-size: 13px; background: #fff; color: var(--text); line-height: 1.5; }
 .notes-textarea:focus { outline: none; border-color: var(--brand); }
 /* Nested in the desktop .notes-field card — blend into it instead of
@@ -2708,7 +2708,7 @@ function periodCardHTML(day, pi, d){
         <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
       </div>
       <input class="fin period-subject-inp pf-subject" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
-      <div class="tg-seg period-top-loc pf-location" style="height:30px">${locBtns}</div>
+      <div class="tg-seg period-top-loc pf-location">${locBtns}</div>
     </div>
     <div class="period-card-bottom">
       <div class="period-field">
