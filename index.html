@@ -1868,6 +1868,17 @@ async function loadWeekDataForRoster(week){
 // a genuine difference from the server.
 let _lastSynced = {};
 
+// Postgres jsonb columns don't preserve key insertion order, so a payload
+// round-tripped through the DB can come back with its object keys in a
+// different order than we wrote them. Sorting keys before comparing means
+// the same logical data always serializes identically regardless of which
+// side (local write vs. realtime echo) produced it.
+function stableStringify(v){
+  if(Array.isArray(v)) return '['+v.map(stableStringify).join(',')+']';
+  if(v && typeof v==='object') return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stableStringify(v[k])).join(',')+'}';
+  return JSON.stringify(v);
+}
+
 async function syncToSupabase(sid, day){
   const s = stu(sid); if(!s) return;
   const d = S.data[sid]?.[S.week]?.[day];
@@ -1892,7 +1903,7 @@ async function syncToSupabase(sid, day){
     comments:             d.comments || ''
   };
   const key = sid + '|' + dateStr;
-  const ser = JSON.stringify(payload);
+  const ser = stableStringify(payload);
   if(_lastSynced[key] === ser) return; // nothing changed since last write
   const { error } = await sb.from('daily_points').upsert(payload, { onConflict: 'student_id,date' });
   if(error) throw error;
@@ -1916,9 +1927,33 @@ function subscribeRealtime(sid){
     }, payload => {
       const row = payload.new || payload.old;
       if(!row) return;
+      const rtKey = sid + '|' + row.date;
+      // This event usually isn't a change at all — it's the echo of the
+      // upsert we ourselves just made, replayed back over the realtime
+      // channel. Re-rendering on every one of those was blowing away
+      // whatever input the user happened to be typing in (e.g. Notes)
+      // the moment a debounced save from an earlier edit landed. If this
+      // row's data matches the payload we last wrote for this key, it's
+      // our own echo — skip the refresh entirely and leave the DOM alone.
+      if(payload.eventType !== 'DELETE'){
+        const echo = stableStringify({
+          student_id:           row.student_id,
+          date:                 row.date,
+          scores:               row.scores,
+          goal_scores:          row.goal_scores,
+          period_names:         row.period_names,
+          participation_scores: row.participation_scores,
+          support_scores:       row.support_scores,
+          period_notes:         row.period_notes,
+          location_type:        row.location_type,
+          coupons:              row.coupons,
+          comments:             row.comments
+        });
+        if(_lastSynced[rtKey] === echo) return;
+      }
       // Another device changed this row — our no-op-write snapshot for it
       // no longer reflects the DB, so drop it (next local sync must write).
-      delete _lastSynced[sid + '|' + row.date];
+      delete _lastSynced[rtKey];
       // Check date falls within current week
       const weekEnd = new Date(S.week + 'T12:00:00');
       weekEnd.setDate(weekEnd.getDate() + 4);
