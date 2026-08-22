@@ -269,21 +269,15 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .sc-title { font-size: 15px; font-weight: 700; color: var(--text); }
 .sc-meta  { font-size: 13px; color: var(--text-3); }
 
-/* GRID TABLE — shared base */
-.gt { width: 100%; border-collapse: collapse; table-layout: auto; }
-.gt th { padding: 8px 9px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text-3); background: var(--surface2); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); white-space: nowrap; letter-spacing: .03em; }
-.gt th:first-child { text-align: left; padding-left: 18px; min-width: 180px; border-left: 3px solid var(--surface2); }
-.gt th.stat-th { min-width: 58px; }
-.gt th:last-child { border-right: none; }
-.gt td { padding: 8px 8px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); vertical-align: middle; }
-.gt td:first-child { text-align: left; padding-left: 18px; }
-.gt td:last-child { border-right: none; }
-.gt tr:last-child td { border-bottom: none; }
-.gt tr:hover td { background: #faf9f7; }
-.tot-row td { background: var(--brand-dim) !important; }
-.tot-row td:first-child { border-left: 3px solid #f4e6e6 !important; }
-.row-lbl { font-size: 14px; font-weight: 500; text-align: left; line-height: 1.45; }
-.row-lbl .tbadge, .row-lbl .od-badge { display: inline-block; vertical-align: middle; margin-left: 6px; }
+/* GOALS — card list (mirrors the period-card treatment) */
+.goals-col { background: var(--surface2); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.goal-card { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; box-shadow: var(--shadow-card); }
+.goal-card-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.goal-card-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.goal-card-stats { display: flex; gap: 14px; flex-shrink: 0; }
+.goal-card-body { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; overflow-x: auto; }
+.goal-period-cell { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+.goal-period-lbl { font-size: 10px; font-weight: 700; letter-spacing: .03em; color: var(--text-3); }
 .tbadge { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .tbadge-yn   { background: var(--green-bg);   color: var(--green); }
 .tbadge-14   { background: var(--blue-bg);    color: var(--blue); }
@@ -342,7 +336,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .tbadge-dur { background: #ccfbf1; color: #0f766e; }
 .stat  { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; }
 .pct   { font-size: 12px; color: var(--text-3); white-space: nowrap; }
-.gt td.pct { font-weight: 700; color: var(--text-2); }
 
 /* TOGGLE BUTTON GROUPS — replaces all radio+label widgets */
 .tg { display: flex; gap: 8px; justify-content: center; }
@@ -407,9 +400,15 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .notes-field { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow-card); }
 .notes-field:focus-within { border-color: var(--brand); }
 .notes-label { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); }
-.coupon-stepper { display: flex; align-items: center; justify-content: center; gap: 14px; flex: 1; padding: 6px 0; }
-.coupon-stepper .cnt-b { width: 26px; height: 26px; font-size: 15px; }
-.coupon-stepper .cnt-inp { width: 76px; font-size: 38px; font-weight: 800; padding: 4px 0; }
+/* PAWS Earned stepper — same pill card design as the hero's date-nav
+   (.week-ctrl): bordered/shadowed container, borderless icon buttons,
+   centered value. */
+.coupon-stepper { display: flex; align-items: center; justify-content: center; align-self: center; gap: 4px; padding: 5px 8px; border-radius: var(--r); border: 1.5px solid var(--border-mid); background: var(--surface2); box-shadow: var(--shadow-card); }
+.coupon-stepper:focus-within { border-color: var(--brand); }
+.coupon-stepper .cnt-b { width: 26px; height: 26px; border: none; border-radius: 7px; background: transparent; font-size: 15px; color: var(--text-2); transition: all .15s; flex-shrink: 0; }
+.coupon-stepper .cnt-b:hover { color: var(--brand); background: rgba(255,255,255,.7); }
+.coupon-stepper .cnt-inp { width: 76px; font-size: 38px; font-weight: 800; color: var(--text); background: transparent; border: none; padding: 4px 0; text-align: center; }
+.coupon-stepper .cnt-inp:focus { outline: none; }
 .notes-textarea { width: 100%; flex: 1; min-height: 80px; resize: vertical; border: 1.5px solid var(--border); border-radius: 7px; padding: 8px 10px; font-family: var(--sans); font-size: 13px; background: #fff; color: var(--text); line-height: 1.5; }
 .notes-textarea:focus { outline: none; border-color: var(--brand); }
 /* Nested in the desktop .notes-field card — blend into it instead of
@@ -612,7 +611,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 99px; }
 
 /* SCROLLABILITY — ensure tables and grid scroll rather than clip */
-.gt { min-width: 420px; }
 .glance-table { min-width: 340px; }
 .glance-grid { min-width: 0; }
 .glance-card { min-width: 0; overflow: hidden; }
@@ -654,24 +652,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .sec-collapsed .sc-chevron { transform: rotate(-90deg); }
 .sec-collapsed > *:not(.sc-head) { display: none; }
 .sec-collapsed .sc-head { border-bottom: none; }
-
-/* TWO-ROW GOALS */
-.goal-name-row td { padding: 9px 14px 5px; border-bottom: none !important; }
-.goal-data-row td { padding: 5px 8px 9px; border-top: none !important; }
-.goal-num-cell { width: 30px !important; min-width: 30px !important; text-align: center !important; font-size: 14px; font-weight: 800; color: var(--text-3); padding: 0 !important; }
-.goal-name-row .goal-num-cell { border-bottom: none !important; vertical-align: middle; }
-.goal-data-row .goal-num-cell { border-top: none !important; }
-.goal-data-row + .goal-name-row td { border-top: 2px solid var(--border-mid) !important; }
-
-/* BOLD TOTALS */
-.tot-row .pct { font-weight: 700; color: var(--text-2); font-size: 13px; }
-.tot-row .stat { font-weight: 700; }
-/* Goals — Total and % columns read larger. */
-#sc-goals .gt td.pct { font-size: 16px; }
-#sc-goals .gt td.stat { font-size: 16px; }
-
-/* COUPON INPUT (larger) */
-.coupon-stepper .cnt-inp { width: 48px; font-size: 21px; font-weight: 700; color: var(--text); padding: 3px 0; }
 
 /* ON-DEMAND SESSIONS */
 .session-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 2px 4px; min-height: 36px; }
@@ -838,6 +818,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .tg-btn { min-width: 44px; min-height: 44px; font-size: 16px; }
   .cnt-b  { min-width: 44px; min-height: 44px; font-size: 19px; }
   .cnt-inp{ min-height: 44px; font-size: 17px; }
+  .coupon-stepper .cnt-b { font-size: 19px; }
   .acc-cell-btn { min-height: 44px; padding: 0 16px; font-size: 15px; }
 
   /* ── On-demand goals ── */
@@ -1027,9 +1008,6 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 
   .sc-head { padding: 8px 14px !important; }
   .stu-header { padding: 10px 14px !important; }
-  .gt { font-size: 11px !important; }
-  .gt th { padding: 5px 7px !important; }
-  .gt td { padding: 4px 7px !important; }
   .tg-btn { min-width: 20px !important; height: 20px !important; font-size: 10px !important; padding: 0 4px !important; }
   .tg { gap: 4px !important; }
   .notes-textarea { min-height: 50px !important; }
@@ -2569,22 +2547,18 @@ function goalsHTML(day, d, gs){
     </div>`;
   }
 
-  // dynamic period columns: only show periods that exist in PER
-  const nameCols=PER.length+2; // cols name cell spans (all except num cell)
-
-  let thead=`<tr><th class="goal-num-cell" style="font-size:11px;font-weight:600;color:var(--text-3)">#</th>${PER.map((p,i)=>`<th class="stat-th" title="${p} period">${i+1}</th>`).join('')}<th class="stat-th">Total</th><th class="stat-th">%</th></tr>`;
-
-  // build rows — 2 rows per goal, all sharing the same white background
-  let tbody='';
-  gs.forEach((g,gi)=>{
+  // One card per goal, matching the period-card treatment: a tinted
+  // header strip (badge + name + type badges + total/% stats) and a
+  // body below (per-period cells, or the on-demand session list).
+  const cards = gs.map((g,gi)=>{
     const isOD=(g.tracking==='ondemand');
-    const bg='#ffffff';
-    const cell=(content,cls='')=>`<td${cls?' class="'+cls+'"':''} style="background:${bg}">${content}</td>`;
     const nameBadges=`<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>${isOD?'<span class="od-badge">ON DEMAND</span>':''}`;
+    const {sum,scored,max,pct} = isOD ? gStatsOnDemand(gi,g,d) : gStats(day,gi,g.type,d);
+    const totalVal = g.type==='acc'?(max>0?`${sum}/${max}`:'—'):(goalTotalCell(g.type,g.totalMode,sum,scored)??(scored>0?sum:'—'));
+    const pctVal = (g.type==='count'||g.type==='dur')?'—':fmtPct(pct);
 
+    let body;
     if(isOD){
-      // On-demand: sessions list spans all period columns
-      const {sum,scored,max,pct}=gStatsOnDemand(gi,g,d);
       const sessions=gRead(d.g, g, gi, 'sessions')||[];
       const chips=sessions.map((s,si)=>`
         <div class="session-chip">
@@ -2592,41 +2566,27 @@ function goalsHTML(day, d, gs){
           ${sessionCell(day,gi,si,g.type,d)}
           <button class="session-remove" onclick="removeSession('${day}',${gi},${si})" title="Remove session">×</button>
         </div>`).join('');
-      tbody+=`<tr class="goal-name-row">
-        ${cell(gi+1,'goal-num-cell')}
-        <td colspan="${nameCols}" style="background:${bg}"><div class="row-lbl">${esc(g.name)}${nameBadges}</div></td>
-      </tr>
-      <tr class="goal-data-row">
-        ${cell('','goal-num-cell')}
-        <td colspan="${PER.length}" style="background:${bg}">
-          <div class="session-list">
-            ${chips}
-            <button class="add-session-btn" onclick="addSession('${day}',${gi})">＋ Add Session</button>
-          </div>
-        </td>
-        ${cell(g.type==='acc'?(max>0?`${sum}/${max}`:'—'):(goalTotalCell(g.type,g.totalMode,sum,scored)??(scored>0?sum:'—')),'stat')}
-        ${cell((g.type==='count'||g.type==='dur')?'—':fmtPct(pct),'pct')}
-      </tr>`;
+      body=`<div class="session-list">${chips}<button class="add-session-btn" onclick="addSession('${day}',${gi})">＋ Add Session</button></div>`;
     } else {
-      // By-period: one cell per period
-      const {sum,scored,max,pct}=gStats(day,gi,g.type,d);
-      tbody+=`<tr class="goal-name-row">
-        ${cell(gi+1,'goal-num-cell')}
-        <td colspan="${nameCols}" style="background:${bg}"><div class="row-lbl">${esc(g.name)}${nameBadges}</div></td>
-      </tr>
-      <tr class="goal-data-row">
-        ${cell('','goal-num-cell')}
-        ${PER.map((_,pi)=>cell(gCell(day,gi,pi,g.type,d))).join('')}
-        ${cell(g.type==='acc'?(max>0?`${sum}/${max}`:'—'):(goalTotalCell(g.type,g.totalMode,sum,scored)??(scored>0?sum:'—')),'stat')}
-        ${cell((g.type==='count'||g.type==='dur')?'—':fmtPct(pct),'pct')}
-      </tr>`;
+      body=PER.map((_,pi)=>`<div class="goal-period-cell"><span class="goal-period-lbl">${pi+1}</span>${gCell(day,gi,pi,g.type,d)}</div>`).join('');
     }
-  });
 
+    return `<div class="goal-card">
+      <div class="goal-card-top">
+        <div class="period-num-badge">${gi+1}</div>
+        <div class="goal-card-name">${esc(g.name)}${nameBadges}</div>
+        <div class="goal-card-stats">
+          <div class="sum-item"><span class="sum-lbl">Total</span><span class="sum-val">${totalVal}</span></div>
+          <div class="sum-item"><span class="sum-lbl">%</span><span class="sum-val accent">${pctVal}</span></div>
+        </div>
+      </div>
+      <div class="goal-card-body">${body}</div>
+    </div>`;
+  }).join('');
 
   return `<div class="section-card${colSec.goals?' sec-collapsed':''}" id="sc-goals">
     <div class="sc-head" onclick="toggleSection('goals')"><span class="sc-title">Goals</span><span class="sc-meta">Scored per period · blanks excluded from %</span>${goalsBtnHTML()}${clearBtnHTML('goals')}${chevron}</div>
-    <div class="section-card-scroll"><table class="gt"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>
+    <div class="goals-col">${cards}</div>
   </div>`;
 }
 
