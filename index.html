@@ -121,10 +121,11 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* SIDEBAR */
 .sidebar { width: 308px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transition: width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1); }
 .sidebar.collapsed { width: 100px; min-width: 100px; }
-.sidebar-head { height: 56px; padding: 0 14px; display: flex; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; transition: padding .22s; }
-.sidebar.collapsed .sidebar-head { padding: 0 6px; }
+.sidebar-head { height: 56px; padding: 0 14px; display: flex; align-items: center; gap: 0; border-bottom: 1px solid var(--border); flex-shrink: 0; transition: padding .22s; }
+.sidebar.collapsed .sidebar-head { padding: 0 6px; gap: 8px; justify-content: center; }
 .sidebar.collapsed .search-wrap { display: none; }
-.sidebar.collapsed .sidebar-add-btn { display: none; }
+.search-collapsed-btn { display: none; }
+.sidebar.collapsed .search-collapsed-btn { display: flex; }
 
 /* SIDEBAR COLLAPSED — student items: avatar + score badge, name hidden */
 .sidebar.collapsed .student-item { justify-content: center; padding: 8px 6px; gap: 6px; }
@@ -140,6 +141,15 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .search-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; border: none; background: transparent; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--text-3); border-radius: 4px; padding: 0; }
 .search-clear:hover { background: var(--border); color: var(--text); }
 .search-input:not(:placeholder-shown) ~ .search-clear { display: flex; }
+/* Sidebar head only — add button is attached flush to the search pill's
+   right edge, shared border, so it reads as one control. */
+.sidebar-head .search-wrap { flex: 1; min-width: 0; }
+.sidebar-head .search-input { border-radius: 7px 0 0 7px; border-right: none; }
+.sidebar-add-btn { flex-shrink: 0; width: 32px; height: 32px; border-radius: 0 7px 7px 0; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text-2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
+.sidebar-add-btn:hover { background: var(--surface); border-color: var(--border-mid); color: var(--text); }
+.sidebar.collapsed .sidebar-add-btn { border-radius: 8px; }
+.search-collapsed-btn { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text-2); align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
+.search-collapsed-btn:hover { background: var(--surface); border-color: var(--border-mid); color: var(--text); }
 .student-list { flex: 1; overflow-y: auto; }
 .student-item { display: flex; align-items: center; gap: 9px; padding: 12px 9px; border-radius: 8px; cursor: pointer; transition: background .12s; margin-bottom: 1px; }
 .student-item:hover { background: var(--surface2); }
@@ -395,7 +405,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* SCHEDULE + NOTES two-column bottom layout */
 .sched-notes-row { display: flex; gap: 0; }
 .sched-notes-row .sched-col { flex: 1 1 0; overflow: auto; background: var(--surface3); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-.sched-notes-row .notes-col { width: 320px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--surface3); display: flex; flex-direction: column; }
+.sched-notes-row .notes-col { width: 320px; flex-shrink: 0; background: var(--surface3); display: flex; flex-direction: column; }
 .notes-col-inner { padding: 12px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .notes-field { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow-card); }
 .notes-field:focus-within { border-color: var(--brand); }
@@ -1102,7 +1112,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 <!-- SHELL -->
 <div class="shell">
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-head" style="gap:8px">
+    <div class="sidebar-head">
       <div class="search-wrap">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="search-input" id="search-input" placeholder="Search students" oninput="setRosterSearch(this.value)">
@@ -1110,8 +1120,11 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <button type="button" class="sidebar-add-btn" onclick="openStudentModal(null)" title="Add student" aria-label="Add student" style="flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid var(--border-mid);background:var(--surface2);color:var(--text-2);display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <button type="button" class="sidebar-add-btn" onclick="openStudentModal(null)" title="Add student" aria-label="Add student">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button type="button" class="search-collapsed-btn" onclick="expandSidebarAndFocusSearch()" title="Search students" aria-label="Search students">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
     </div>
     <div class="roster-campus" id="desk-campus-sel"></div>
@@ -2401,6 +2414,13 @@ function toggleSidebar(){
   const collapsed=sb.classList.toggle('collapsed');
   updateHamburgerIcon(collapsed);
   try{ localStorage.setItem('ppdc_sidebar',''+collapsed); }catch(e){}
+}
+function expandSidebarAndFocusSearch(){
+  const sb=document.getElementById('sidebar')||document.querySelector('.sidebar');
+  sb.classList.remove('collapsed');
+  updateHamburgerIcon(false);
+  try{ localStorage.setItem('ppdc_sidebar','false'); }catch(e){}
+  document.getElementById('search-input')?.focus();
 }
 
 // ═══════════════════════════════════════════════════════════════
