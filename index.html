@@ -264,9 +264,9 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* Score card — pulled out of the header text flow so today's expectations/
    participation numbers read as a standalone stat, not a small inline badge. */
 .stu-header-score { display: flex; gap: 8px; flex-shrink: 0; align-self: center; }
-.stu-header-score-item { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 88px; padding: 10px 16px; border-radius: var(--r); border: 1.5px solid var(--border-mid); background: var(--surface2); box-shadow: var(--shadow-card); }
-.stu-header-score-val { font-family: var(--display); font-size: 26px; font-weight: 800; line-height: 1; color: var(--text); }
-.stu-header-score-lbl { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin-top: 5px; white-space: nowrap; }
+.stu-header-score-item { display: flex; flex-direction: row; align-items: baseline; gap: 6px; padding: 9px 14px; border-radius: var(--r); border: 1.5px solid var(--border-mid); background: var(--surface2); box-shadow: var(--shadow-card); }
+.stu-header-score-val { font-family: var(--display); font-size: 18px; font-weight: 800; line-height: 1; color: var(--text); white-space: nowrap; }
+.stu-header-score-lbl { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); white-space: nowrap; }
 .stu-header-score-item.ok   { background: var(--green-bg); border-color: rgba(22,163,74,.35); }
 .stu-header-score-item.ok   .stu-header-score-val { color: var(--green); }
 .stu-header-score-item.mid  { background: var(--amber-bg); border-color: rgba(202,138,4,.35); }
@@ -807,9 +807,9 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .stu-header-date   { text-align: left; }
   .stu-header-score  { width: 100%; }
   /* Match the Week tab's KPI strip proportions (.sum-kpi/.sum-kpi-val below) */
-  .stu-header-score-item { flex: 1; min-width: 0; padding: 14px 16px; }
+  .stu-header-score-item { flex: 1; min-width: 0; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 14px 16px; }
   .stu-header-score-val  { font-size: 25px; }
-  .stu-header-score-lbl  { font-size: 12px; }
+  .stu-header-score-lbl  { font-size: 12px; margin-top: 5px; }
   .pane-btn { padding: 9px 15px; font-size: 14px; min-height: 40px; }
 
   /* ── Absent banner ── */
