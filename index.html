@@ -388,7 +388,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .period-card:not(:last-child) { border-bottom: none; }
 .period-card:first-child { border-top: none; }
 .period-card-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.period-num-badge { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--border-mid); color: var(--brand); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.period-num-badge { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-dim); color: var(--brand); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .pf-time, .pf-location { flex-shrink: 0; }
 .pf-subject { flex: 1; min-width: 110px; }
 .period-time-row { display: flex; align-items: center; gap: 6px; }
@@ -401,7 +401,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .period-top-loc .tg-btn.sel-b { background: var(--accent-dim); color: var(--accent-dark); }
 .period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 12px 0; }
 .period-field { display: flex; align-items: center; gap: 8px; }
-.period-field-divided { padding-left: 16px; border-left: 1.5px solid var(--border); }
 .period-field-lbl { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); flex-shrink: 0; }
 .period-card-notes { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px 12px; border-top: 1px solid var(--border); }
 .period-card-notes .fin { flex: 1; min-width: 0; }
@@ -929,7 +928,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .period-top-loc .tg-btn { font-size: 13px; }
   .period-card-bottom { flex-direction: column; align-items: stretch; gap: 14px; padding: 14px 14px 0; }
   .period-field { flex-direction: column; align-items: flex-start; width: 100%; gap: 8px; }
-  .period-field-divided { padding-left: 0; border-left: none; padding-top: 14px; border-top: 1px solid var(--border); }
   .star-btn { padding: 4px; }
   .star-btn svg { width: 24px; height: 24px; }
   .sup-row { width: 100%; }
@@ -2743,7 +2741,7 @@ function periodCardHTML(day, pi, d){
         <span class="period-field-lbl">Participation</span>
         <div class="star-row">${stars}</div>
       </div>
-      <div class="period-field period-field-divided">
+      <div class="period-field">
         <span class="period-field-lbl">Support</span>
         <div class="sup-row">${supBtns}</div>
       </div>
