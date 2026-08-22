@@ -1069,14 +1069,14 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mob-stu-chevron"><polyline points="6 9 12 15 18 9"/></svg>
   </button>
   <div class="topbar-right">
+    <div class="save-status idle" id="save-status">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Saved</span>
+    </div>
     <div class="week-ctrl">
       <button class="week-arrow" onclick="changeWeek(-1)">&#8249;</button>
       <div class="week-lbl" id="week-lbl" onclick="openCalendar(event)">—</div>
       <button class="week-arrow" onclick="changeWeek(1)">&#8250;</button>
-    </div>
-    <div class="save-status idle" id="save-status">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      <span>Saved</span>
     </div>
     <!-- Mobile calendar icon (desktop hidden via CSS) -->
     <button class="mob-cal-btn" onclick="openCalendar(event)" title="Pick week" aria-label="Open calendar">
