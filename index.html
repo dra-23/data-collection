@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Chart.js is only used by the Yearly Summary tab, and _initYrCharts guards
      on typeof Chart — defer keeps its ~200KB from blocking first paint. The
@@ -58,10 +58,8 @@
   --purple:     #9333ea;
   --purple-bg:  rgba(147,51,234,0.12);
   --shadow-card: 0 1px 2px rgba(28,25,23,.04), 0 2px 8px rgba(28,25,23,.06);
-  /* Fonts match tailwind.config.ts: sans=Roboto, serif=Instrument Serif,
-     display=Plus Jakarta Sans. */
+  /* Fonts match tailwind.config.ts: sans=Roboto, display=Plus Jakarta Sans. */
   --sans:    'Roboto', sans-serif;
-  --serif:   'Instrument Serif', serif;
   --display: 'Plus Jakarta Sans', sans-serif;
   --r:    10px;
   --r-lg: 16px;
@@ -135,20 +133,26 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .sidebar.collapsed .roster-teacher-hdr { display: none; }
 .search-wrap { position: relative; width: 100%; }
 .search-wrap > svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
-.search-input { width: 100%; padding: 7px 26px 7px 28px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
+.search-input { -webkit-appearance: none; appearance: none; width: 100%; padding: 7px 26px 7px 28px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
 .search-input::placeholder { color: var(--text-3); }
 .search-input:focus { outline: none; border-color: var(--brand); }
 .search-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; border: none; background: transparent; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--text-3); border-radius: 4px; padding: 0; }
 .search-clear:hover { background: var(--border); color: var(--text); }
 .search-input:not(:placeholder-shown) ~ .search-clear { display: flex; }
-/* Sidebar head only — add button is attached flush to the search pill's
-   right edge, shared border, so it reads as one control. */
-.sidebar-head .search-wrap { flex: 1; min-width: 0; }
-.sidebar-head .search-input { border-radius: 7px 0 0 7px; border-right: none; }
-.sidebar-add-btn { flex-shrink: 0; width: 32px; height: 32px; border-radius: 0 7px 7px 0; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text-2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
-.sidebar-add-btn:hover { background: var(--surface); border-color: var(--border-mid); color: var(--text); }
-.sidebar.collapsed .sidebar-add-btn { border-radius: 8px; }
+/* Sidebar head only — single shared border/background around both the
+   search box and add button (instead of two separately-bordered
+   elements meeting edge to edge), so there's exactly one outline to
+   render and no seam that can show a gap. */
+.search-add-group { flex: 1; min-width: 0; display: flex; align-items: stretch; border: 1.5px solid var(--border); border-radius: 7px; background: var(--surface2); overflow: hidden; }
+.sidebar.collapsed .search-add-group { flex: 0 0 auto; }
+.search-add-group .search-wrap { flex: 1; min-width: 0; }
+.search-add-group .search-input { border: none; border-radius: 0; background: transparent; }
+.search-add-group .sidebar-add-btn { border: none; border-left: 1.5px solid var(--border); border-radius: 0; background: transparent; }
+.sidebar-add-btn { flex-shrink: 0; width: 32px; height: 32px; color: var(--text-2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
+.sidebar-add-btn:hover { background: var(--surface) !important; color: var(--text); }
+.sidebar.collapsed .search-add-group .sidebar-add-btn { border-left: none; }
 .search-collapsed-btn { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text-2); align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
+.search-collapsed-btn:hover { background: var(--surface); border-color: var(--border-mid); color: var(--text); }
 .search-collapsed-btn:hover { background: var(--surface); border-color: var(--border-mid); color: var(--text); }
 .student-list { flex: 1; overflow-y: auto; }
 .student-item { display: flex; align-items: center; gap: 9px; padding: 12px 9px; border-radius: 8px; cursor: pointer; transition: background .12s; margin-bottom: 1px; }
@@ -548,7 +552,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* EMPTY STATE */
 .no-student { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-3); gap: 10px; padding: 40px; }
 .no-student svg { opacity: .2; }
-.no-student-title { font-family: var(--serif); font-size: 23px; color: var(--text-2); }
+.no-student-title { font-size: 23px; font-weight: 700; color: var(--text-2); }
 .no-student-sub { font-size: 14px; }
 
 /* MODALS — matches components/ui/ConfirmDialog.tsx's chrome */
@@ -1113,16 +1117,18 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 <div class="shell">
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
-      <div class="search-wrap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search-input" id="search-input" placeholder="Search students" oninput="setRosterSearch(this.value)">
-        <button type="button" class="search-clear" onclick="clearRosterSearch('search-input')" aria-label="Clear search" tabindex="-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <div class="search-add-group">
+        <div class="search-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="search-input" placeholder="Search students" oninput="setRosterSearch(this.value)">
+          <button type="button" class="search-clear" onclick="clearRosterSearch('search-input')" aria-label="Clear search" tabindex="-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <button type="button" class="sidebar-add-btn" onclick="openStudentModal(null)" title="Add student" aria-label="Add student">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
-      <button type="button" class="sidebar-add-btn" onclick="openStudentModal(null)" title="Add student" aria-label="Add student">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
       <button type="button" class="search-collapsed-btn" onclick="expandSidebarAndFocusSearch()" title="Search students" aria-label="Search students">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
