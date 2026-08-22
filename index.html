@@ -381,12 +381,13 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* PERIOD CARDS — one per period, shared by desktop (stacked list) and
    mobile (single card for the currently-navigated period). Split into two
    zones: a tinted "schedule" strip (time/subject/location) and a plain
-   "data entry" area below (participation/support/notes) — the tint uses
-   --brand-dim rather than --surface2 so it doesn't visually merge with
-   the section header above it, which already uses --surface2. */
+   "data entry" area below (participation/support/notes). The tint uses
+   --border (a plain structural gray) rather than --surface2 (would merge
+   with the section header, which already uses --surface2) or --brand-dim
+   (reads as a hover/selected state elsewhere in the app). */
 .period-card { border: 1px solid var(--border); margin-bottom: 0; background: var(--surface); overflow: hidden; }
 .period-card:not(:last-child) { border-bottom: none; }
-.period-card-top { display: flex; align-items: flex-end; gap: 10px; padding: 10px 12px; background: var(--brand-dim); border-bottom: 1.5px solid var(--border); }
+.period-card-top { display: flex; align-items: flex-end; gap: 10px; padding: 10px 12px; background: var(--border); border-bottom: 1.5px solid var(--border-mid); }
 .period-num-badge { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--border-mid); color: var(--brand); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .period-field-col { display: flex; flex-direction: column; gap: 3px; }
 .pf-time, .pf-location { flex-shrink: 0; }
