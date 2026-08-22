@@ -571,24 +571,24 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .modal-section-title:first-of-type { margin-top: 0; }
 .modal-acts  { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 
-/* STUDENT MODAL — card-per-section layout with a pinned header/footer,
-   same 4-tier neutral treatment (page/section backdrop/card header/card
-   body) already used for Goals and Schedule & Participation. */
-#student-modal .modal { display: flex; flex-direction: column; padding: 0; background: var(--surface3); overflow: hidden; }
-#student-modal .modal-hdr { flex-shrink: 0; padding: 20px 24px 16px; background: var(--surface); }
-#student-modal .modal-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-#student-modal .modal-title { margin-bottom: 0; }
-#student-modal .modal-close-x { flex-shrink: 0; width: 28px; height: 28px; border: none; border-radius: 6px; background: transparent; color: var(--text-3); font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; }
-#student-modal .modal-close-x:hover { background: var(--surface2); color: var(--text); }
-#student-modal .modal-sub { margin-bottom: 0; padding-bottom: 0; border-bottom: none; margin-top: 4px; }
-#student-modal .modal-scroll-body { flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 14px; }
-#student-modal .modal-card { flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-card); overflow: hidden; }
-#student-modal .modal-card-hdr { padding: 12px 16px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); background: var(--surface2); border-bottom: 1px solid var(--border); }
-#student-modal .modal-card-body { padding: 16px; }
-#student-modal .modal-card-body .fi:last-child,
-#student-modal .modal-card-body .fi-row:last-child { margin-bottom: 0; }
-#student-modal .modal-acts { flex-shrink: 0; margin-top: 0; padding: 16px 24px; background: var(--surface); border-top: 1px solid var(--border); }
-.desk-goals-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+/* CARD-LAYOUT MODAL — reusable pinned-header/footer + card-per-section
+   treatment (student modal, goals modal, ...). Same 4-tier neutral
+   scheme (page/section backdrop/card header/card body) already used
+   for Goals and Schedule & Participation on the daily view. */
+.modal-card-layout { display: flex; flex-direction: column; padding: 0; background: var(--surface3); overflow: hidden; }
+.modal-card-layout .modal-hdr { flex-shrink: 0; padding: 20px 24px 16px; background: var(--surface); }
+.modal-card-layout .modal-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.modal-card-layout .modal-title { margin-bottom: 0; }
+.modal-card-layout .modal-close-x { flex-shrink: 0; width: 28px; height: 28px; border: none; border-radius: 6px; background: transparent; color: var(--text-3); font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; }
+.modal-card-layout .modal-close-x:hover { background: var(--surface2); color: var(--text); }
+.modal-card-layout .modal-sub { margin-bottom: 0; padding-bottom: 0; border-bottom: none; margin-top: 4px; }
+.modal-card-layout .modal-scroll-body { flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 14px; }
+.modal-card-layout .modal-card { flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-card); overflow: hidden; }
+.modal-card-layout .modal-card-hdr { padding: 12px 16px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); background: var(--surface2); border-bottom: 1px solid var(--border); }
+.modal-card-layout .modal-card-body { padding: 16px; }
+.modal-card-layout .modal-card-body .fi:last-child,
+.modal-card-layout .modal-card-body .fi-row:last-child { margin-bottom: 0; }
+.modal-card-layout .modal-acts { flex-shrink: 0; margin-top: 0; padding: 16px 24px; background: var(--surface); border-top: 1px solid var(--border); }
 .modal-help-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface2); color: var(--text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
 .modal-help-btn:hover { background: var(--brand-dim); border-color: var(--brand); color: var(--brand); }
 .fi { margin-bottom: 12px; }
@@ -605,13 +605,13 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .goal-num-badge { width: 30px; height: 30px; border-radius: 50%; background: var(--brand-dim); color: var(--brand); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .del-b:hover { background: #fee2e2; color: var(--brand); border-color: #fca5a5; }
 /* Goal list — collapsed preview row + expanded edit block (accordion) */
-.goal-preview-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; cursor: default; }
+.goal-preview-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow-card); cursor: default; flex-shrink: 0; }
 .goal-preview-text { flex: 1; min-width: 0; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tbadge-track { background: var(--surface); color: var(--text-3); border: 1px solid var(--border-mid); }
 .goal-icon-btn { width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
 .goal-icon-btn:hover { border-color: var(--border-mid); color: var(--text-2); background: #fff; }
 .goal-icon-btn.danger:hover { background: #fee2e2; color: var(--danger); border-color: #fca5a5; }
-.goal-edit-block { border: 1.5px solid var(--brand); border-radius: 10px; padding: 14px; margin-bottom: 8px; background: var(--surface); }
+.goal-edit-block { border: 1.5px solid var(--brand); border-radius: 10px; padding: 14px; background: var(--surface); box-shadow: var(--shadow-card); flex-shrink: 0; }
 .goal-edit-block-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .goal-edit-block-title { flex: 1; font-size: 12px; font-weight: 700; color: var(--text-3); letter-spacing: .06em; text-transform: uppercase; }
 .contact-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; background: var(--surface); }
@@ -753,7 +753,8 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .mob-period-nav     { display: none; }
 .mob-cal-btn        { display: none; }
 .mob-goals-hdr      { display: none; }
-.goals-scroll-body  { display: contents; } /* no-op on desktop, flex on mobile */
+.goals-scroll-body  { flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 14px; background: var(--surface3); } /* card-per-section scroll body on desktop; mobile override below replaces this */
+#goals-list { display: flex; flex-direction: column; gap: 10px; }
 .mob-goals-footer   { display: none; }
 .tab-short          { display: none; }
 
@@ -1199,7 +1200,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 
 <!-- ADD/EDIT STUDENT MODAL -->
 <div class="modal-bg" id="student-modal">
-  <div class="modal">
+  <div class="modal modal-card-layout">
     <div class="modal-hdr">
       <div class="modal-title-row">
         <div class="modal-title" id="student-modal-title">Add Student</div>
@@ -1338,7 +1339,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 
 <!-- GOALS MODAL -->
 <div class="modal-bg" id="goals-modal">
-  <div class="modal modal-wide">
+  <div class="modal modal-wide modal-card-layout">
 
     <!-- Mobile header (full-screen top bar) -->
     <div class="mob-goals-hdr">
@@ -1350,14 +1351,19 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     </div>
 
     <!-- Desktop header -->
-    <div class="desk-goals-hdr">
-      <div>
-        <div class="modal-title">Goals</div>
-        <div class="modal-sub" id="goals-modal-sub">Configure goals for this student.</div>
+    <div class="modal-hdr desk-goals-hdr">
+      <div class="modal-title-row">
+        <div>
+          <div class="modal-title">Goals</div>
+          <div class="modal-sub" id="goals-modal-sub">Configure goals for this student.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+          <button type="button" class="modal-help-btn" title="Help" aria-label="Help">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 1.7-2 3.5"/><line x1="12" y1="16.5" x2="12" y2="16.51"/></svg>
+          </button>
+          <button type="button" class="modal-close-x" onclick="cancelGoals()" aria-label="Close">&#10005;</button>
+        </div>
       </div>
-      <button type="button" class="modal-help-btn" title="Help" aria-label="Help">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 1.7-2 3.5"/><line x1="12" y1="16.5" x2="12" y2="16.51"/></svg>
-      </button>
     </div>
 
     <!-- Goal list — scrollable body on mobile -->
