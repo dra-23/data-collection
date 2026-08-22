@@ -213,12 +213,13 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .day-tab.active .tab-date { color: var(--brand); }
 .day-tab:hover .tab-date { color: var(--brand); }
 /* Week nav lives in the student hero (light card background) now, not the
-   dark topbar it briefly sat in. */
-.week-ctrl { display: flex; align-items: center; gap: 6px; }
-.week-arrow { width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-2); font-size: 19px; transition: all .15s; flex-shrink: 0; }
-.week-arrow:hover { border-color: var(--border-mid); color: var(--text); background: var(--surface2); }
-.week-lbl { font-size: 14px; color: var(--text-2); min-width: 150px; text-align: center; font-weight: 600; cursor: pointer; border-radius: 7px; padding: 6px 8px; transition: background .15s, color .15s; }
-.week-lbl:hover { background: var(--surface2); color: var(--text); }
+   dark topbar it briefly sat in — styled as its own card, matching the
+   .stu-header-score-item treatment elsewhere in the same hero. */
+.week-ctrl { display: flex; align-items: center; gap: 2px; padding: 5px; border-radius: var(--r); border: 1.5px solid var(--border-mid); background: var(--surface2); box-shadow: var(--shadow-card); }
+.week-arrow { width: 28px; height: 28px; border-radius: 7px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-2); font-size: 19px; transition: all .15s; flex-shrink: 0; }
+.week-arrow:hover { color: var(--brand); background: rgba(255,255,255,.7); }
+.week-lbl { font-size: 14px; color: var(--text-2); min-width: 140px; text-align: center; font-weight: 600; cursor: pointer; border-radius: 7px; padding: 6px 8px; transition: background .15s, color .15s; }
+.week-lbl:hover { background: rgba(255,255,255,.7); color: var(--text); }
 .pane-body { flex: 1; overflow-y: auto; padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
 
 /* STUDENT HEADER */
