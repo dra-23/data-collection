@@ -2455,7 +2455,7 @@ function renderPane(){
   body.classList.toggle('is-nonschool', nonSchool);
   const partScore=dayPartScore(curDay);
   const psc=partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
-  const chips=[gradeChipHTML(s.grade),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('teacher',s.teacher),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room)].filter(Boolean);
   body.innerHTML=
     `<div class="stu-header">
       <div class="stu-header-avatar">${initials(s.name)}</div>
@@ -3163,7 +3163,7 @@ function _buildYearlyView(body,s){
   // are available from the top of the function, so there's no actual reason
   // chips can't be built right here and included inline, matching Week's
   // structure (.stu-header-right nested inside the profile block) exactly.
-  const chips=[gradeChipHTML(s.grade),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('teacher',s.teacher),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room)].filter(Boolean);
   const kpiVal=(v,cls,suffix='')=>v!==null?`<div class="yr-kpi-val ${cls}">${v}${suffix}</div>`:`<div class="yr-kpi-val t">—</div>`;
   const hero=`<div class="yr-hero">
     <div class="yr-hero-profile">
@@ -3620,7 +3620,7 @@ function renderGlance(body){
   </div>`;
 
   // ── Render ───────────────────────────────────────────────────
-  const chips=[gradeChipHTML(s.grade),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips=[gradeChipHTML(s.grade),metaChip('teacher',s.teacher),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room)].filter(Boolean);
   body.innerHTML=`
   <div class="sum-page">
     <div class="sum-hero">
@@ -4168,7 +4168,7 @@ function renderPaneMobile(body){
   const pLbl = PER[pi];
   const partScore = dayPartScore(curDay);
   const psc       = partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
-  const chips     = [gradeChipHTML(s.grade),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room),metaChip('teacher',s.teacher)].filter(Boolean);
+  const chips     = [gradeChipHTML(s.grade),metaChip('teacher',s.teacher),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room)].filter(Boolean);
   const chevSVG   = `<svg class="mob-sec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
 
   // ── Student header ──
