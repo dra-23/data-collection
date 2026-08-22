@@ -379,22 +379,31 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .cnt-inp { -moz-appearance: textfield; }
 
 /* PERIOD CARDS — one per period, shared by desktop (stacked list) and
-   mobile (single card for the currently-navigated period). */
-.period-card { border: 1px solid var(--border); padding: 10px 12px; margin-bottom: 0; background: var(--surface); }
+   mobile (single card for the currently-navigated period). Split into two
+   zones: a tinted "schedule" strip (time/subject/location) and a plain
+   "data entry" area below (participation/support/notes) — the tint uses
+   --brand-dim rather than --surface2 so it doesn't visually merge with
+   the section header above it, which already uses --surface2. */
+.period-card { border: 1px solid var(--border); margin-bottom: 0; background: var(--surface); overflow: hidden; }
 .period-card:not(:last-child) { border-bottom: none; }
-.period-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.period-time-inp { width: 122px; flex-shrink: 0; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
+.period-card-top { display: flex; align-items: flex-end; gap: 10px; padding: 10px 12px; background: var(--brand-dim); border-bottom: 1.5px solid var(--border); }
+.period-num-badge { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--border-mid); color: var(--brand); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.period-field-col { display: flex; flex-direction: column; gap: 3px; }
+.pf-time, .pf-location { flex-shrink: 0; }
+.pf-subject { flex: 1; min-width: 110px; }
+.period-time-row { display: flex; align-items: center; gap: 6px; }
+.period-time-inp { width: 116px; flex-shrink: 0; padding: 7px 9px; border: 1.5px solid var(--border-mid); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--text); }
 .period-time-inp:focus { outline: none; border-color: var(--brand); }
 .period-time-sep { color: var(--text-3); font-weight: 600; flex-shrink: 0; }
-.period-subject-inp { flex: 1; min-width: 90px; }
+.period-subject-inp { width: 100%; }
 .period-top-loc { flex-shrink: 0; }
 .period-top-loc .tg-btn { padding: 0 10px; font-size: 12px; white-space: nowrap; }
 .period-top-loc .tg-btn.sel-b { background: var(--accent-dim); color: var(--accent-dark); }
-.period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.period-card-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 12px 0; }
 .period-field { display: flex; align-items: center; gap: 8px; }
 .period-field-divided { padding-left: 16px; border-left: 1.5px solid var(--border); }
 .period-field-lbl { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); flex-shrink: 0; }
-.period-card-notes { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.period-card-notes { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px 12px; border-top: 1px solid var(--border); }
 .period-card-notes .fin { flex: 1; min-width: 0; }
 .star-row { display: flex; gap: 2px; }
 .star-btn { background: none; border: none; padding: 1px; cursor: pointer; color: var(--border-mid); display: flex; transition: color .12s; }
@@ -911,19 +920,21 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .section-card-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   /* ── Period card (Schedule & Participation, mobile) ── */
-  .period-card { padding: 12px 14px; }
-  .period-card-top { flex-wrap: wrap; row-gap: 10px; }
+  .period-card-top { flex-wrap: wrap; row-gap: 12px; padding: 12px 14px; }
   .period-time-inp { width: auto; flex: 1; min-width: 0; font-size: 16px; padding: 9px 8px; }
-  .period-subject-inp { flex: 1 1 100%; font-size: 16px; }
-  .period-top-loc { flex: 1 1 100%; height: 40px !important; }
+  .pf-subject { flex: 1 1 100%; }
+  .pf-location { flex: 1 1 100%; }
+  .period-subject-inp { font-size: 16px; }
+  .period-top-loc { height: 40px !important; }
   .period-top-loc .tg-btn { font-size: 13px; }
-  .period-card-bottom { flex-direction: column; align-items: stretch; gap: 14px; }
+  .period-card-bottom { flex-direction: column; align-items: stretch; gap: 14px; padding: 14px 14px 0; }
   .period-field { flex-direction: column; align-items: flex-start; width: 100%; gap: 8px; }
   .period-field-divided { padding-left: 0; border-left: none; padding-top: 14px; border-top: 1px solid var(--border); }
   .star-btn { padding: 4px; }
   .star-btn svg { width: 24px; height: 24px; }
   .sup-row { width: 100%; }
   .sup-btn { flex: 1; padding: 10px 4px; font-size: 12px; white-space: normal; line-height: 1.25; text-align: center; }
+  .period-card-notes { padding: 14px 14px 16px; }
   .period-card-notes .fin { font-size: 16px; }
 }
 
@@ -2718,12 +2729,23 @@ function periodCardHTML(day, pi, d){
 
   return `<div class="period-card">
     <div class="period-card-top">
-      <div class="goal-num-badge">${pi+1}</div>
-      <input class="period-time-inp" type="time" value="${esc(time.start||'')}" onchange="setPt('${day}',${pi},'start',this.value)">
-      <span class="period-time-sep">–</span>
-      <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
-      <input class="fin period-subject-inp" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
-      <div class="tg-seg period-top-loc" style="height:30px">${locBtns}</div>
+      <div class="period-num-badge">${pi+1}</div>
+      <div class="period-field-col pf-time">
+        <span class="period-field-lbl">Time</span>
+        <div class="period-time-row">
+          <input class="period-time-inp" type="time" value="${esc(time.start||'')}" onchange="setPt('${day}',${pi},'start',this.value)">
+          <span class="period-time-sep">–</span>
+          <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
+        </div>
+      </div>
+      <div class="period-field-col pf-subject">
+        <span class="period-field-lbl">Subject</span>
+        <input class="fin period-subject-inp" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
+      </div>
+      <div class="period-field-col pf-location">
+        <span class="period-field-lbl">Location</span>
+        <div class="tg-seg period-top-loc" style="height:30px">${locBtns}</div>
+      </div>
     </div>
     <div class="period-card-bottom">
       <div class="period-field">
