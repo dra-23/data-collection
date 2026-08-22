@@ -386,9 +386,9 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
    the strip reads as part of the same "header" family. */
 .period-card { border: 1px solid var(--border); margin-bottom: 0; background: var(--surface); overflow: hidden; }
 .period-card:not(:last-child) { border-bottom: none; }
-.period-card-top { display: flex; align-items: flex-end; gap: 10px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.period-card:first-child { border-top: none; }
+.period-card-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); }
 .period-num-badge { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--border-mid); color: var(--brand); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.period-field-col { display: flex; flex-direction: column; gap: 3px; }
 .pf-time, .pf-location { flex-shrink: 0; }
 .pf-subject { flex: 1; min-width: 110px; }
 .period-time-row { display: flex; align-items: center; gap: 6px; }
@@ -2730,22 +2730,13 @@ function periodCardHTML(day, pi, d){
   return `<div class="period-card">
     <div class="period-card-top">
       <div class="period-num-badge">${pi+1}</div>
-      <div class="period-field-col pf-time">
-        <span class="period-field-lbl">Time</span>
-        <div class="period-time-row">
-          <input class="period-time-inp" type="time" value="${esc(time.start||'')}" onchange="setPt('${day}',${pi},'start',this.value)">
-          <span class="period-time-sep">–</span>
-          <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
-        </div>
+      <div class="period-time-row pf-time">
+        <input class="period-time-inp" type="time" value="${esc(time.start||'')}" onchange="setPt('${day}',${pi},'start',this.value)">
+        <span class="period-time-sep">–</span>
+        <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
       </div>
-      <div class="period-field-col pf-subject">
-        <span class="period-field-lbl">Subject</span>
-        <input class="fin period-subject-inp" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
-      </div>
-      <div class="period-field-col pf-location">
-        <span class="period-field-lbl">Location</span>
-        <div class="tg-seg period-top-loc" style="height:30px">${locBtns}</div>
-      </div>
+      <input class="fin period-subject-inp pf-subject" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
+      <div class="tg-seg period-top-loc pf-location" style="height:30px">${locBtns}</div>
     </div>
     <div class="period-card-bottom">
       <div class="period-field">
