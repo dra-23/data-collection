@@ -903,6 +903,22 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 
   /* ── Section scroll (desktop tables keep horizontal scroll on mobile) ── */
   .section-card-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ── Period card (Schedule & Participation, mobile) ── */
+  .period-card { padding: 12px 14px; }
+  .period-card-top { flex-wrap: wrap; row-gap: 10px; }
+  .period-time-inp { width: auto; flex: 1; min-width: 0; font-size: 16px; padding: 9px 8px; }
+  .period-subject-inp { flex: 1 1 100%; font-size: 16px; }
+  .period-top-loc { flex: 1 1 100%; height: 40px !important; }
+  .period-top-loc .tg-btn { font-size: 13px; }
+  .period-card-bottom { flex-direction: column; align-items: stretch; gap: 14px; }
+  .period-field { flex-direction: column; align-items: flex-start; width: 100%; gap: 8px; }
+  .period-field-divided { padding-left: 0; border-left: none; padding-top: 14px; border-top: 1px solid var(--border); }
+  .star-btn { padding: 4px; }
+  .star-btn svg { width: 24px; height: 24px; }
+  .sup-row { width: 100%; }
+  .sup-btn { flex: 1; padding: 10px 4px; font-size: 12px; white-space: normal; line-height: 1.25; text-align: center; }
+  .period-card-notes .fin { font-size: 16px; }
 }
 
 /* LOGIN OVERLAY */
