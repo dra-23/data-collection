@@ -270,7 +270,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .sc-meta  { font-size: 13px; color: var(--text-3); }
 
 /* GOALS — card list (mirrors the period-card treatment) */
-.goals-col { background: var(--surface2); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.goals-col { background: var(--brand-dim); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .goal-card { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; box-shadow: var(--shadow-card); }
 .goal-card-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); }
 .goal-card-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
@@ -394,8 +394,8 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 
 /* SCHEDULE + NOTES two-column bottom layout */
 .sched-notes-row { display: flex; gap: 0; }
-.sched-notes-row .sched-col { flex: 1 1 0; overflow: auto; background: var(--surface2); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-.sched-notes-row .notes-col { width: 320px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--surface2); display: flex; flex-direction: column; }
+.sched-notes-row .sched-col { flex: 1 1 0; overflow: auto; background: var(--brand-dim); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.sched-notes-row .notes-col { width: 320px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--brand-dim); display: flex; flex-direction: column; }
 .notes-col-inner { padding: 12px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .notes-field { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow-card); }
 .notes-field:focus-within { border-color: var(--brand); }
@@ -422,8 +422,10 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .notes-card-hdr { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 8px 14px; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); }
 .notes-card-split .notes-textarea { padding: 12px 14px; }
 
-/* PARTICIPATION SUMMARY strip at bottom of sched col */
-.part-summary { padding: 9px 14px; background: var(--brand-dim); border: 1px solid rgba(50,59,135,.25); border-radius: var(--r); box-shadow: var(--shadow-card); display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+/* PARTICIPATION SUMMARY strip at bottom of sched col — a stronger wash
+   than --brand-dim so it still stands out now that sched-col itself
+   uses --brand-dim as its backdrop. */
+.part-summary { padding: 9px 14px; background: rgba(50,59,135,.22); border: 1px solid rgba(50,59,135,.35); border-radius: var(--r); box-shadow: var(--shadow-card); display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
 .sum-item { display: flex; align-items: center; gap: 6px; }
 .sum-lbl { font-size: 12px; font-weight: 600; color: var(--text-3); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .sum-val { font-size: 14px; font-weight: 700; color: var(--text); }
@@ -1181,6 +1183,14 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <input class="fin" id="stu-teacher" placeholder="Teacher name" list="teacher-datalist" autocomplete="off">
       <datalist id="teacher-datalist"></datalist>
     </div>
+    <div class="fi">
+      <label class="fl">Number of Periods</label>
+      <select class="fsel" id="stu-period-count">
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+        <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+      </select>
+    </div>
     <datalist id="subject-datalist"></datalist>
 
     <div class="modal-section-title">Special Education</div>
@@ -1426,6 +1436,9 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 const DAYS    = ['monday','tuesday','wednesday','thursday','friday'];
 const DL      = {monday:'Monday',tuesday:'Tuesday',wednesday:'Wednesday',thursday:'Thursday',friday:'Friday'};
 const PER     = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
+// Students can shrink their own period count (down to 1); PER stays the
+// full ordinal-label list so a lower count is just "use fewer of them".
+function studentPeriodCount(s){ return Math.min(PER.length, Math.max(1, parseInt(s?.periodCount)||PER.length)); }
 
 // Hero chips — matches components/students/StudentHero.tsx exactly.
 const GOLD_GRADES = new Set(['Pre-Kindergarten','Kindergarten','1st Grade','2nd Grade','3rd Grade','4th Grade','5th Grade']);
@@ -1618,7 +1631,7 @@ async function loadStudents(){
   // Deactivated students are excluded — their data stays in the database
   // (goals, daily records, contacts), they just no longer show up here.
   const { data, error } = await sb.from('students')
-    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement, eligibility_id, related_service_minutes, related_service_frequency, iep_meeting_date, iep_start_date, iep_end_date')
+    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement, eligibility_id, related_service_minutes, related_service_frequency, iep_meeting_date, iep_start_date, iep_end_date, period_count')
     .eq('active', true)
     .order('last_name').order('first_name');
   if(error){ console.error('loadStudents:', error); return; }
@@ -1642,7 +1655,8 @@ async function loadStudents(){
     serviceFrequency: r.related_service_frequency || '',
     iepMeetingDate:   r.iep_meeting_date || '',
     iepStartDate:     r.iep_start_date   || '',
-    iepEndDate:       r.iep_end_date     || ''
+    iepEndDate:       r.iep_end_date     || '',
+    periodCount:      r.period_count || PER.length
   }));
 }
 
@@ -2117,13 +2131,13 @@ function gSessArr(d,g,gi){
   return d.g[key];
 }
 
-function gStats(day, gi, type, d){
+function gStats(day, gi, type, d, n=PER.length){
   const g=goals()[gi];
   let sum=0, scored=0, max=0;
-  PER.forEach((_,pi)=>{
+  for(let pi=0; pi<n; pi++){
     const v = gRead(d.g, g, gi, pi);
     const hasVal = v!==undefined && v!=='';
-    if(!hasVal) return;           // blank — skip entirely
+    if(!hasVal) continue;         // blank — skip entirely
     if(type==='yn' || type==='on'){
       scored++; max += 1;
       sum += parseInt(v);         // 1=yes/observed, 0=no/not-observed
@@ -2140,18 +2154,18 @@ function gStats(day, gi, type, d){
     } else {                      // count — no max, just sum
       scored++; sum += parseInt(v)||0;
     }
-  });
+  }
   const pct = (type==='count'||type==='dur') ? null : (max>0 ? (sum/max)*100 : null);
   return { sum, scored, max, pct };
 }
 
-function pStats(d){
+function pStats(d, n=PER.length){
   let sum=0, scored=0;
-  PER.forEach((_,pi)=>{
+  for(let pi=0; pi<n; pi++){
     const v=d.p[pi];
-    if(v===undefined||v==='') return;
+    if(v===undefined||v==='') continue;
     scored++; sum+=parseInt(v);
-  });
+  }
   const max=scored*4; // 4-star scale
   const pct=max>0?(sum/max)*100:null;
   return {sum, scored, max, pct};
@@ -2160,11 +2174,12 @@ function pStats(d){
 function stuWeekScore(sid){
   // Weekly average participation % across non-absent days
   if(!sid||!S.week) return null;
+  const n=studentPeriodCount(stu(sid));
   let sum=0, max=0;
   DAYS.forEach(day=>{
     const d=S.data[sid]?.[S.week]?.[day]||null;
     if(!d||d.absent) return;
-    const {sum:s,max:m}=pStats(d); sum+=s; max+=m;
+    const {sum:s,max:m}=pStats(d,n); sum+=s; max+=m;
   });
   return max>0?Math.round((sum/max)*100):null;
 }
@@ -2550,10 +2565,11 @@ function goalsHTML(day, d, gs){
   // One card per goal, matching the period-card treatment: a tinted
   // header strip (badge + name + type badges + total/% stats) and a
   // body below (per-period cells, or the on-demand session list).
+  const n = studentPeriodCount(stu());
   const cards = gs.map((g,gi)=>{
     const isOD=(g.tracking==='ondemand');
     const nameBadges=`<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>${isOD?'<span class="od-badge">ON DEMAND</span>':''}`;
-    const {sum,scored,max,pct} = isOD ? gStatsOnDemand(gi,g,d) : gStats(day,gi,g.type,d);
+    const {sum,scored,max,pct} = isOD ? gStatsOnDemand(gi,g,d) : gStats(day,gi,g.type,d,n);
     const totalVal = g.type==='acc'?(max>0?`${sum}/${max}`:'—'):(goalTotalCell(g.type,g.totalMode,sum,scored)??(scored>0?sum:'—'));
     const pctVal = (g.type==='count'||g.type==='dur')?'—':fmtPct(pct);
 
@@ -2568,7 +2584,7 @@ function goalsHTML(day, d, gs){
         </div>`).join('');
       body=`<div class="session-list">${chips}<button class="add-session-btn" onclick="addSession('${day}',${gi})">＋ Add Session</button></div>`;
     } else {
-      body=PER.map((_,pi)=>`<div class="goal-period-cell"><span class="goal-period-lbl">${pi+1}</span>${gCell(day,gi,pi,g.type,d)}</div>`).join('');
+      body=PER.slice(0,n).map((_,pi)=>`<div class="goal-period-cell"><span class="goal-period-lbl">${pi+1}</span>${gCell(day,gi,pi,g.type,d)}</div>`).join('');
     }
 
     return `<div class="goal-card">
@@ -2688,8 +2704,9 @@ function periodCardHTML(day, pi, d){
 }
 
 function schedHTML(day, d){
-  const cards = PER.map((_,pi)=>periodCardHTML(day,pi,d)).join('');
-  const {sum,scored,max,pct}=pStats(d);
+  const n = studentPeriodCount(stu());
+  const cards = PER.slice(0,n).map((_,pi)=>periodCardHTML(day,pi,d)).join('');
+  const {sum,scored,max,pct}=pStats(d,n);
   const coupons = parseInt(d.coupons)||0;
 
   const chevron=`<svg class="sc-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
@@ -3008,6 +3025,7 @@ function _buildYearlyView(body,s){
   _destroyYrCharts(); // clean up any previous Chart.js instances
   const rows=_yearData[s.id]||[];
   const gs=goals();
+  const n=studentPeriodCount(s);
   const {label:yearLabel}=getSchoolYear();
 
   // Aggregate into weeks
@@ -3042,7 +3060,7 @@ function _buildYearlyView(body,s){
     const present=wr.filter(r=>!r.absent);
     let pSum=0,pMax=0,coup=0;
     present.forEach(row=>{
-      const{sum:ps,max:pm}=pStats(row); pSum+=ps; pMax+=pm;
+      const{sum:ps,max:pm}=pStats(row,n); pSum+=ps; pMax+=pm;
       coup+=parseInt(row.coupons||0);
     });
     const shortLbl=useMonthly
@@ -3070,7 +3088,7 @@ function _buildYearlyView(body,s){
       const dist=[0,0,0,0,0];
       rows.forEach(row=>{
         if(row.absent) return;
-        PER.forEach((_,pi)=>{ const v=parseInt(gRead(row.g,g,gi,pi)||0); if(v>=1&&v<=5) dist[v-1]++; });
+        PER.slice(0,n).forEach((_,pi)=>{ const v=parseInt(gRead(row.g,g,gi,pi)||0); if(v>=1&&v<=5) dist[v-1]++; });
         (gRead(row.g,g,gi,'sessions')||[]).forEach(ses=>{ const v=parseInt(ses.v||0); if(v>=1&&v<=5) dist[v-1]++; });
       });
       return {kind:'donut',dist};
@@ -3088,7 +3106,7 @@ function _buildYearlyView(body,s){
         else if(type==='yn'||type==='on'){sum+=parseInt(v)||0;max++;cnt++;}
       };
       wr.forEach(row=>{
-        PER.forEach((_,pi)=>addEntry(g.type,gRead(row.g,g,gi,pi)));
+        PER.slice(0,n).forEach((_,pi)=>addEntry(g.type,gRead(row.g,g,gi,pi)));
         (gRead(row.g,g,gi,'sessions')||[]).forEach(ses=>addEntry(g.type,ses.v));
       });
       if(!cnt) return null;
@@ -3167,7 +3185,7 @@ function _buildYearlyView(body,s){
       let sumAll=0,maxAll=0,scoredDays=0;
       rows.forEach(row=>{
         if(row.absent) return;
-        PER.forEach((_,pi)=>{
+        PER.slice(0,n).forEach((_,pi)=>{
           const v=gRead(row.g,g,gi,pi);
           if(v===undefined||v==='') return;
           if(g.type==='acc'){const pts=(v||'').split('|');const c=parseInt(pts[0])||0,t=parseInt(pts[1])||0;if(t>0){sumAll+=c;maxAll+=t;scoredDays++;}}
@@ -3303,6 +3321,7 @@ function renderGlance(body){
   _destroyYrCharts(); // clean up any previous Chart.js instances (Yearly tab or a prior Glance render)
   const s=stu(), gs=goals();
   if(!s){ body.innerHTML=''; return; }
+  const n=studentPeriodCount(s);
   function d(day){ const sid=S.cur,wk=S.week; return S.data[sid]?.[wk]?.[day]||{g:{},q:{},p:{},pn:{},sup:{},pNotes:{},loc:{},coupons:0,comments:'',absent:false}; }
 
   // ── colour helpers ──────────────────────────────────────────
@@ -3312,7 +3331,7 @@ function renderGlance(body){
 
   // ── KPI strip numbers ───────────────────────────────────────
   let tpW=0,tsW=0;
-  DAYS.forEach(day=>{ if(d(day).absent) return; const{sum,scored}=pStats(d(day));tpW+=sum;tsW+=scored; });
+  DAYS.forEach(day=>{ if(d(day).absent) return; const{sum,scored}=pStats(d(day),n);tpW+=sum;tsW+=scored; });
   const wpmW=tsW*4, wppW=wpmW>0?Math.round((tpW/wpmW)*100):null;
 
   const tc=DAYS.reduce((a,day)=>a+parseInt(d(day).coupons||0),0);
@@ -3340,7 +3359,7 @@ function renderGlance(body){
 
   function gDayCell(gi,g,day){
     if(d(day).absent) return absCell;
-    const{sum,scored,max,pct}=gStats(day,gi,g.type,d(day));
+    const{sum,scored,max,pct}=gStats(day,gi,g.type,d(day),n);
     const tot=goalTotalCell(g.type,g.totalMode,sum,scored);
     if(tot!==null) return `<td>${tot==='—'?`<span style="color:var(--text-3)">—</span>`:`<strong>${tot}</strong>`}</td>`;
     if(g.type==='acc')   return `<td>${max>0?`<strong>${sum}/${max}</strong><br><small style="color:var(--text-3)">${Math.round((sum/max)*100)}%</small>`:`<span style="color:var(--text-3)">—</span>`}</td>`;
@@ -3348,7 +3367,7 @@ function renderGlance(body){
   }
   function gWeekCell(gi,g){
     let ws=0,wm=0,wScored=0;
-    DAYS.forEach(day=>{ if(d(day).absent) return; const{sum,max,scored}=gStats(day,gi,g.type,d(day));ws+=sum;wm+=max;wScored+=scored; });
+    DAYS.forEach(day=>{ if(d(day).absent) return; const{sum,max,scored}=gStats(day,gi,g.type,d(day),n);ws+=sum;wm+=max;wScored+=scored; });
     const tot=goalTotalCell(g.type,g.totalMode,ws,wScored);
     if(tot!==null) return `<td>${tot==='—'?`<span style="color:var(--text-3)">—</span>`:`<strong>${tot}</strong>`}</td>`;
     if(g.type==='acc')   return `<td>${wm>0?`<strong>${ws}/${wm}</strong><br><small style="color:var(--text-3)">${Math.round((ws/wm)*100)}%</small>`:`<span style="color:var(--text-3)">—</span>`}</td>`;
@@ -3417,7 +3436,7 @@ function renderGlance(body){
   const dayLabels = DAYS.map(day=>DL[day].slice(0,3));
   const partAvgData = DAYS.map(day=>{
     if(d(day).absent) return null;
-    const {sum,scored} = pStats(d(day));
+    const {sum,scored} = pStats(d(day),n);
     return scored>0 ? +(sum/scored).toFixed(2) : null;
   });
   const pawsData = DAYS.map(day=>parseInt(d(day).coupons)||0);
@@ -3426,11 +3445,11 @@ function renderGlance(body){
   let supScored=0;
   DAYS.forEach(day=>{
     if(d(day).absent) return;
-    PER.forEach((_,pi)=>{
+    for(let pi=0; pi<n; pi++){
       const v = d(day).sup?.[pi];
       const idx = v ? SUPPORT_LEVELS.findIndex(o=>o.v===v) : -1;
       if(idx>=0){ supCounts[idx]++; supScored++; }
-    });
+    }
   });
   const SUPPORT_COLORS = ['#16a34a','#3b82f6','#d97706','#dc2626']; // Independent / Mostly Independent / Partial Support / Max Support
 
@@ -3466,13 +3485,13 @@ function renderGlance(body){
   let pushInCount=0, pullOutCount=0, pushInMin=0, pullOutMin=0;
   DAYS.forEach(day=>{
     if(d(day).absent) return;
-    PER.forEach((_,pi)=>{
+    for(let pi=0; pi<n; pi++){
       const loc = d(day).loc?.[pi];
-      if(loc!=='Push-In' && loc!=='Pull-Out') return;
+      if(loc!=='Push-In' && loc!=='Pull-Out') continue;
       const mins = minutesBetween(s.pt?.[pi]?.start, s.pt?.[pi]?.end);
       if(loc==='Push-In'){ pushInCount++; pushInMin+=mins; }
       else { pullOutCount++; pullOutMin+=mins; }
-    });
+    }
   });
   const locCard = `<div class="yr-card yr-exportable">
     <div class="yr-card-hdr"><span class="yr-card-title">Push-In vs Pull-Out</span><span class="yr-card-sub">${pushInCount+pullOutCount} period${(pushInCount+pullOutCount)!==1?'s':''} tracked</span></div>
@@ -3499,8 +3518,8 @@ function renderGlance(body){
         <div class="sum-part-day">${DL[day].slice(0,3)}</div>
         <div class="sum-part-bar-wrap" style="padding-top:4px"><span class="sum-abs-pill">Absent</span></div>
       </div>`;
-    const{sum,scored,max,pct}=pStats(d(day)); tp+=sum; ts+=scored;
-    const dots=PER.map((_,pi)=>{
+    const{sum,scored,max,pct}=pStats(d(day),n); tp+=sum; ts+=scored;
+    const dots=PER.slice(0,n).map((_,pi)=>{
       const v=d(day).p[pi];
       const title=v!==undefined&&v!==''?`Period ${pi+1}: ${v} star${v!=1?'s':''}`:`Period ${pi+1}: not scored`;
       return `<span class="sum-per-dot ${dotCls(v)}" title="${title}"></span>`;
@@ -4070,7 +4089,7 @@ async function selectStuMobile(id){
 }
 
 function navPeriod(delta){
-  curPeriod = Math.max(0, Math.min(PER.length - 1, curPeriod + delta));
+  curPeriod = Math.max(0, Math.min(studentPeriodCount(stu()) - 1, curPeriod + delta));
   renderPane();
 }
 
@@ -4110,6 +4129,8 @@ function renderPaneMobile(body){
   body.classList.toggle('is-absent', !!(d && d.absent) && !nonSchool);
   body.classList.toggle('is-nonschool', nonSchool);
 
+  const n = studentPeriodCount(s);
+  curPeriod = Math.min(curPeriod, n-1); // clamp if the new student has fewer periods
   const pi   = curPeriod;
   const pLbl = PER[pi];
   const chips     = [gradeChipHTML(s.grade),metaChip('teacher',s.teacher),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room)].filter(Boolean);
@@ -4165,7 +4186,7 @@ function renderPaneMobile(body){
   </div>` : '';
 
   // ── Period navigator ──
-  const dots = PER.map((_,i)=>`<div class="mob-period-dot${i===pi?' active':''}"></div>`).join('');
+  const dots = PER.slice(0,n).map((_,i)=>`<div class="mob-period-dot${i===pi?' active':''}"></div>`).join('');
   const periodNav = `<div class="mob-period-nav">
     <button class="mob-period-arrow" onclick="navPeriod(-1)" ${pi===0?'disabled':''}
       aria-label="Previous period">
@@ -4175,7 +4196,7 @@ function renderPaneMobile(body){
       <div class="mob-period-lbl">${pLbl} Period</div>
       <div class="mob-period-dots">${dots}</div>
     </div>
-    <button class="mob-period-arrow" onclick="navPeriod(1)" ${pi===PER.length-1?'disabled':''}
+    <button class="mob-period-arrow" onclick="navPeriod(1)" ${pi===n-1?'disabled':''}
       aria-label="Next period">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
@@ -4480,6 +4501,7 @@ async function openStudentModal(id){
   document.getElementById('stu-last-name').value  = s?.lastName  || '';
   document.getElementById('stu-grade').value      = s?.grade     || '';
   document.getElementById('stu-teacher').value    = s?.teacher   || '';
+  document.getElementById('stu-period-count').value = s?.periodCount || PER.length;
   document.getElementById('stu-eligibility').value       = s?.eligibilityId    || '';
   document.getElementById('stu-service-minutes').value   = s?.serviceMinutes  ?? '';
   document.getElementById('stu-service-frequency').value = s?.serviceFrequency || '';
@@ -4500,6 +4522,7 @@ async function saveStudent(){
     last_name:  lastName,
     grade:      document.getElementById('stu-grade').value,
     teacher:    document.getElementById('stu-teacher').value.trim(),
+    period_count: parseInt(document.getElementById('stu-period-count').value) || PER.length,
     eligibility_id:             document.getElementById('stu-eligibility').value || null,
     related_service_minutes:    serviceMinutesVal ? parseInt(serviceMinutesVal) : null,
     related_service_frequency:  document.getElementById('stu-service-frequency').value || null,
