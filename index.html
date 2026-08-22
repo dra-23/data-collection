@@ -209,12 +209,14 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .day-tab:hover::before { background: var(--brand-dim); }
 .day-tab:hover { color: var(--brand); }
 .day-tab.active { color: var(--brand); font-weight: 600; border-bottom-color: var(--brand); }
-.tab-spacer { flex: 1; }
-.week-ctrl { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
-.week-arrow { width: 34px; height: 34px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-2); font-size: 20px; transition: all .15s; }
-.week-arrow:hover { border-color: var(--border-mid); color: var(--text); background: var(--surface2); }
-.week-lbl { font-size: 16px; color: var(--text-2); min-width: 172px; text-align: center; font-weight: 600; cursor: pointer; border-radius: 7px; padding: 5px 10px; transition: background .15s, color .15s; }
-.week-lbl:hover { background: var(--surface2); color: var(--text); }
+/* Week nav now lives in the topbar (dark brand background), not the
+   (light) day-tabs row it originally sat in — colors are inverted for
+   contrast there instead of reusing the surface/border tokens. */
+.week-ctrl { display: flex; align-items: center; gap: 6px; }
+.week-arrow { width: 32px; height: 32px; border-radius: 7px; border: none; background: rgba(255,255,255,.15); cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 19px; transition: background .15s; flex-shrink: 0; }
+.week-arrow:hover { background: rgba(255,255,255,.28); }
+.week-lbl { font-size: 14px; color: #fff; min-width: 150px; text-align: center; font-weight: 600; cursor: pointer; border-radius: 7px; padding: 6px 8px; transition: background .15s; }
+.week-lbl:hover { background: rgba(255,255,255,.18); }
 .pane-body { flex: 1; overflow-y: auto; padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
 
 /* STUDENT HEADER */
@@ -748,8 +750,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   /* ── Day tabs ── */
   .day-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding: 0 4px; gap: 0; }
   .day-tab  { height: 56px; min-height: 56px; padding: 0 20px; font-size: 15px; font-weight: 500; flex-shrink: 0; border-radius: 0; }
-  .tab-spacer { display: none; }
-  .week-ctrl  { display: none; }    /* hidden — calendar moves to topbar on mobile */
+  .week-ctrl  { display: none; }    /* mob-cal-btn (topbar) is the mobile equivalent instead */
 
   /* ── Pane body ── */
   .pane-body { padding: 0 0 12px; }
@@ -1068,6 +1069,11 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mob-stu-chevron"><polyline points="6 9 12 15 18 9"/></svg>
   </button>
   <div class="topbar-right">
+    <div class="week-ctrl">
+      <button class="week-arrow" onclick="changeWeek(-1)">&#8249;</button>
+      <div class="week-lbl" id="week-lbl" onclick="openCalendar(event)">—</div>
+      <button class="week-arrow" onclick="changeWeek(1)">&#8250;</button>
+    </div>
     <div class="save-status idle" id="save-status">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       <span>Saved</span>
@@ -1144,12 +1150,6 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <button class="day-tab" data-day="friday" onclick="switchDay('friday',this)"><span class="tab-full">Friday</span><span class="tab-short">Fri</span></button>
       <button class="day-tab" onclick="switchDay('glance',this)"><span class="tab-full">Week Summary</span><span class="tab-short">Week</span></button>
       <button class="day-tab" onclick="switchDay('yearly',this)"><span class="tab-full">Yearly Summary</span><span class="tab-short">Year</span></button>
-      <div class="tab-spacer"></div>
-      <div class="week-ctrl">
-        <button class="week-arrow" onclick="changeWeek(-1)">&#8249;</button>
-        <div class="week-lbl" id="week-lbl" onclick="openCalendar(event)">—</div>
-        <button class="week-arrow" onclick="changeWeek(1)">&#8250;</button>
-      </div>
     </div>
     <div class="pane-body" id="pane-body"></div>
   </div>
