@@ -149,8 +149,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .stu-info { flex: 1; min-width: 0; }
 .stu-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .status-chip { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin-top: 3px; white-space: nowrap; }
-/* Same border-radius convention as .stu-header-score-item so the roster's
-   score badge reads as the same shape as the hero's score card. */
 .stu-badge { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: var(--r); letter-spacing: .03em; white-space: nowrap; flex-shrink: 0; }
 .badge-ok   { background: var(--green-bg); color: var(--green); }
 .badge-mid  { background: var(--amber-bg); color: var(--amber); }
@@ -213,8 +211,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .day-tab.active .tab-date { color: var(--brand); }
 .day-tab:hover .tab-date { color: var(--brand); }
 /* Week nav lives in the student hero (light card background) now, not the
-   dark topbar it briefly sat in — styled as its own card, matching the
-   .stu-header-score-item treatment elsewhere in the same hero. */
+   dark topbar it briefly sat in — styled as its own small card. */
 .week-ctrl { display: flex; align-items: center; gap: 2px; padding: 5px; border-radius: var(--r); border: 1.5px solid var(--border-mid); background: var(--surface2); box-shadow: var(--shadow-card); }
 .week-arrow { width: 28px; height: 28px; border-radius: 7px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-2); font-size: 19px; transition: all .15s; flex-shrink: 0; }
 .week-arrow:hover { color: var(--brand); background: rgba(255,255,255,.7); }
@@ -261,19 +258,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .mob-fab-menu button:active { background: var(--surface2); }
 .mob-fab-menu button:disabled { opacity: .4; pointer-events: none; }
 .mob-fab-menu button svg { color: var(--text-3); flex-shrink: 0; }
-/* Score card — pulled out of the header text flow so today's expectations/
-   participation numbers read as a standalone stat, not a small inline badge. */
-.stu-header-score { display: flex; gap: 8px; flex-shrink: 0; align-self: center; }
-.stu-header-score-item { display: flex; flex-direction: row; align-items: baseline; gap: 6px; padding: 9px 14px; border-radius: var(--r); border: 1.5px solid var(--border-mid); background: var(--surface2); box-shadow: var(--shadow-card); }
-.stu-header-score-val { font-family: var(--display); font-size: 18px; font-weight: 800; line-height: 1; color: var(--text); white-space: nowrap; }
-.stu-header-score-lbl { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); white-space: nowrap; }
-.stu-header-score-item.ok   { background: var(--green-bg); border-color: rgba(22,163,74,.35); }
-.stu-header-score-item.ok   .stu-header-score-val { color: var(--green); }
-.stu-header-score-item.mid  { background: var(--amber-bg); border-color: rgba(202,138,4,.35); }
-.stu-header-score-item.mid  .stu-header-score-val { color: var(--amber); }
-.stu-header-score-item.low  { background: #fee2e2; border-color: rgba(220,38,38,.35); }
-.stu-header-score-item.low  .stu-header-score-val { color: var(--danger); }
-.stu-header-score-item.none .stu-header-score-val { color: var(--text-3); }
 /* Standard action toolbar button — matches components/ui/CLAUDE.md's spec. */
 .pane-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-family: var(--sans); font-size: 15px; font-weight: 500; cursor: pointer; border: none; background: var(--btn-tonal); color: var(--text-2); transition: all .15s; white-space: nowrap; }
 .pane-btn:hover { background: var(--border-mid); color: var(--text); }
@@ -384,9 +368,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
    "data entry" area below (participation/support/notes). The tint matches
    the section header's own --surface2/--border treatment (.sc-head) so
    the strip reads as part of the same "header" family. */
-.period-card { border: 1px solid var(--border); margin-bottom: 0; background: var(--surface); overflow: hidden; }
-.period-card:not(:last-child) { border-bottom: none; }
-.period-card:first-child { border-top: none; }
+.period-card { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; box-shadow: var(--shadow-card); }
 .period-card-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); }
 .period-num-badge { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-dim); color: var(--brand); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .pf-time, .pf-location { flex-shrink: 0; }
@@ -418,20 +400,25 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .sup-btn.on.sup-max         { background: var(--danger-bg); color: var(--danger); }
 
 /* SCHEDULE + NOTES two-column bottom layout */
-.sched-notes-row { display: flex; gap: 0; border-top: 1px solid var(--border); }
-.sched-notes-row .sched-col { flex: 1 1 0; overflow: auto; }
+.sched-notes-row { display: flex; gap: 0; }
+.sched-notes-row .sched-col { flex: 1 1 0; overflow: auto; background: var(--surface2); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .sched-notes-row .notes-col { width: 320px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--surface2); display: flex; flex-direction: column; }
-.notes-col-inner { padding: 14px 16px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
-.notes-field { display: flex; flex-direction: column; gap: 6px; }
+.notes-col-inner { padding: 12px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.notes-field { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow-card); }
+.notes-field:focus-within { border-color: var(--brand); }
 .notes-label { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); }
 .coupon-stepper { display: flex; align-items: center; gap: 8px; }
 .coupon-stepper .cnt-b { width: 28px; height: 28px; font-size: 17px; }
 .coupon-stepper .cnt-v { font-size: 21px; font-weight: 700; color: var(--text); min-width: 28px; text-align: center; }
 .notes-textarea { width: 100%; flex: 1; min-height: 80px; resize: vertical; border: 1.5px solid var(--border); border-radius: 7px; padding: 8px 10px; font-family: var(--sans); font-size: 13px; background: #fff; color: var(--text); line-height: 1.5; }
 .notes-textarea:focus { outline: none; border-color: var(--brand); }
+/* Nested in the desktop .notes-field card — blend into it instead of
+   drawing a second border (mobile's bare .notes-textarea keeps its own). */
+.notes-field .notes-textarea { border: none; border-radius: 0; padding: 0; background: transparent; }
+.notes-field .notes-textarea:focus { border-color: transparent; }
 
 /* PARTICIPATION SUMMARY strip at bottom of sched col */
-.part-summary { padding: 9px 14px; background: var(--brand-dim); border-top: 1px solid var(--border); display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.part-summary { padding: 9px 14px; background: var(--brand-dim); border: 1px solid rgba(50,59,135,.25); border-radius: var(--r); box-shadow: var(--shadow-card); display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
 .sum-item { display: flex; align-items: center; gap: 6px; }
 .sum-lbl { font-size: 12px; font-weight: 600; color: var(--text-3); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .sum-val { font-size: 14px; font-weight: 700; color: var(--text); }
@@ -805,11 +792,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
     border-top: 1px solid var(--border); padding-top: 12px; margin-top: 2px;
   }
   .stu-header-date   { text-align: left; }
-  .stu-header-score  { width: 100%; }
-  /* Match the Week tab's KPI strip proportions (.sum-kpi/.sum-kpi-val below) */
-  .stu-header-score-item { flex: 1; min-width: 0; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 14px 16px; }
-  .stu-header-score-val  { font-size: 25px; }
-  .stu-header-score-lbl  { font-size: 12px; margin-top: 5px; }
   .pane-btn { padding: 9px 15px; font-size: 14px; min-height: 40px; }
 
   /* ── Absent banner ── */
@@ -1500,12 +1482,6 @@ const META_CHIP_ICONS = {
 function metaChip(iconKey, text){
   if(!text) return '';
   return `<span class="meta-chip"><svg class="meta-chip-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${META_CHIP_ICONS[iconKey]}</svg>${esc(text)}</span>`;
-}
-// Standalone hero stat card for today's participation %.
-function scoreCardHTML(partScore, psc){
-  const item=(val,cls,lbl)=> val===null?'':`<div class="stu-header-score-item ${cls}"><div class="stu-header-score-val">${val}%</div><div class="stu-header-score-lbl">${lbl}</div></div>`;
-  const html = item(partScore,psc,'Participation');
-  return html ? `<div class="stu-header-score">${html}</div>` : '';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2208,11 +2184,6 @@ function stuWeekScore(sid){
   });
   return max>0?Math.round((sum/max)*100):null;
 }
-function dayPartScore(day){
-  const d=dd(day); if(!d||d.absent) return null;
-  const {pct}=pStats(d);
-  return pct!==null?Math.round(pct):null;
-}
 
 // ═══════════════════════════════════════════════════════════════
 // SIDEBAR / ROSTER — search + teacher filter dropdown, grouped by teacher
@@ -2463,8 +2434,6 @@ function renderPane(){
   const nonSchool=!!lock;
   body.classList.toggle('is-absent', !!(d && d.absent) && !nonSchool);
   body.classList.toggle('is-nonschool', nonSchool);
-  const partScore=dayPartScore(curDay);
-  const psc=partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
   const chips=[gradeChipHTML(s.grade),metaChip('teacher',s.teacher),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room)].filter(Boolean);
   body.innerHTML=
     `<div class="stu-header">
@@ -2501,7 +2470,6 @@ function renderPane(){
           </div>
         </div>
       </div>
-      ${scoreCardHTML(partScore,psc)}
     </div>`+
     (lock?`<div class="nonschool-banner">
       ${lock.kind==='notstarted'
@@ -4178,8 +4146,6 @@ function renderPaneMobile(body){
 
   const pi   = curPeriod;
   const pLbl = PER[pi];
-  const partScore = dayPartScore(curDay);
-  const psc       = partScore===null?'none':partScore>=80?'ok':partScore>=50?'mid':'low';
   const chips     = [gradeChipHTML(s.grade),metaChip('teacher',s.teacher),metaChip('eligibility',eligibilityLabel(s.eligibilityId)),metaChip('campus',s.campus),metaChip('classroom',s.room)].filter(Boolean);
   const chevSVG   = `<svg class="mob-sec-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
 
@@ -4214,7 +4180,6 @@ function renderPaneMobile(body){
         </div>
       </div>
     </div>
-    ${scoreCardHTML(partScore,psc)}
   </div>`;
 
   // ── Non-school-day / not-started / absent banner ──
