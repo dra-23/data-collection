@@ -570,6 +570,24 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .modal-section-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin: 22px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 .modal-section-title:first-of-type { margin-top: 0; }
 .modal-acts  { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+/* STUDENT MODAL — card-per-section layout with a pinned header/footer,
+   same 4-tier neutral treatment (page/section backdrop/card header/card
+   body) already used for Goals and Schedule & Participation. */
+#student-modal .modal { display: flex; flex-direction: column; padding: 0; background: var(--surface3); overflow: hidden; }
+#student-modal .modal-hdr { flex-shrink: 0; padding: 20px 24px 16px; background: var(--surface); }
+#student-modal .modal-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#student-modal .modal-title { margin-bottom: 0; }
+#student-modal .modal-close-x { flex-shrink: 0; width: 28px; height: 28px; border: none; border-radius: 6px; background: transparent; color: var(--text-3); font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; }
+#student-modal .modal-close-x:hover { background: var(--surface2); color: var(--text); }
+#student-modal .modal-sub { margin-bottom: 0; padding-bottom: 0; border-bottom: none; margin-top: 4px; }
+#student-modal .modal-scroll-body { flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 14px; }
+#student-modal .modal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-card); overflow: hidden; }
+#student-modal .modal-card-hdr { padding: 12px 16px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); background: var(--surface2); border-bottom: 1px solid var(--border); }
+#student-modal .modal-card-body { padding: 16px; }
+#student-modal .modal-card-body .fi:last-child,
+#student-modal .modal-card-body .fi-row:last-child { margin-bottom: 0; }
+#student-modal .modal-acts { flex-shrink: 0; margin-top: 0; padding: 16px 24px; background: var(--surface); border-top: 1px solid var(--border); }
 .desk-goals-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .modal-help-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface2); color: var(--text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
 .modal-help-btn:hover { background: var(--brand-dim); border-color: var(--brand); color: var(--brand); }
@@ -861,6 +879,10 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   /* ── Modals: full-screen bottom sheets ── */
   .modal-bg  { align-items: flex-end; padding: 0; }
   .modal, .modal.modal-wide { width: 100%; max-width: 100%; border-radius: 16px 16px 0 0; max-height: 92vh; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom, 16px); }
+
+  /* ── Student modal: keep the pinned footer's safe-area padding now that
+     padding:0 moved from .modal down onto the header/body/footer. ── */
+  #student-modal .modal-acts { padding-bottom: env(safe-area-inset-bottom, 16px); }
 
   /* ── Goals modal: full-screen on mobile ── */
   #goals-modal { align-items: stretch; }
@@ -1178,84 +1200,101 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 <!-- ADD/EDIT STUDENT MODAL -->
 <div class="modal-bg" id="student-modal">
   <div class="modal">
-    <div class="modal-title" id="student-modal-title">Add Student</div>
-    <div class="modal-sub">Only visible to you.</div>
-
-    <div class="modal-section-title">Student Information</div>
-    <div class="fi-row">
-      <div class="fi"><label class="fl">First Name</label><input class="fin" id="stu-first-name" placeholder="First name"></div>
-      <div class="fi"><label class="fl">Last Name</label><input class="fin" id="stu-last-name" placeholder="Last name"></div>
-    </div>
-    <div class="fi">
-      <label class="fl">Grade</label>
-      <select class="fsel" id="stu-grade">
-        <option value=""></option>
-        <option>Pre-Kindergarten</option><option>Kindergarten</option>
-        <option>1st Grade</option><option>2nd Grade</option><option>3rd Grade</option>
-        <option>4th Grade</option><option>5th Grade</option><option>6th Grade</option>
-        <option>7th Grade</option><option>8th Grade</option><option>9th Grade</option>
-        <option>10th Grade</option><option>11th Grade</option><option>12th Grade</option>
-      </select>
-    </div>
-    <div class="fi">
-      <label class="fl">Teacher</label>
-      <input class="fin" id="stu-teacher" placeholder="Teacher name" list="teacher-datalist" autocomplete="off">
-      <datalist id="teacher-datalist"></datalist>
-    </div>
-    <div class="fi">
-      <label class="fl">Number of Periods</label>
-      <select class="fsel" id="stu-period-count">
-        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-        <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-      </select>
-    </div>
-    <datalist id="subject-datalist"></datalist>
-
-    <div class="modal-section-title">Special Education</div>
-    <div class="fi">
-      <label class="fl">Eligibility</label>
-      <select class="fsel" id="stu-eligibility">
-        <option value=""></option>
-      </select>
-    </div>
-    <div class="fi-row">
-      <div class="fi">
-        <label class="fl">Related Service Minutes</label>
-        <input class="fin" type="number" min="0" id="stu-service-minutes" placeholder="e.g. 30">
+    <div class="modal-hdr">
+      <div class="modal-title-row">
+        <div class="modal-title" id="student-modal-title">Add Student</div>
+        <button type="button" class="modal-close-x" onclick="closeModal('student-modal')" aria-label="Close">&#10005;</button>
       </div>
-      <div class="fi">
-        <label class="fl">Frequency</label>
-        <select class="fsel" id="stu-service-frequency">
-          <option value=""></option>
-          <option value="week">Per Week</option>
-          <option value="month">Per Month</option>
-          <option value="quarter">Per Quarter</option>
-          <option value="trimester">Per Trimester</option>
-          <option value="semester">Per Semester</option>
-          <option value="year">Per Year</option>
-        </select>
-      </div>
-    </div>
-    <div class="fi">
-      <label class="fl">IEP Meeting Date</label>
-      <input class="fin" type="date" id="stu-iep-meeting">
-    </div>
-    <div class="fi-row">
-      <div class="fi">
-        <label class="fl">IEP Start Date</label>
-        <input class="fin" type="date" id="stu-iep-start">
-      </div>
-      <div class="fi">
-        <label class="fl">IEP End Date</label>
-        <input class="fin" type="date" id="stu-iep-end">
-      </div>
+      <div class="modal-sub">Only visible to you.</div>
     </div>
 
-    <div class="modal-section-title">Contacts</div>
-    <div class="fi">
-      <div id="contacts-list"></div>
-      <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
+    <div class="modal-scroll-body">
+      <div class="modal-card">
+        <div class="modal-card-hdr">Student Information</div>
+        <div class="modal-card-body">
+          <div class="fi-row">
+            <div class="fi"><label class="fl">First Name</label><input class="fin" id="stu-first-name" placeholder="First name"></div>
+            <div class="fi"><label class="fl">Last Name</label><input class="fin" id="stu-last-name" placeholder="Last name"></div>
+          </div>
+          <div class="fi">
+            <label class="fl">Grade</label>
+            <select class="fsel" id="stu-grade">
+              <option value=""></option>
+              <option>Pre-Kindergarten</option><option>Kindergarten</option>
+              <option>1st Grade</option><option>2nd Grade</option><option>3rd Grade</option>
+              <option>4th Grade</option><option>5th Grade</option><option>6th Grade</option>
+              <option>7th Grade</option><option>8th Grade</option><option>9th Grade</option>
+              <option>10th Grade</option><option>11th Grade</option><option>12th Grade</option>
+            </select>
+          </div>
+          <div class="fi">
+            <label class="fl">Teacher</label>
+            <input class="fin" id="stu-teacher" placeholder="Teacher name" list="teacher-datalist" autocomplete="off">
+            <datalist id="teacher-datalist"></datalist>
+          </div>
+          <div class="fi">
+            <label class="fl">Number of Periods</label>
+            <select class="fsel" id="stu-period-count">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+              <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+              <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+            </select>
+          </div>
+          <datalist id="subject-datalist"></datalist>
+        </div>
+      </div>
+
+      <div class="modal-card">
+        <div class="modal-card-hdr">Special Education</div>
+        <div class="modal-card-body">
+          <div class="fi">
+            <label class="fl">Eligibility</label>
+            <select class="fsel" id="stu-eligibility">
+              <option value=""></option>
+            </select>
+          </div>
+          <div class="fi-row">
+            <div class="fi">
+              <label class="fl">Related Service Minutes</label>
+              <input class="fin" type="number" min="0" id="stu-service-minutes" placeholder="e.g. 30">
+            </div>
+            <div class="fi">
+              <label class="fl">Frequency</label>
+              <select class="fsel" id="stu-service-frequency">
+                <option value=""></option>
+                <option value="week">Per Week</option>
+                <option value="month">Per Month</option>
+                <option value="quarter">Per Quarter</option>
+                <option value="trimester">Per Trimester</option>
+                <option value="semester">Per Semester</option>
+                <option value="year">Per Year</option>
+              </select>
+            </div>
+          </div>
+          <div class="fi">
+            <label class="fl">IEP Meeting Date</label>
+            <input class="fin" type="date" id="stu-iep-meeting">
+          </div>
+          <div class="fi-row">
+            <div class="fi">
+              <label class="fl">IEP Start Date</label>
+              <input class="fin" type="date" id="stu-iep-start">
+            </div>
+            <div class="fi">
+              <label class="fl">IEP End Date</label>
+              <input class="fin" type="date" id="stu-iep-end">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-card">
+        <div class="modal-card-hdr">Contacts</div>
+        <div class="modal-card-body">
+          <div id="contacts-list"></div>
+          <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
+        </div>
+      </div>
     </div>
 
     <div class="modal-acts" style="justify-content:space-between">
