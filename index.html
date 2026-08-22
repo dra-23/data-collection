@@ -204,11 +204,14 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .pane { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 .day-tabs { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: stretch; padding: 0 8px; gap: 0; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
 .day-tabs::-webkit-scrollbar { display: none; }
-.day-tab { position: relative; height: 56px; padding: 0 22px; font-size: 14px; font-weight: 500; color: var(--text-2); cursor: pointer; background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -1px; transition: color .2s cubic-bezier(.2,0,0,1), background .18s; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; letter-spacing: .01em; -webkit-tap-highlight-color: transparent; border-radius: 0; }
+.day-tab { position: relative; height: 56px; padding: 0 22px; font-size: 14px; font-weight: 500; color: var(--text-2); cursor: pointer; background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -1px; transition: color .2s cubic-bezier(.2,0,0,1), background .18s; white-space: nowrap; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; flex-shrink: 0; letter-spacing: .01em; -webkit-tap-highlight-color: transparent; border-radius: 0; }
 .day-tab::before { content: ''; position: absolute; inset: 6px 4px; border-radius: 8px; background: transparent; transition: background .18s; pointer-events: none; }
 .day-tab:hover::before { background: var(--brand-dim); }
 .day-tab:hover { color: var(--brand); }
 .day-tab.active { color: var(--brand); font-weight: 600; border-bottom-color: var(--brand); }
+.tab-date { font-size: 11px; font-weight: 500; color: var(--text-3); }
+.day-tab.active .tab-date { color: var(--brand); }
+.day-tab:hover .tab-date { color: var(--brand); }
 /* Week nav lives in the student hero (light card background) now, not the
    dark topbar it briefly sat in. */
 .week-ctrl { display: flex; align-items: center; gap: 6px; }
@@ -1139,11 +1142,11 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 
   <div class="pane">
     <div class="day-tabs">
-      <button class="day-tab active" data-day="monday" onclick="switchDay('monday',this)"><span class="tab-full">Monday</span><span class="tab-short">Mon</span></button>
-      <button class="day-tab" data-day="tuesday" onclick="switchDay('tuesday',this)"><span class="tab-full">Tuesday</span><span class="tab-short">Tue</span></button>
-      <button class="day-tab" data-day="wednesday" onclick="switchDay('wednesday',this)"><span class="tab-full">Wednesday</span><span class="tab-short">Wed</span></button>
-      <button class="day-tab" data-day="thursday" onclick="switchDay('thursday',this)"><span class="tab-full">Thursday</span><span class="tab-short">Thu</span></button>
-      <button class="day-tab" data-day="friday" onclick="switchDay('friday',this)"><span class="tab-full">Friday</span><span class="tab-short">Fri</span></button>
+      <button class="day-tab active" data-day="monday" onclick="switchDay('monday',this)"><span class="tab-lbl"><span class="tab-full">Monday</span><span class="tab-short">Mon</span></span><span class="tab-date"></span></button>
+      <button class="day-tab" data-day="tuesday" onclick="switchDay('tuesday',this)"><span class="tab-lbl"><span class="tab-full">Tuesday</span><span class="tab-short">Tue</span></span><span class="tab-date"></span></button>
+      <button class="day-tab" data-day="wednesday" onclick="switchDay('wednesday',this)"><span class="tab-lbl"><span class="tab-full">Wednesday</span><span class="tab-short">Wed</span></span><span class="tab-date"></span></button>
+      <button class="day-tab" data-day="thursday" onclick="switchDay('thursday',this)"><span class="tab-lbl"><span class="tab-full">Thursday</span><span class="tab-short">Thu</span></span><span class="tab-date"></span></button>
+      <button class="day-tab" data-day="friday" onclick="switchDay('friday',this)"><span class="tab-lbl"><span class="tab-full">Friday</span><span class="tab-short">Fri</span></span><span class="tab-date"></span></button>
       <button class="day-tab" onclick="switchDay('glance',this)"><span class="tab-full">Week Summary</span><span class="tab-short">Week</span></button>
       <button class="day-tab" onclick="switchDay('yearly',this)"><span class="tab-full">Yearly Summary</span><span class="tab-short">Year</span></button>
     </div>
@@ -4062,9 +4065,12 @@ function refreshTabs(){
     tab.classList.toggle('non-school', !!lock);
     tab.title = lock ? lock.msg : '';
 
+    const dateEl=tab.querySelector('.tab-date');
+    if(dateEl) dateEl.textContent = dateStr ? new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+
     const absent=S.cur && S.data[S.cur]?.[S.week]?.[day]?.absent && !lock;
     let dot=tab.querySelector('.absent-dot');
-    if(absent){ if(!dot){dot=document.createElement('span');dot.className='absent-dot';tab.appendChild(dot);} }
+    if(absent){ if(!dot){dot=document.createElement('span');dot.className='absent-dot';(tab.querySelector('.tab-lbl')||tab).appendChild(dot);} }
     else { if(dot) dot.remove(); }
   });
 }
