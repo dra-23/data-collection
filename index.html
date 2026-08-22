@@ -68,7 +68,7 @@
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; }
-body { height: 100%; font-family: var(--sans); background: rgba(50,59,135,0.10); color: var(--text); font-size: 15px; display: flex; flex-direction: column; overflow: hidden; }
+body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 15px; display: flex; flex-direction: column; overflow: hidden; }
 
 /* Material Symbols Outlined is loaded via the Google Fonts <link> in <head>
    alongside the other web fonts — no local font file to host. */
@@ -270,7 +270,7 @@ body { height: 100%; font-family: var(--sans); background: rgba(50,59,135,0.10);
 .sc-meta  { font-size: 13px; color: var(--text-3); }
 
 /* GOALS — card list (mirrors the period-card treatment) */
-.goals-col { background: var(--bg); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.goals-col { background: var(--surface3); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .goal-card { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; box-shadow: var(--shadow-card); }
 .goal-card-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); }
 .goal-card-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
@@ -394,8 +394,8 @@ body { height: 100%; font-family: var(--sans); background: rgba(50,59,135,0.10);
 
 /* SCHEDULE + NOTES two-column bottom layout */
 .sched-notes-row { display: flex; gap: 0; }
-.sched-notes-row .sched-col { flex: 1 1 0; overflow: auto; background: var(--bg); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-.sched-notes-row .notes-col { width: 320px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; }
+.sched-notes-row .sched-col { flex: 1 1 0; overflow: auto; background: var(--surface3); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.sched-notes-row .notes-col { width: 320px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--surface3); display: flex; flex-direction: column; }
 .notes-col-inner { padding: 12px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .notes-field { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow-card); }
 .notes-field:focus-within { border-color: var(--brand); }
@@ -422,10 +422,10 @@ body { height: 100%; font-family: var(--sans); background: rgba(50,59,135,0.10);
 .notes-card-hdr { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 8px 14px; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); }
 .notes-card-split .notes-textarea { padding: 12px 14px; }
 
-/* PARTICIPATION SUMMARY strip at bottom of sched col — a stronger wash
-   than --brand-dim so it still stands out now that sched-col itself
-   uses --brand-dim as its backdrop. */
-.part-summary { padding: 9px 14px; background: rgba(50,59,135,.22); border: 1px solid rgba(50,59,135,.35); border-radius: var(--r); box-shadow: var(--shadow-card); display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+/* PARTICIPATION SUMMARY strip at bottom of sched col — gold accent tint,
+   matching the star/PAWS accent color rather than the brand indigo. */
+.part-summary { padding: 9px 14px; background: var(--accent-dim); border: 1px solid rgba(247,189,0,.35); border-radius: var(--r); box-shadow: var(--shadow-card); display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.part-summary .sum-val.accent { color: var(--accent-dark); }
 .sum-item { display: flex; align-items: center; gap: 6px; }
 .sum-lbl { font-size: 12px; font-weight: 600; color: var(--text-3); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .sum-val { font-size: 14px; font-weight: 700; color: var(--text); }
@@ -908,7 +908,7 @@ body { height: 100%; font-family: var(--sans); background: rgba(50,59,135,0.10);
 }
 
 /* LOGIN OVERLAY */
-.login-overlay { display:none; position:fixed; inset:0; background:rgba(50,59,135,0.10); z-index:1000; align-items:center; justify-content:center; flex-direction:column; gap:0; }
+.login-overlay { display:none; position:fixed; inset:0; background:var(--bg); z-index:1000; align-items:center; justify-content:center; flex-direction:column; gap:0; }
 .login-overlay.active { display:flex; }
 .login-card { background:#fff; border:1px solid var(--border); border-radius:var(--r-lg); padding:40px; width:380px; box-shadow:0 24px 64px rgba(0,0,0,.12); }
 @media (max-width:480px){ .login-card { width:calc(100% - 32px); padding:28px 24px; border-radius:var(--r); } }
