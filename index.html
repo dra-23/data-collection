@@ -598,6 +598,12 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .modal-tab-panel { display: none; }
 .modal-tab-panel.active { display: flex; flex-direction: column; gap: 14px; }
 
+/* Fixed size so the student modal doesn't resize as tabs are switched —
+   .modal-scroll-body's own overflow-y:auto handles any per-tab overflow. */
+@media (min-width: 769px) {
+  #student-modal .modal { height: 640px; }
+}
+
 /* Toggle switch (Data tab — which per-period fields to collect) */
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .toggle-row:last-child { border-bottom: none; }
@@ -1237,7 +1243,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     <div class="modal-tabs">
       <button type="button" class="modal-tab active" data-tab="details" onclick="switchStuTab('details')">Details</button>
       <button type="button" class="modal-tab" data-tab="contacts" onclick="switchStuTab('contacts')">Contacts</button>
-      <button type="button" class="modal-tab" data-tab="data" onclick="switchStuTab('data')">Data</button>
+      <button type="button" class="modal-tab" data-tab="data" onclick="switchStuTab('data')">Data Options</button>
     </div>
 
     <div class="modal-scroll-body">
@@ -1328,6 +1334,10 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
         <div class="modal-card">
           <div class="modal-card-hdr">Schedule</div>
           <div class="modal-card-body">
+            <div class="toggle-row">
+              <span class="toggle-row-label">Track Goals</span>
+              <label class="switch"><input type="checkbox" id="stu-track-goals"><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
             <div class="fi">
               <label class="fl">Number of Periods</label>
               <select class="fsel" id="stu-period-count">
@@ -1760,7 +1770,7 @@ async function loadStudents(){
   // Deactivated students are excluded — their data stays in the database
   // (goals, daily records, contacts), they just no longer show up here.
   const { data, error } = await sb.from('students')
-    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement, eligibility_id, related_service_minutes, related_service_frequency, iep_meeting_date, iep_start_date, iep_end_date, period_count, track_location, track_participation, track_support, track_notes')
+    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement, eligibility_id, related_service_minutes, related_service_frequency, iep_meeting_date, iep_start_date, iep_end_date, period_count, track_location, track_participation, track_support, track_notes, track_goals')
     .eq('active', true)
     .order('last_name').order('first_name');
   if(error){ console.error('loadStudents:', error); return; }
@@ -1789,7 +1799,8 @@ async function loadStudents(){
     trackLocation:      r.track_location      !== false,
     trackParticipation: r.track_participation !== false,
     trackSupport:       r.track_support       !== false,
-    trackNotes:         r.track_notes         !== false
+    trackNotes:         r.track_notes         !== false,
+    trackGoals:         r.track_goals         !== false
   }));
 }
 
@@ -2626,7 +2637,7 @@ function renderPane(){
         <div class="absent-banner-sub">You may still record notes or observations below.</div>
       </div>
     </div>`:'')+
-    goalsHTML(curDay,d,gs)+
+    (s?.trackGoals!==false?goalsHTML(curDay,d,gs):'')+
     schedHTML(curDay,d);
 }
 
@@ -4425,7 +4436,8 @@ function renderPaneMobile(body){
     </div>
   </div>`;
 
-  body.innerHTML = header + absentBanner + periodNav + goalSec + odSec + partSec + notesSec;
+  const trackGoals = s?.trackGoals !== false;
+  body.innerHTML = header + absentBanner + periodNav + (trackGoals?goalSec+odSec:'') + partSec + notesSec;
 }
 
 
@@ -4668,6 +4680,7 @@ async function openStudentModal(id){
   document.getElementById('stu-track-participation').checked = s?.trackParticipation !== false;
   document.getElementById('stu-track-support').checked       = s?.trackSupport       !== false;
   document.getElementById('stu-track-notes').checked         = s?.trackNotes         !== false;
+  document.getElementById('stu-track-goals').checked         = s?.trackGoals         !== false;
   document.getElementById('stu-deactivate-btn').style.display = s ? 'inline-flex' : 'none';
   switchStuTab('details');
   await loadContactsForModal(id);
@@ -4693,7 +4706,8 @@ async function saveStudent(){
     track_location:      document.getElementById('stu-track-location').checked,
     track_participation: document.getElementById('stu-track-participation').checked,
     track_support:       document.getElementById('stu-track-support').checked,
-    track_notes:         document.getElementById('stu-track-notes').checked
+    track_notes:         document.getElementById('stu-track-notes').checked,
+    track_goals:         document.getElementById('stu-track-goals').checked
   };
   let error, newId;
   if(_editingStudentId){
