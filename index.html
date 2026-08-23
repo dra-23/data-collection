@@ -589,6 +589,26 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .modal-card-layout .modal-card-body .fi:last-child,
 .modal-card-layout .modal-card-body .fi-row:last-child { margin-bottom: 0; }
 .modal-card-layout .modal-acts { flex-shrink: 0; margin-top: 0; padding: 16px 24px; background: var(--surface); border-top: 1px solid var(--border); }
+
+/* Modal tab bar (Details / Contacts / Data on the student modal) */
+.modal-card-layout .modal-tabs { flex-shrink: 0; display: flex; gap: 20px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.modal-tab { padding: 10px 2px; font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--text-3); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s; }
+.modal-tab:hover { color: var(--text); }
+.modal-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+.modal-tab-panel { display: none; }
+.modal-tab-panel.active { display: flex; flex-direction: column; gap: 14px; }
+
+/* Toggle switch (Data tab — which per-period fields to collect) */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-row-label { font-size: 14px; color: var(--text); }
+.switch { position: relative; display: inline-flex; flex-shrink: 0; width: 40px; height: 24px; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch-track { position: absolute; inset: 0; background: var(--border-mid); border-radius: 999px; transition: background .15s; pointer-events: none; }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.switch input:checked ~ .switch-track { background: var(--brand); }
+.switch input:checked ~ .switch-track .switch-thumb { transform: translateX(16px); }
+.switch input:focus-visible ~ .switch-track { outline: 2px solid var(--brand); outline-offset: 2px; }
 .modal-help-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface2); color: var(--text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
 .modal-help-btn:hover { background: var(--brand-dim); border-color: var(--brand); color: var(--brand); }
 .fi { margin-bottom: 12px; }
@@ -1214,91 +1234,131 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <div class="modal-sub">Only visible to you.</div>
     </div>
 
+    <div class="modal-tabs">
+      <button type="button" class="modal-tab active" data-tab="details" onclick="switchStuTab('details')">Details</button>
+      <button type="button" class="modal-tab" data-tab="contacts" onclick="switchStuTab('contacts')">Contacts</button>
+      <button type="button" class="modal-tab" data-tab="data" onclick="switchStuTab('data')">Data</button>
+    </div>
+
     <div class="modal-scroll-body">
-      <div class="modal-card">
-        <div class="modal-card-hdr">Student Information</div>
-        <div class="modal-card-body">
-          <div class="fi-row">
-            <div class="fi"><label class="fl">First Name</label><input class="fin" id="stu-first-name" placeholder="First name"></div>
-            <div class="fi"><label class="fl">Last Name</label><input class="fin" id="stu-last-name" placeholder="Last name"></div>
+      <div class="modal-tab-panel active" data-tab-panel="details">
+        <div class="modal-card">
+          <div class="modal-card-hdr">Student Information</div>
+          <div class="modal-card-body">
+            <div class="fi-row">
+              <div class="fi"><label class="fl">First Name</label><input class="fin" id="stu-first-name" placeholder="First name"></div>
+              <div class="fi"><label class="fl">Last Name</label><input class="fin" id="stu-last-name" placeholder="Last name"></div>
+            </div>
+            <div class="fi">
+              <label class="fl">Grade</label>
+              <select class="fsel" id="stu-grade">
+                <option value=""></option>
+                <option>Pre-Kindergarten</option><option>Kindergarten</option>
+                <option>1st Grade</option><option>2nd Grade</option><option>3rd Grade</option>
+                <option>4th Grade</option><option>5th Grade</option><option>6th Grade</option>
+                <option>7th Grade</option><option>8th Grade</option><option>9th Grade</option>
+                <option>10th Grade</option><option>11th Grade</option><option>12th Grade</option>
+              </select>
+            </div>
+            <div class="fi">
+              <label class="fl">Teacher</label>
+              <input class="fin" id="stu-teacher" placeholder="Teacher name" list="teacher-datalist" autocomplete="off">
+              <datalist id="teacher-datalist"></datalist>
+            </div>
+            <datalist id="subject-datalist"></datalist>
           </div>
-          <div class="fi">
-            <label class="fl">Grade</label>
-            <select class="fsel" id="stu-grade">
-              <option value=""></option>
-              <option>Pre-Kindergarten</option><option>Kindergarten</option>
-              <option>1st Grade</option><option>2nd Grade</option><option>3rd Grade</option>
-              <option>4th Grade</option><option>5th Grade</option><option>6th Grade</option>
-              <option>7th Grade</option><option>8th Grade</option><option>9th Grade</option>
-              <option>10th Grade</option><option>11th Grade</option><option>12th Grade</option>
-            </select>
+        </div>
+
+        <div class="modal-card">
+          <div class="modal-card-hdr">Special Education</div>
+          <div class="modal-card-body">
+            <div class="fi">
+              <label class="fl">Eligibility</label>
+              <select class="fsel" id="stu-eligibility">
+                <option value=""></option>
+              </select>
+            </div>
+            <div class="fi-row">
+              <div class="fi">
+                <label class="fl">Related Service Minutes</label>
+                <input class="fin" type="number" min="0" id="stu-service-minutes" placeholder="e.g. 30">
+              </div>
+              <div class="fi">
+                <label class="fl">Frequency</label>
+                <select class="fsel" id="stu-service-frequency">
+                  <option value=""></option>
+                  <option value="week">Per Week</option>
+                  <option value="month">Per Month</option>
+                  <option value="quarter">Per Quarter</option>
+                  <option value="trimester">Per Trimester</option>
+                  <option value="semester">Per Semester</option>
+                  <option value="year">Per Year</option>
+                </select>
+              </div>
+            </div>
+            <div class="fi">
+              <label class="fl">IEP Meeting Date</label>
+              <input class="fin" type="date" id="stu-iep-meeting">
+            </div>
+            <div class="fi-row">
+              <div class="fi">
+                <label class="fl">IEP Start Date</label>
+                <input class="fin" type="date" id="stu-iep-start">
+              </div>
+              <div class="fi">
+                <label class="fl">IEP End Date</label>
+                <input class="fin" type="date" id="stu-iep-end">
+              </div>
+            </div>
           </div>
-          <div class="fi">
-            <label class="fl">Teacher</label>
-            <input class="fin" id="stu-teacher" placeholder="Teacher name" list="teacher-datalist" autocomplete="off">
-            <datalist id="teacher-datalist"></datalist>
-          </div>
-          <div class="fi">
-            <label class="fl">Number of Periods</label>
-            <select class="fsel" id="stu-period-count">
-              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-              <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-              <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-            </select>
-          </div>
-          <datalist id="subject-datalist"></datalist>
         </div>
       </div>
 
-      <div class="modal-card">
-        <div class="modal-card-hdr">Special Education</div>
-        <div class="modal-card-body">
-          <div class="fi">
-            <label class="fl">Eligibility</label>
-            <select class="fsel" id="stu-eligibility">
-              <option value=""></option>
-            </select>
+      <div class="modal-tab-panel" data-tab-panel="contacts">
+        <div class="modal-card">
+          <div class="modal-card-hdr">Contacts</div>
+          <div class="modal-card-body">
+            <div id="contacts-list"></div>
+            <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
           </div>
-          <div class="fi-row">
+        </div>
+      </div>
+
+      <div class="modal-tab-panel" data-tab-panel="data">
+        <div class="modal-card">
+          <div class="modal-card-hdr">Schedule</div>
+          <div class="modal-card-body">
             <div class="fi">
-              <label class="fl">Related Service Minutes</label>
-              <input class="fin" type="number" min="0" id="stu-service-minutes" placeholder="e.g. 30">
-            </div>
-            <div class="fi">
-              <label class="fl">Frequency</label>
-              <select class="fsel" id="stu-service-frequency">
-                <option value=""></option>
-                <option value="week">Per Week</option>
-                <option value="month">Per Month</option>
-                <option value="quarter">Per Quarter</option>
-                <option value="trimester">Per Trimester</option>
-                <option value="semester">Per Semester</option>
-                <option value="year">Per Year</option>
+              <label class="fl">Number of Periods</label>
+              <select class="fsel" id="stu-period-count">
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                <option value="7">7</option><option value="8">8</option><option value="9">9</option>
               </select>
             </div>
           </div>
-          <div class="fi">
-            <label class="fl">IEP Meeting Date</label>
-            <input class="fin" type="date" id="stu-iep-meeting">
-          </div>
-          <div class="fi-row">
-            <div class="fi">
-              <label class="fl">IEP Start Date</label>
-              <input class="fin" type="date" id="stu-iep-start">
-            </div>
-            <div class="fi">
-              <label class="fl">IEP End Date</label>
-              <input class="fin" type="date" id="stu-iep-end">
-            </div>
-          </div>
         </div>
-      </div>
 
-      <div class="modal-card">
-        <div class="modal-card-hdr">Contacts</div>
-        <div class="modal-card-body">
-          <div id="contacts-list"></div>
-          <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="addContactRow()" id="add-contact-btn">+ Add Contact</button>
+        <div class="modal-card">
+          <div class="modal-card-hdr">Track Per Period</div>
+          <div class="modal-card-body">
+            <div class="toggle-row">
+              <span class="toggle-row-label">Push-In / Pull-Out</span>
+              <label class="switch"><input type="checkbox" id="stu-track-location"><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-row-label">Participation</span>
+              <label class="switch"><input type="checkbox" id="stu-track-participation"><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-row-label">Support</span>
+              <label class="switch"><input type="checkbox" id="stu-track-support"><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-row-label">Notes</span>
+              <label class="switch"><input type="checkbox" id="stu-track-notes"><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1700,7 +1760,7 @@ async function loadStudents(){
   // Deactivated students are excluded — their data stays in the database
   // (goals, daily records, contacts), they just no longer show up here.
   const { data, error } = await sb.from('students')
-    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement, eligibility_id, related_service_minutes, related_service_frequency, iep_meeting_date, iep_start_date, iep_end_date, period_count')
+    .select('id, first_name, last_name, grade, status, goals, pn, pt, campus, classroom, teacher, date_of_placement, eligibility_id, related_service_minutes, related_service_frequency, iep_meeting_date, iep_start_date, iep_end_date, period_count, track_location, track_participation, track_support, track_notes')
     .eq('active', true)
     .order('last_name').order('first_name');
   if(error){ console.error('loadStudents:', error); return; }
@@ -1725,7 +1785,11 @@ async function loadStudents(){
     iepMeetingDate:   r.iep_meeting_date || '',
     iepStartDate:     r.iep_start_date   || '',
     iepEndDate:       r.iep_end_date     || '',
-    periodCount:      r.period_count || PER.length
+    periodCount:      r.period_count || PER.length,
+    trackLocation:      r.track_location      !== false,
+    trackParticipation: r.track_participation !== false,
+    trackSupport:       r.track_support       !== false,
+    trackNotes:         r.track_notes         !== false
   }));
 }
 
@@ -2734,6 +2798,10 @@ function periodCardHTML(day, pi, d){
   const supVal = d.sup?.[pi] || '';
   const note = d.pNotes?.[pi] || '';
   const locVal = d.loc?.[pi] || '';
+  const trackLoc  = s?.trackLocation      !== false;
+  const trackPart = s?.trackParticipation !== false;
+  const trackSup  = s?.trackSupport       !== false;
+  const trackNote = s?.trackNotes         !== false;
 
   const stars = [1,2,3,4].map(n=>{
     const on = pVal!=='' && parseInt(pVal)>=n;
@@ -2751,6 +2819,11 @@ function periodCardHTML(day, pi, d){
     return `<button type="button" class="tg-btn${on?' sel-b':''}" onclick="setLoc('${day}',${pi},'${v}')">${v}</button>`;
   }).join('');
 
+  const bottomFields = [
+    trackPart ? `<div class="period-field"><span class="period-field-lbl">Participation</span><div class="star-row">${stars}</div></div>` : '',
+    trackSup  ? `<div class="period-field"><span class="period-field-lbl">Support</span><div class="sup-row">${supBtns}</div></div>` : ''
+  ].filter(Boolean).join('');
+
   return `<div class="period-card">
     <div class="period-card-top">
       <div class="period-num-badge">${pi+1}</div>
@@ -2760,41 +2833,34 @@ function periodCardHTML(day, pi, d){
         <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
       </div>
       <input class="fin period-subject-inp pf-subject" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
-      <div class="tg-seg period-top-loc pf-location">${locBtns}</div>
+      ${trackLoc?`<div class="tg-seg period-top-loc pf-location">${locBtns}</div>`:''}
     </div>
-    <div class="period-card-bottom">
-      <div class="period-field">
-        <span class="period-field-lbl">Participation</span>
-        <div class="star-row">${stars}</div>
-      </div>
-      <div class="period-field">
-        <span class="period-field-lbl">Support</span>
-        <div class="sup-row">${supBtns}</div>
-      </div>
-    </div>
-    <div class="period-card-notes">
+    ${bottomFields?`<div class="period-card-bottom">${bottomFields}</div>`:''}
+    ${trackNote?`<div class="period-card-notes">
       <span class="period-field-lbl">Notes</span>
       <input class="fin" placeholder="Notes…" value="${esc(note)}" onchange="setPeriodNote('${day}',${pi},this.value)">
-    </div>
+    </div>`:''}
   </div>`;
 }
 
 function schedHTML(day, d){
-  const n = studentPeriodCount(stu());
+  const s = stu();
+  const n = studentPeriodCount(s);
   const cards = PER.slice(0,n).map((_,pi)=>periodCardHTML(day,pi,d)).join('');
+  const trackPart = s?.trackParticipation !== false;
   const {sum,scored,max,pct}=pStats(d,n);
   const coupons = parseInt(d.coupons)||0;
 
   const chevron=`<svg class="sc-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
   return `<div class="section-card${colSec.schedule?' sec-collapsed':''}" id="sc-schedule">
-    <div class="sc-head" onclick="toggleSection('schedule')"><span class="sc-title">Schedule &amp; Participation</span><span class="sc-meta">1–4 stars per period · blanks excluded</span>${clearBtnHTML('schedule')}${chevron}</div>
+    <div class="sc-head" onclick="toggleSection('schedule')"><span class="sc-title">Schedule &amp; Participation</span><span class="sc-meta">${trackPart?'1–4 stars per period · blanks excluded':'Blanks excluded'}</span>${clearBtnHTML('schedule')}${chevron}</div>
     <div class="sched-notes-row">
       <div class="sched-col">
         ${cards}
-        <div class="part-summary">
+        ${trackPart?`<div class="part-summary">
           <div class="sum-item"><span class="sum-lbl">Total</span><span class="sum-val">${sum} / ${max}</span></div>
           <div class="sum-item"><span class="sum-lbl">Score</span><span class="sum-val accent">${fmtPct(pct)}</span></div>
-        </div>
+        </div>`:''}
       </div>
       <div class="notes-col">
         <div class="notes-col-inner">
@@ -4578,6 +4644,11 @@ async function saveGoals(){
 // ═══════════════════════════════════════════════════════════════
 let _editingStudentId = null; // id being edited, or null while adding a new student
 
+function switchStuTab(tab){
+  document.querySelectorAll('#student-modal .modal-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('#student-modal .modal-tab-panel').forEach(p=>p.classList.toggle('active', p.dataset.tabPanel===tab));
+}
+
 async function openStudentModal(id){
   _editingStudentId = id || null;
   const s = id ? S.students.find(x=>x.id===id) : null;
@@ -4593,7 +4664,12 @@ async function openStudentModal(id){
   document.getElementById('stu-iep-meeting').value        = s?.iepMeetingDate  || '';
   document.getElementById('stu-iep-start').value          = s?.iepStartDate    || '';
   document.getElementById('stu-iep-end').value            = s?.iepEndDate      || '';
+  document.getElementById('stu-track-location').checked      = s?.trackLocation      !== false;
+  document.getElementById('stu-track-participation').checked = s?.trackParticipation !== false;
+  document.getElementById('stu-track-support').checked       = s?.trackSupport       !== false;
+  document.getElementById('stu-track-notes').checked         = s?.trackNotes         !== false;
   document.getElementById('stu-deactivate-btn').style.display = s ? 'inline-flex' : 'none';
+  switchStuTab('details');
   await loadContactsForModal(id);
   openModal('student-modal');
 }
@@ -4613,7 +4689,11 @@ async function saveStudent(){
     related_service_frequency:  document.getElementById('stu-service-frequency').value || null,
     iep_meeting_date:           document.getElementById('stu-iep-meeting').value || null,
     iep_start_date:             document.getElementById('stu-iep-start').value || null,
-    iep_end_date:               document.getElementById('stu-iep-end').value || null
+    iep_end_date:               document.getElementById('stu-iep-end').value || null,
+    track_location:      document.getElementById('stu-track-location').checked,
+    track_participation: document.getElementById('stu-track-participation').checked,
+    track_support:       document.getElementById('stu-track-support').checked,
+    track_notes:         document.getElementById('stu-track-notes').checked
   };
   let error, newId;
   if(_editingStudentId){
