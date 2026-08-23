@@ -608,14 +608,25 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .goal-preview-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow-card); cursor: default; flex-shrink: 0; }
 .goal-preview-text { flex: 1; min-width: 0; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tbadge-track { background: var(--surface); color: var(--text-3); border: 1px solid var(--border-mid); }
+/* +Add Goal sits directly on the tinted section backdrop (unlike
+   +Add Contact, which is already inside a white card), so it needs
+   the same white/bordered/shadowed treatment as the goal cards to
+   read as a peer rather than a flat outline floating on the tint. */
+#add-goal-btn { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-card); }
+#add-goal-btn:hover { background: var(--surface2); }
+#contacts-list { display: flex; flex-direction: column; gap: 8px; }
+#add-contact-btn { margin-top: 8px; }
 .goal-icon-btn { width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
 .goal-icon-btn:hover { border-color: var(--border-mid); color: var(--text-2); background: #fff; }
 .goal-icon-btn.danger:hover { background: #fee2e2; color: var(--danger); border-color: #fca5a5; }
-.goal-edit-block { border: 1.5px solid var(--brand); border-radius: 10px; padding: 14px; background: var(--surface); box-shadow: var(--shadow-card); flex-shrink: 0; }
-.goal-edit-block-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.goal-edit-block-title { flex: 1; font-size: 12px; font-weight: 700; color: var(--text-3); letter-spacing: .06em; text-transform: uppercase; }
-.contact-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; background: var(--surface); }
-.contact-card-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+/* Goal edit block / contact card now reuse .modal-card's header+body
+   split (shading, padding) instead of their own flat block — see
+   editBlock()/renderContactsList() in JS, which pair these classes
+   with .modal-card/.modal-card-hdr/.modal-card-body. */
+.modal-card.goal-edit-block { border-color: var(--brand); border-width: 1.5px; }
+.goal-edit-block-hdr,
+.contact-card-hdr { display: flex; align-items: center; gap: 10px; }
+.goal-edit-block-title,
 .contact-card-title { flex: 1; font-size: 12px; font-weight: 700; color: var(--text-3); letter-spacing: .06em; text-transform: uppercase; }
 .goal-edit-block-ftr { display: flex; justify-content: flex-end; margin-top: 10px; }
 .mob-goal-card.editing { border-color: var(--brand); }
@@ -4421,7 +4432,7 @@ function renderGoalsList(){
   if(!tempGoals.length){
     const msg = isMobile()
       ? `<div style="color:var(--text-3);font-size:16px;padding:20px 4px;text-align:center">No goals yet.<br>Tap <strong>+ Add Goal</strong> below.</div>`
-      : `<div style="color:var(--text-3);font-size:14px;padding:12px 4px">No goals yet — click <strong>+ Add Goal</strong> to get started.</div>`;
+      : `<div class="modal-card"><div class="modal-card-body" style="color:var(--text-3);font-size:14px">No goals yet — click <strong>+ Add Goal</strong> to get started.</div></div>`;
     el.innerHTML = msg;
     return;
   }
@@ -4467,32 +4478,34 @@ function renderGoalsList(){
   // ── Expanded edit block — desktop ──
   const editBlock=(g,i)=>{
     const trk=g.tracking||'period';
-    return `<div class="goal-edit-block">
-      <div class="goal-edit-block-hdr">
+    return `<div class="modal-card goal-edit-block">
+      <div class="modal-card-hdr goal-edit-block-hdr">
         <div class="goal-num-badge">${i+1}</div>
         <span class="goal-edit-block-title">Editing Goal ${i+1}</span>
         <button type="button" class="goal-icon-btn danger" onclick="openGoalDeleteConfirm(${i},event)" title="Delete goal">${delIcon}</button>
       </div>
-      <div class="fi">
-        <label class="fl">Goal Description</label>
-        <textarea class="goal-text-area" placeholder="Describe the goal…" onchange="tempGoals[${i}].name=this.value" oninput="tempGoals[${i}].name=this.value">${esc(g.name)}</textarea>
-      </div>
-      <div class="fi-row">
+      <div class="modal-card-body">
         <div class="fi">
-          <label class="fl">Data Type</label>
-          <select class="fsel" onchange="tempGoals[${i}].type=this.value;renderGoalsList()">${typeOpts(g.type)}</select>
-          ${condFields(g,i,false)}
+          <label class="fl">Goal Description</label>
+          <textarea class="goal-text-area" placeholder="Describe the goal…" onchange="tempGoals[${i}].name=this.value" oninput="tempGoals[${i}].name=this.value">${esc(g.name)}</textarea>
         </div>
-        <div class="fi">
-          <label class="fl">Tracking</label>
-          <div class="tg-seg" style="height:36px">
-            <button type="button" class="tg-btn${trk==='period'?' sel-b':''}" style="font-size:12px" onclick="tempGoals[${i}].tracking='period';renderGoalsList()">By Period</button>
-            <button type="button" class="tg-btn${trk==='ondemand'?' sel-b':''}" style="font-size:12px" onclick="tempGoals[${i}].tracking='ondemand';renderGoalsList()">On Demand</button>
+        <div class="fi-row">
+          <div class="fi">
+            <label class="fl">Data Type</label>
+            <select class="fsel" onchange="tempGoals[${i}].type=this.value;renderGoalsList()">${typeOpts(g.type)}</select>
+            ${condFields(g,i,false)}
+          </div>
+          <div class="fi">
+            <label class="fl">Tracking</label>
+            <div class="tg-seg" style="height:36px">
+              <button type="button" class="tg-btn${trk==='period'?' sel-b':''}" style="font-size:12px" onclick="tempGoals[${i}].tracking='period';renderGoalsList()">By Period</button>
+              <button type="button" class="tg-btn${trk==='ondemand'?' sel-b':''}" style="font-size:12px" onclick="tempGoals[${i}].tracking='ondemand';renderGoalsList()">On Demand</button>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="goal-edit-block-ftr">
-        <button type="button" class="mbtn mbtn-brand mbtn-sm" onclick="closeGoalEdit()">Done</button>
+        <div class="goal-edit-block-ftr">
+          <button type="button" class="mbtn mbtn-brand mbtn-sm" onclick="closeGoalEdit()">Done</button>
+        </div>
       </div>
     </div>`;
   };
@@ -4689,20 +4702,22 @@ function renderContactsList(){
     return;
   }
   const delIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
-  el.innerHTML = tempContacts.map((c,i)=>`<div class="contact-card">
-    <div class="contact-card-hdr">
+  el.innerHTML = tempContacts.map((c,i)=>`<div class="modal-card contact-card">
+    <div class="modal-card-hdr contact-card-hdr">
       <span class="contact-card-title">Contact ${i+1}</span>
       <button type="button" class="del-b" onclick="removeContactRow(${i})" title="Delete contact">${delIcon}</button>
     </div>
-    <div class="fi-row">
-      <div class="fi"><label class="fl">First Name</label><input class="fin" value="${esc(c.firstName)}" oninput="tempContacts[${i}].firstName=this.value"></div>
-      <div class="fi"><label class="fl">Last Name</label><input class="fin" value="${esc(c.lastName)}" oninput="tempContacts[${i}].lastName=this.value"></div>
+    <div class="modal-card-body">
+      <div class="fi-row">
+        <div class="fi"><label class="fl">First Name</label><input class="fin" value="${esc(c.firstName)}" oninput="tempContacts[${i}].firstName=this.value"></div>
+        <div class="fi"><label class="fl">Last Name</label><input class="fin" value="${esc(c.lastName)}" oninput="tempContacts[${i}].lastName=this.value"></div>
+      </div>
+      <div class="fi-row">
+        <div class="fi"><label class="fl">Relationship</label><input class="fin" placeholder="e.g. Mother, Guardian" value="${esc(c.relationship)}" oninput="tempContacts[${i}].relationship=this.value"></div>
+        <div class="fi"><label class="fl">Phone</label><input class="fin" type="tel" value="${esc(c.phone)}" oninput="tempContacts[${i}].phone=this.value"></div>
+      </div>
+      <div class="fi"><label class="fl">Email</label><input class="fin" type="email" value="${esc(c.email)}" oninput="tempContacts[${i}].email=this.value"></div>
     </div>
-    <div class="fi-row">
-      <div class="fi"><label class="fl">Relationship</label><input class="fin" placeholder="e.g. Mother, Guardian" value="${esc(c.relationship)}" oninput="tempContacts[${i}].relationship=this.value"></div>
-      <div class="fi"><label class="fl">Phone</label><input class="fin" type="tel" value="${esc(c.phone)}" oninput="tempContacts[${i}].phone=this.value"></div>
-    </div>
-    <div class="fi"><label class="fl">Email</label><input class="fin" type="email" value="${esc(c.email)}" oninput="tempContacts[${i}].email=this.value"></div>
   </div>`).join('');
 }
 // Replaces this student's stored contacts with the current tempContacts —
