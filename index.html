@@ -430,7 +430,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .notes-field .notes-textarea { border: none; border-radius: 0; padding: 0; background: transparent; }
 .notes-field .notes-textarea:focus { border-color: transparent; }
 /* Comments card — the label becomes a full header bar (same tint as the
-   Schedule & Participation section header/period strip) instead of a
+   Daily Data section header/period strip) instead of a
    plain inline label, so it clearly separates from the textarea below. */
 .notes-card-split { padding: 0; overflow: hidden; gap: 0; }
 .notes-card-hdr { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 8px 14px; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); }
@@ -574,7 +574,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* CARD-LAYOUT MODAL — reusable pinned-header/footer + card-per-section
    treatment (student modal, goals modal, ...). Same 4-tier neutral
    scheme (page/section backdrop/card header/card body) already used
-   for Goals and Schedule & Participation on the daily view. */
+   for Goals and Daily Data on the daily view. */
 .modal-card-layout { display: flex; flex-direction: column; padding: 0; background: var(--surface3); overflow: hidden; }
 .modal-card-layout .modal-hdr { flex-shrink: 0; padding: 20px 24px 16px; background: var(--surface); }
 .modal-card-layout .modal-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -951,7 +951,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   /* ── Section scroll (desktop tables keep horizontal scroll on mobile) ── */
   .section-card-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-  /* ── Period card (Schedule & Participation, mobile) ── */
+  /* ── Period card (Daily Data, mobile) ── */
   .period-card-top { flex-wrap: wrap; row-gap: 12px; padding: 12px 14px; }
   .period-time-inp { width: auto; flex: 1; min-width: 0; font-size: 16px; padding: 9px 8px; }
   .pf-subject { flex: 1 1 100%; }
@@ -2853,7 +2853,7 @@ function schedHTML(day, d){
 
   const chevron=`<svg class="sc-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
   return `<div class="section-card${colSec.schedule?' sec-collapsed':''}" id="sc-schedule">
-    <div class="sc-head" onclick="toggleSection('schedule')"><span class="sc-title">Schedule &amp; Participation</span><span class="sc-meta">${trackPart?'1–4 stars per period · blanks excluded':'Blanks excluded'}</span>${clearBtnHTML('schedule')}${chevron}</div>
+    <div class="sc-head" onclick="toggleSection('schedule')"><span class="sc-title">Daily Data</span><span class="sc-meta">${trackPart?'1–4 stars per period · blanks excluded':'Blanks excluded'}</span>${clearBtnHTML('schedule')}${chevron}</div>
     <div class="sched-notes-row">
       <div class="sched-col">
         ${cards}
@@ -4366,10 +4366,10 @@ function renderPaneMobile(body){
     <div class="mob-sec-body">${goalRows}</div>
   </div>`;
 
-  // ── Schedule & Participation (this period) ──
+  // ── Daily Data (this period) ──
   const partSec = `<div class="mob-section${_mobCollapsed.part?' collapsed':''}" id="mob-sec-part">
     <div class="mob-sec-hdr" onclick="toggleMobSection('part')">
-      <span class="mob-sec-title">Schedule &amp; Participation</span>
+      <span class="mob-sec-title">Daily Data</span>
       <div class="mob-sec-hdr-actions">${clearBtnHTML('schedule')}${chevSVG}</div>
     </div>
     <div class="mob-sec-body">${periodCardHTML(curDay,pi,d)}</div>
@@ -4832,12 +4832,12 @@ function toggleSection(id){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CLEAR SECTION (Goals / Schedule & Participation)
+// CLEAR SECTION (Goals / Daily Data)
 // ═══════════════════════════════════════════════════════════════
 let _clearSectionTarget = null; // { key, day }
 const CLEAR_SECTION_META = {
   goals:        { label:'Goals',                   desc:'goal scores' },
-  schedule:     { label:'Schedule & Participation',  desc:'schedule, participation, support, and notes' },
+  schedule:     { label:'Daily Data',  desc:'schedule, participation, support, and notes' },
 };
 function clearBtnHTML(key){
   return `<button type="button" class="sc-clear-btn" onclick="openClearConfirm('${key}', event)" title="Clear ${CLEAR_SECTION_META[key].desc} for this day">
