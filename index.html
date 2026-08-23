@@ -608,12 +608,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .goal-preview-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow-card); cursor: default; flex-shrink: 0; }
 .goal-preview-text { flex: 1; min-width: 0; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tbadge-track { background: var(--surface); color: var(--text-3); border: 1px solid var(--border-mid); }
-/* +Add Goal sits directly on the tinted section backdrop (unlike
-   +Add Contact, which is already inside a white card), so it needs
-   the same white/bordered/shadowed treatment as the goal cards to
-   read as a peer rather than a flat outline floating on the tint. */
-#add-goal-btn { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-card); }
-#add-goal-btn:hover { background: var(--surface2); }
 #contacts-list { display: flex; flex-direction: column; gap: 8px; }
 #add-contact-btn { margin-top: 8px; }
 .goal-icon-btn { width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
@@ -4391,8 +4385,6 @@ async function selectStu(id){
 // ═══════════════════════════════════════════════════════════════
 function openGoalsModal(){
   const s=stu(); if(!s){ alert('Select a student first.'); return; }
-  const sub = `Configure goals for ${s.name}.`;
-  document.getElementById('goals-modal-sub').textContent = sub;
   const mobTitle = document.getElementById('mob-goals-title');
   if(mobTitle) mobTitle.textContent = s.name + '\u2019s Goals';
   tempGoals=JSON.parse(JSON.stringify(s.goals||[]));
@@ -4421,6 +4413,13 @@ function confirmGoalDelete(){
 function renderGoalsList(){
   const el  = document.getElementById('goals-list');
 
+  // Desktop's subtitle doubles as the empty-state message, so it needs to
+  // stay in sync with tempGoals as goals are added/removed, not just set
+  // once when the modal opens.
+  const s = stu();
+  const subEl = document.getElementById('goals-modal-sub');
+  if(subEl && s) subEl.textContent = tempGoals.length ? `Configure goals for ${s.name}.` : 'No goals yet — click + Add Goal to get started.';
+
   const typeOpts = (cur) => `
     <option value="yn"   ${cur==='yn'   ?'selected':''}>Yes / No</option>
     <option value="on"   ${cur==='on'   ?'selected':''}>Observed / Not Observed</option>
@@ -4430,10 +4429,12 @@ function renderGoalsList(){
     <option value="dur"  ${cur==='dur'  ?'selected':''}>Duration</option>`;
 
   if(!tempGoals.length){
-    const msg = isMobile()
+    // Desktop: the subtitle above already says "No goals yet…", so the
+    // list area just shows the +Add Goal button with nothing redundant
+    // above it. Mobile has no subtitle line, so it keeps its own message.
+    el.innerHTML = isMobile()
       ? `<div style="color:var(--text-3);font-size:16px;padding:20px 4px;text-align:center">No goals yet.<br>Tap <strong>+ Add Goal</strong> below.</div>`
-      : `<div class="modal-card"><div class="modal-card-body" style="color:var(--text-3);font-size:14px">No goals yet — click <strong>+ Add Goal</strong> to get started.</div></div>`;
-    el.innerHTML = msg;
+      : '';
     return;
   }
 
