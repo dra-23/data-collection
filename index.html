@@ -3252,9 +3252,9 @@ function _buildYearlyView(body,s){
       return {kind:'donut',dist};
     }
     // Per-bucket aggregated value for all other types (week, or month once useMonthly)
-    const perWk=bucketKeys.map(bk=>{
+    const perBucket=bucketKeys.map(bk=>{
       const wr=bucketMap[bk].rows.filter(r=>!r.absent);
-      if(!wr.length) return null;
+      if(!wr.length) return {val:null,rawSum:0,cnt:0};
       let sum=0,max=0,cnt=0;
       const addEntry=(type,v)=>{
         if(v===undefined||v===''||v===null) return;
@@ -3267,13 +3267,19 @@ function _buildYearlyView(body,s){
         PER.slice(0,n).forEach((_,pi)=>addEntry(g.type,gRead(row.g,g,gi,pi)));
         (gRead(row.g,g,gi,'sessions')||[]).forEach(ses=>addEntry(g.type,ses.v));
       });
-      if(!cnt) return null;
-      if(g.type==='acc'||g.type==='yn'||g.type==='on') return max>0?Math.round((sum/max)*100):null;
-      if(g.type==='dur') return cnt>0?Math.round(sum/cnt):null; // avg seconds per entry
-      if(g.type==='count') return sum;
-      return null;
+      if(!cnt) return {val:null,rawSum:0,cnt:0};
+      let val=null;
+      if(g.type==='acc'||g.type==='yn'||g.type==='on') val=max>0?Math.round((sum/max)*100):null;
+      else if(g.type==='dur') val=cnt>0?Math.round(sum/cnt):null; // avg seconds per entry
+      else if(g.type==='count') val=sum; // week/month total — drives the bar chart
+      return {val,rawSum:sum,cnt};
     });
-    return {kind:'chart',perWk};
+    const perWk=perBucket.map(b=>b.val);
+    // Per-bucket average (this bucket's sum / this bucket's entry count) — used
+    // to average "typical count per entry" across buckets, rather than letting
+    // buckets with more entries dominate a straight sum-of-all/bucket-count.
+    const perWkAvg=perBucket.map(b=>b.cnt?b.rawSum/b.cnt:null);
+    return {kind:'chart',perWk,perWkAvg};
   });
 
   // Hero KPI strip
@@ -3374,8 +3380,10 @@ function _buildYearlyView(body,s){
         const entriesTile=`<div class="yr-goal-card-stat"><div class="yr-goal-card-stat-val">${scoredDays}</div><div class="yr-goal-card-stat-lbl">Entries</div></div>`;
         statTiles=(g.totalMode==='average'?avgTile+totalTile:totalTile+avgTile)+entriesTile;
       } else if(g.type==='count'){
-        const perWkVals=goalChartData[gi].perWk.filter(v=>v!==null);
-        const wkAvg=perWkVals.length?(sumAll/perWkVals.length).toFixed(1):'—';
+        // Average each bucket's own per-entry average first, then average
+        // those — a bucket with more entries doesn't outweigh a quieter one.
+        const perWkAvgVals=goalChartData[gi].perWkAvg.filter(v=>v!==null);
+        const wkAvg=perWkAvgVals.length?(perWkAvgVals.reduce((a,v)=>a+v,0)/perWkAvgVals.length).toFixed(1):'—';
         const totalTile=`<div class="yr-goal-card-stat"><div class="yr-goal-card-stat-val">${sumAll}</div><div class="yr-goal-card-stat-lbl">YTD Total</div></div>`;
         const avgTile=`<div class="yr-goal-card-stat"><div class="yr-goal-card-stat-val">${wkAvg}</div><div class="yr-goal-card-stat-lbl">Avg / ${useMonthly?'Month':'Week'}</div></div>`;
         statTiles=g.totalMode==='average'?avgTile+totalTile:totalTile+avgTile;
