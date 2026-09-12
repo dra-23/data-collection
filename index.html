@@ -384,7 +384,16 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .period-time-inp { width: 116px; height: 34px; flex-shrink: 0; padding: 0 9px; border: 1.5px solid var(--border-mid); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--text); }
 .period-time-inp:focus { outline: none; border-color: var(--brand); }
 .period-time-sep { color: var(--text-3); font-weight: 600; flex-shrink: 0; }
-.fin.period-subject-inp { width: 100%; height: 34px; background: var(--surface); border-color: var(--border-mid); }
+.fsel.period-subject-sel { width: 100%; height: 34px; background: var(--surface); border-color: var(--border-mid); }
+
+/* Manage Periods (Data Options tab) */
+#manage-periods-list { display: flex; flex-direction: column; gap: 6px; }
+.manage-period-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); cursor: grab; }
+.manage-period-row.dragging { opacity: .4; cursor: grabbing; }
+.manage-period-badge { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-dim); color: var(--brand); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.manage-period-row .period-subject-sel { flex: 1; height: 30px; }
+.manage-period-time { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.manage-period-time .period-time-inp { width: 92px; }
 .period-top-loc { flex-shrink: 0; height: 34px; }
 .period-top-loc .tg-btn { padding: 0 10px; font-size: 12px; white-space: nowrap; }
 .period-top-loc .tg-btn.sel-b { background: var(--accent-dim); color: var(--accent-dark); }
@@ -622,6 +631,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .fi-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .fi-row .fi { flex: 1; margin-bottom: 0; }
 .fl { display: block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin-bottom: 5px; }
+.fl-hint { font-size: 12px; color: var(--text-3); margin-bottom: 8px; }
 .fin, .fsel { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
 .fsel { appearance: none; -webkit-appearance: none; padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235f6368' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
 .fin:focus, .fsel:focus { outline: none; border-color: var(--brand); }
@@ -964,7 +974,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .period-time-inp { width: auto; flex: 1; min-width: 0; font-size: 16px; padding: 9px 8px; }
   .pf-subject { flex: 1 1 100%; }
   .pf-location { flex: 1 1 100%; }
-  .period-subject-inp { font-size: 16px; }
+  .period-subject-sel { font-size: 16px; }
   .period-top-loc { height: 40px !important; }
   .period-top-loc .tg-btn { font-size: 13px; }
   .period-card-bottom { flex-direction: column; align-items: stretch; gap: 14px; padding: 14px 14px 0; }
@@ -1274,7 +1284,6 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
               <input class="fin" id="stu-teacher" placeholder="Teacher name" list="teacher-datalist" autocomplete="off">
               <datalist id="teacher-datalist"></datalist>
             </div>
-            <datalist id="subject-datalist"></datalist>
           </div>
         </div>
 
@@ -1343,11 +1352,16 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
             </div>
             <div class="fi">
               <label class="fl">Number of Periods</label>
-              <select class="fsel" id="stu-period-count">
+              <select class="fsel" id="stu-period-count" onchange="renderManagePeriodsList()">
                 <option value="1">1</option><option value="2">2</option><option value="3">3</option>
                 <option value="4">4</option><option value="5">5</option><option value="6">6</option>
                 <option value="7">7</option><option value="8">8</option><option value="9">9</option>
               </select>
+            </div>
+            <div class="fi">
+              <label class="fl">Manage Periods</label>
+              <div class="fl-hint">Drag to swap which subject is taught in each period. Times stay with the period; subjects move.</div>
+              <div id="manage-periods-list"></div>
             </div>
           </div>
         </div>
@@ -1835,29 +1849,138 @@ async function rememberTeacher(name){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SUPABASE — SUBJECTS (autocomplete helper list)
-// Grows automatically as subject names are entered on a period card — see
-// setPn() — so retyping the same subject later just picks it from the list.
+// SUPABASE — SUBJECTS (the reference bank a period's subject is picked from)
+// A period's subject is stored as a subject_id (see students.pn), not free
+// text, so renaming a subject here is reflected everywhere it's used and
+// summary rollups can group by subject reliably instead of text-matching.
 // ═══════════════════════════════════════════════════════════════
-let subjectNames = [];
+let subjects = [];              // [{id,name}, ...] sorted by name
+let subjectsById = new Map();
 
 async function loadSubjects(){
-  const { data, error } = await sb.from('subjects').select('name').order('name');
+  const { data, error } = await sb.from('subjects').select('id,name').order('name');
   if(error){ console.error('loadSubjects:', error); return; }
-  subjectNames = (data || []).map(r => r.name);
-  renderSubjectDatalist();
+  subjects = data || [];
+  subjectsById = new Map(subjects.map(s => [s.id, s]));
 }
-function renderSubjectDatalist(){
-  const el = document.getElementById('subject-datalist');
-  if(el) el.innerHTML = subjectNames.map(n => `<option value="${esc(n)}">`).join('');
+// Subject ids are uuids; a period's subject used to be stored as free text,
+// so anything that doesn't look like a uuid is legacy text still needing
+// migration (this same check also lets Phase 2's reporting code tell a
+// trustworthy post-migration snapshot apart from old free-text data).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function looksLikeSubjectId(v){ return typeof v === 'string' && UUID_RE.test(v); }
+// One-time, idempotent migration from free-text period subjects to
+// subject_id references — runs after loadStudents()/loadSubjects() on every
+// load, but no-ops immediately once every student's pn values are already
+// ids. Safe to run unconditionally at this app's scale (1-2 teachers,
+// modest rosters) rather than asking anyone to re-pick subjects by hand.
+async function migrateSubjectsIfNeeded(){
+  const legacyNames = new Set();
+  S.students.forEach(s => {
+    Object.values(s.pn || {}).forEach(v => { if(v && !looksLikeSubjectId(v)) legacyNames.add(v.trim()); });
+  });
+  if(!legacyNames.size) return;
+
+  const nameToId = new Map(subjects.map(s => [s.name.toLowerCase(), s.id]));
+  for(const name of legacyNames){
+    if(nameToId.has(name.toLowerCase())) continue;
+    const id = await getOrCreateSubjectId(name);
+    if(id) nameToId.set(name.toLowerCase(), id);
+  }
+
+  for(const s of S.students){
+    if(!s.pn || !Object.keys(s.pn).length) continue;
+    let changed = false;
+    const newPn = {...s.pn};
+    Object.entries(s.pn).forEach(([pi,v]) => {
+      if(v && !looksLikeSubjectId(v)){
+        const id = nameToId.get(String(v).trim().toLowerCase());
+        if(id){ newPn[pi] = id; changed = true; }
+      }
+    });
+    if(!changed) continue;
+    s.pn = newPn;
+    const { error } = await sb.from('students').update({ pn: newPn }).eq('id', s.id);
+    if(error) console.error('migrateSubjectsIfNeeded:', s.id, error);
+  }
 }
-async function rememberSubject(name){
-  if(!name || subjectNames.includes(name)) return;
-  const { error } = await sb.from('subjects').upsert({ name }, { onConflict: 'owner_id,name', ignoreDuplicates: true });
-  if(error){ console.error('rememberSubject:', error); return; }
-  subjectNames.push(name);
-  subjectNames.sort();
-  renderSubjectDatalist();
+// Resolves a subject name to its id, creating the subject if it doesn't
+// exist yet. Unlike the old free-text autocomplete cache, callers need the
+// id back (whether the row was just created or already existed), so this
+// upserts without ignoreDuplicates and reads the resolved row back.
+async function getOrCreateSubjectId(name){
+  name = (name || '').trim();
+  if(!name) return null;
+  const existing = subjects.find(s => s.name.toLowerCase() === name.toLowerCase());
+  if(existing) return existing.id;
+  const { data, error } = await sb.from('subjects').upsert({ name }, { onConflict: 'owner_id,name' }).select('id,name').single();
+  if(error){ console.error('getOrCreateSubjectId:', error); return null; }
+  subjects.push(data);
+  subjects.sort((a,b) => a.name.localeCompare(b.name));
+  subjectsById.set(data.id, data);
+  return data.id;
+}
+// Shared <select> for picking a period's subject — used both inline on a
+// daily period card (context 'card') and in the student modal's Manage
+// Periods list (context 'manage'), so both entry points read/write the
+// same subject_id values through the same apply/re-render path below.
+// `_pendingSubjectAdd` tracks which single picker (if any) is mid
+// "+ Add new subject" across the whole app — only one can be open at a
+// time, which is the only case that matters since the two contexts are
+// never visible simultaneously (one lives behind the student modal).
+let _pendingSubjectAdd = null; // {context, day, pi} | null
+function subjectSelectHTML(pi, selectedId, context, day){
+  if(_pendingSubjectAdd && _pendingSubjectAdd.context===context && _pendingSubjectAdd.pi===pi){
+    return `<span class="subject-inline-add" style="display:inline-flex;gap:4px;align-items:center">
+      <input class="fin" type="text" id="subject-inline-input" placeholder="New subject name" style="width:130px" autofocus>
+      <button type="button" class="mbtn mbtn-ghost mbtn-sm" title="Add" onclick="confirmInlineSubject()">✓</button>
+      <button type="button" class="mbtn mbtn-ghost mbtn-sm" title="Cancel" onclick="cancelInlineSubject()">✕</button>
+    </span>`;
+  }
+  const opts = subjects.map(s => `<option value="${s.id}"${s.id===selectedId?' selected':''}>${esc(s.name)}</option>`).join('');
+  return `<select class="fsel period-subject-sel" onchange="onSubjectPick('${context}','${day||''}',${pi},this.value)">
+    <option value=""${selectedId?'':' selected'}>— Subject —</option>
+    ${opts}
+    <option value="__new__">+ Add new subject…</option>
+  </select>`;
+}
+// Handles a picker's onchange: either applies the picked subject_id
+// directly, or (for "+ Add new subject") switches that one picker into
+// inline-add mode and re-renders — mirrors the app's inline-add-in-place
+// convention rather than window.prompt(), which this app never uses.
+function onSubjectPick(context, day, pi, value){
+  if(value === '__new__'){ _pendingSubjectAdd = {context, day, pi}; renderSubjectPickerHost(context); return; }
+  applySubjectPick(context, day, pi, value || null);
+}
+async function confirmInlineSubject(){
+  if(!_pendingSubjectAdd) return;
+  const {context, day, pi} = _pendingSubjectAdd;
+  const name = (document.getElementById('subject-inline-input')?.value || '').trim();
+  _pendingSubjectAdd = null;
+  if(!name){ renderSubjectPickerHost(context); return; }
+  const id = await getOrCreateSubjectId(name);
+  applySubjectPick(context, day, pi, id);
+}
+function cancelInlineSubject(){
+  if(!_pendingSubjectAdd) return;
+  const {context} = _pendingSubjectAdd;
+  _pendingSubjectAdd = null;
+  renderSubjectPickerHost(context);
+}
+function applySubjectPick(context, day, pi, id){
+  if(context==='card') setPn(day, pi, id);
+  else {
+    // 'manage' — the student being edited in the modal isn't necessarily
+    // the one currently open in the daily view, so resolve by
+    // _editingStudentId rather than stu()'s S.cur default.
+    const s = _editingStudentId ? stu(_editingStudentId) : null;
+    if(s){ if(!s.pn) s.pn={}; s.pn[pi]=id; queueStuScheduleSync(s); }
+  }
+  renderSubjectPickerHost(context);
+}
+function renderSubjectPickerHost(context){
+  if(context==='card') refreshData();
+  else renderManagePeriodsList();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2023,12 +2146,18 @@ async function syncToSupabase(sid, day){
   let absQ = d.q || {};
   if(d.absent)   absQ = {...absQ, _absent:true};
   if(d.excluded) absQ = {...absQ, _excluded:true};
+  // Snapshot which subject occupied which period on THIS day, once — never
+  // re-stamped on later syncs of the same day, so a schedule change made
+  // afterward can't reinterpret data that was already recorded. The first
+  // sync of a day (d.pn still empty) captures the current schedule; every
+  // later sync of that same day just resends the same value.
+  if(!d.pn || !Object.keys(d.pn).length) d.pn = {...(s.pn||{})};
   const payload = {
     student_id:           sid,
     date:                 dateStr,
     scores:               absQ,
     goal_scores:          d.g,
-    period_names:         s.pn || {},
+    period_names:         d.pn,
     participation_scores: d.p,
     support_scores:       d.sup || {},
     period_notes:         d.pNotes || {},
@@ -2508,6 +2637,67 @@ function toggleTeacherIsolation(teacher){
   renderRoster();
 }
 
+// ── Manage Periods (Data Options tab) — drag-and-drop reorder ──────────────
+// Periods are fixed time slots, so a drop SWAPS the two positions' subjects
+// rather than shifting everything between them like the teacher list above;
+// times never move. Reads the live (possibly unsaved) period-count value so
+// the list grows/shrinks immediately as that select changes.
+function renderManagePeriodsList(){
+  const el = document.getElementById('manage-periods-list');
+  if(!el) return;
+  if(!_editingStudentId){
+    el.innerHTML = `<p style="font-size:13px;color:var(--text-3);font-style:italic;margin:0">Save this student first, then reopen Edit to configure periods.</p>`;
+    return;
+  }
+  const s = stu(_editingStudentId);
+  if(!s){ el.innerHTML=''; return; }
+  const n = parseInt(document.getElementById('stu-period-count')?.value) || s.periodCount || PER.length;
+  const grip = `<span class="roster-teacher-grip" title="Drag to swap"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.5"/><circle cx="7.5" cy="2.5" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13.5" r="1.5"/><circle cx="7.5" cy="13.5" r="1.5"/></svg></span>`;
+  el.innerHTML = Array.from({length:n}, (_,pi) => {
+    const time = s.pt?.[pi] || {};
+    return `<div class="manage-period-row" draggable="true" ondragstart="onPeriodDragStart(event,${pi})" ondragover="onPeriodDragOver(event)" ondrop="onPeriodDrop(event,${pi})" ondragend="onPeriodDragEnd(event)">
+      ${grip}
+      <span class="manage-period-badge">${pi+1}</span>
+      ${subjectSelectHTML(pi, s.pn?.[pi]||null, 'manage', '')}
+      <div class="manage-period-time">
+        <input class="period-time-inp" type="time" value="${esc(time.start||'')}" onchange="setPt('',${pi},'start',this.value)">
+        <span class="period-time-sep">–</span>
+        <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('',${pi},'end',this.value)">
+      </div>
+    </div>`;
+  }).join('');
+}
+let _dragPeriodPi = null;
+function onPeriodDragStart(e, pi){
+  _dragPeriodPi = pi;
+  e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain', String(pi)); }catch(err){}
+  e.currentTarget.classList.add('dragging');
+}
+function onPeriodDragOver(e){
+  if(_dragPeriodPi===null) return;
+  e.preventDefault(); // required for drop to fire
+  e.dataTransfer.dropEffect = 'move';
+}
+function onPeriodDrop(e, targetPi){
+  e.preventDefault();
+  if(_dragPeriodPi===null || _dragPeriodPi===targetPi || !_editingStudentId){ _dragPeriodPi=null; return; }
+  const s = stu(_editingStudentId);
+  if(s){
+    if(!s.pn) s.pn={};
+    const a = s.pn[_dragPeriodPi] ?? null, b = s.pn[targetPi] ?? null;
+    s.pn[_dragPeriodPi] = b;
+    s.pn[targetPi] = a;
+    queueStuScheduleSync(s);
+  }
+  _dragPeriodPi = null;
+  renderManagePeriodsList();
+}
+function onPeriodDragEnd(){
+  _dragPeriodPi = null;
+  document.querySelectorAll('.manage-period-row.dragging').forEach(el=>el.classList.remove('dragging'));
+}
+
 function renderRoster(){
   const pre = rosterPreFiltered();
   // Only build the visible list: the desktop sidebar is display:none on
@@ -2826,7 +3016,7 @@ const STAR_SVG_OFF = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none
 function periodCardHTML(day, pi, d){
   const s = stu();
   const time = (s?.pt?.[pi]) || {};
-  const subject = (s?.pn?.[pi]) || (d.pn?.[pi]) || '';
+  const subjectId = (s?.pn?.[pi]) || (d.pn?.[pi]) || null;
   const pVal = d.p[pi]!==undefined ? d.p[pi] : '';
   const supVal = d.sup?.[pi] || '';
   const note = d.pNotes?.[pi] || '';
@@ -2865,7 +3055,7 @@ function periodCardHTML(day, pi, d){
         <span class="period-time-sep">–</span>
         <input class="period-time-inp" type="time" value="${esc(time.end||'')}" onchange="setPt('${day}',${pi},'end',this.value)">
       </div>
-      <input class="fin period-subject-inp pf-subject" placeholder="Subject…" value="${esc(subject)}" list="subject-datalist" autocomplete="off" onchange="setPn('${day}',${pi},this.value)">
+      <div class="pf-subject">${subjectSelectHTML(pi, subjectId, 'card', day)}</div>
       ${trackLoc?`<div class="tg-seg period-top-loc pf-location">${locBtns}</div>`:''}
     </div>
     ${bottomFields?`<div class="period-card-bottom">${bottomFields}</div>`:''}
@@ -2947,8 +3137,9 @@ async function renderYearly(body){
       _yearData[s.id]=(data||[]).map(row=>{
         const rawQ=row.scores||{};
         const absent=!!rawQ._absent;
-        const q=Object.fromEntries(Object.entries(rawQ).filter(([k])=>k!=='_absent'));
-        return {date:row.date,q,g:row.goal_scores||{},p:row.participation_scores||{},coupons:row.coupons||0,comments:row.comments||'',absent};
+        const excluded=!!rawQ._excluded;
+        const q=Object.fromEntries(Object.entries(rawQ).filter(([k])=>k!=='_absent'&&k!=='_excluded'));
+        return {date:row.date,q,g:row.goal_scores||{},p:row.participation_scores||{},coupons:row.coupons||0,comments:row.comments||'',absent,excluded};
       });
     }catch(e){ console.error('yearly load:',e); _yearData[s.id]=[]; }
     finally{ _yearLoading=false; }
@@ -3859,7 +4050,6 @@ function setPn(day,pi,val){
   if(!s.pn) s.pn={};
   s.pn[pi]=val;
   queueStuScheduleSync(s);
-  if(val) rememberSubject(val);
 }
 function setPt(day,pi,field,val){
   const s=stu(); if(!s) return;
@@ -4759,6 +4949,7 @@ async function openStudentModal(id){
   document.getElementById('stu-track-goals').checked         = s?.trackGoals         !== false;
   document.getElementById('stu-deactivate-btn').style.display = s ? 'inline-flex' : 'none';
   switchStuTab('details');
+  renderManagePeriodsList();
   await loadContactsForModal(id);
   openModal('student-modal');
 }
@@ -5180,6 +5371,7 @@ async function init(){
   S.week = S.week || monday(new Date());
 
   await Promise.all([loadStudents(), loadTeachers(), loadSubjects(), loadEligibilities()]);
+  await migrateSubjectsIfNeeded();
 
   const fullName = currentUser.email;
   const avatarEl = document.getElementById('topbar-avatar-btn');
