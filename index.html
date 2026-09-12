@@ -384,14 +384,21 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .period-time-inp { width: 116px; height: 34px; flex-shrink: 0; padding: 0 9px; border: 1.5px solid var(--border-mid); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--text); }
 .period-time-inp:focus { outline: none; border-color: var(--brand); }
 .period-time-sep { color: var(--text-3); font-weight: 600; flex-shrink: 0; }
-.fsel.period-subject-sel { width: 100%; height: 34px; background: var(--surface); border-color: var(--border-mid); }
+/* The base .fin,.fsel padding (8px top/bottom) plus a forced 34px height
+   left too little vertical room for the text, clipping it — drop the
+   vertical padding here (like .period-time-inp does) so the fixed height
+   alone determines the box, with the text centered by the browser. */
+.fsel.period-subject-sel { width: 100%; height: 34px; padding: 0 32px 0 10px; background: var(--surface); border-color: var(--border-mid); }
 
-/* Manage Periods (Data Options tab) */
+/* Manage Periods (Data Options tab) — wraps onto a second line whenever the
+   subject picker + two time inputs don't fit on one (not just on phones —
+   the modal can end up narrower than its 820px target on a smaller desktop
+   window too, via its max-width:96vw cap). */
 #manage-periods-list { display: flex; flex-direction: column; gap: 6px; }
-.manage-period-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); cursor: grab; }
+.manage-period-row { display: flex; flex-wrap: wrap; row-gap: 8px; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); cursor: grab; }
 .manage-period-row.dragging { opacity: .4; cursor: grabbing; }
 .manage-period-badge { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-dim); color: var(--brand); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.manage-period-row .period-subject-sel { flex: 1; height: 30px; }
+.manage-period-row .period-subject-sel { flex: 1 1 140px; min-width: 120px; }
 .manage-period-time { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .manage-period-time .period-time-inp { width: 92px; }
 .period-top-loc { flex-shrink: 0; height: 34px; }
@@ -975,6 +982,11 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .pf-subject { flex: 1 1 100%; }
   .pf-location { flex: 1 1 100%; }
   .period-subject-sel { font-size: 16px; }
+
+  /* ── Manage Periods list (Data Options tab, mobile) — wrapping itself is
+     handled unconditionally in the base rule; just bump font-size here to
+     match the daily period card (prevents iOS Safari zooming on focus). ── */
+  .manage-period-row .period-subject-sel { font-size: 16px; }
   .period-top-loc { height: 40px !important; }
   .period-top-loc .tg-btn { font-size: 13px; }
   .period-card-bottom { flex-direction: column; align-items: stretch; gap: 14px; padding: 14px 14px 0; }
