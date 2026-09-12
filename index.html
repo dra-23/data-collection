@@ -610,7 +610,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* Fixed size so the student modal doesn't resize as tabs are switched —
    .modal-scroll-body's own overflow-y:auto handles any per-tab overflow. */
 @media (min-width: 769px) {
-  #student-modal .modal { height: 640px; }
+  #student-modal .modal { height: 720px; }
 }
 
 /* Toggle switch (Data tab — which per-period fields to collect) */
@@ -1244,7 +1244,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
 
 <!-- ADD/EDIT STUDENT MODAL -->
 <div class="modal-bg" id="student-modal">
-  <div class="modal modal-card-layout">
+  <div class="modal modal-wide modal-card-layout">
     <div class="modal-hdr">
       <div class="modal-title-row">
         <div class="modal-title" id="student-modal-title">Add Student</div>
