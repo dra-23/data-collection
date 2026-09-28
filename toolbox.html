@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SPEDsight Toolbox</title>
+<title>Toolbox</title>
 <!-- Same policy as abc.html: scripts only from this site + the pinned CDN,
      network requests only to this Supabase project. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://owuqtnapskzionawmjkm.supabase.co wss://owuqtnapskzionawmjkm.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'">
@@ -87,7 +87,7 @@ button { font-family: var(--sans); }
   <div class="login-card">
     <div class="login-logo">
       <img src="icon.png" alt="">
-      <div><div class="login-logo-name">SPEDsight</div><div class="login-logo-sub">Toolbox</div></div>
+      <div><div class="login-logo-name">Toolbox</div><div class="login-logo-sub">SPEDsheet · SPEDsight</div></div>
     </div>
     <div class="login-title">Sign In</div>
     <div class="login-sub">Enter your email and password.</div>
@@ -102,7 +102,7 @@ button { font-family: var(--sans); }
 
 <div id="app" hidden>
   <div class="topbar">
-    <div class="topbar-brand"><img src="icon.png" alt="">SPEDsight</div>
+    <div class="topbar-brand"><img src="icon.png" alt="">Toolbox</div>
     <div class="topbar-right">
       <div class="tb-user" title="Signed in">
         <div class="tb-avatar" id="tb-avatar" aria-hidden="true"></div>
@@ -112,7 +112,7 @@ button { font-family: var(--sans); }
     </div>
   </div>
   <main class="page">
-    <h1 class="page-title">Toolbox</h1>
+    <h1 class="page-title">Your tools</h1>
     <p class="page-sub">Choose a tool to get started.</p>
     <div class="tools">
       <a class="tool-card" href="index.html">
@@ -120,8 +120,8 @@ button { font-family: var(--sans); }
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
         </div>
         <div>
-          <div class="tool-name">Point Sheets</div>
-          <div class="tool-desc">Record each student's daily goals, participation, and support, with weekly and yearly summaries.</div>
+          <div class="tool-name">SPEDsheet</div>
+          <div class="tool-desc">Daily point sheets — record each student's goals, participation, and support, with weekly and yearly summaries.</div>
         </div>
         <span class="tool-open">Open →</span>
       </a>
@@ -130,8 +130,8 @@ button { font-family: var(--sans); }
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>
         </div>
         <div>
-          <div class="tool-name">ABC Data Collection</div>
-          <div class="tool-desc">Log antecedent–behavior–consequence observations and analyze behavior function for FBAs.</div>
+          <div class="tool-name">SPEDsight</div>
+          <div class="tool-desc">ABC data collection — log antecedent–behavior–consequence observations and analyze behavior function for FBAs.</div>
         </div>
         <span class="tool-open">Open →</span>
       </a>
@@ -141,7 +141,7 @@ button { font-family: var(--sans); }
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// SPEDsight Toolbox — sign in once, then pick a tool. The Supabase session
+// Toolbox — sign in once, then pick a tool (SPEDsheet or SPEDsight). The Supabase session
 // lives in this site's localStorage (supabase-js default), so every page
 // on this site that creates a client with the same URL/key shares it.
 // ═══════════════════════════════════════════════════════════════

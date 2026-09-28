@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ABC Data Collection · SPEDsight</title>
+<title>SPEDsight · ABC Data Collection</title>
 <!-- Defense in depth for FERPA data: scripts only from this site and the
      pinned CDN, and network requests only to this Supabase project, so even
      an injection bug couldn't send data anywhere else. -->
@@ -251,7 +251,7 @@ button { font-family: var(--sans); }
 <body>
 
 <div class="topbar">
-  <div class="topbar-brand"><img src="icon.png" alt="">ABC Data Collection</div>
+  <div class="topbar-brand"><img src="icon.png" alt="">SPEDsight</div>
   <div class="topbar-right">
     <a class="topbar-back" href="toolbox.html" title="Back to toolbox">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -298,7 +298,7 @@ button { font-family: var(--sans); }
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// ABC Data Collection — observation entry.
+// SPEDsight — ABC (antecedent-behavior-consequence) data collection.
 //
 // Security notes (FERPA):
 // - Access control is Supabase row-level security (sql/001_abc_schema.sql);
@@ -779,7 +779,7 @@ function renderRoster(){
   const el = document.getElementById('student-list');
   const q = A.search.trim().toLowerCase();
   const list = A.students.filter(s => !q || s.name.toLowerCase().includes(q));
-  if(!A.students.length){ el.innerHTML = `<div class="roster-empty">No students yet. Add students in the Point Sheets tool first.</div>`; return; }
+  if(!A.students.length){ el.innerHTML = `<div class="roster-empty">No students yet. Add students in SPEDsheet first.</div>`; return; }
   if(!list.length){ el.innerHTML = `<div class="roster-empty">No students match your search.</div>`; return; }
   const groups = new Map();
   for(const s of list){
