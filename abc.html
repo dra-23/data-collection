@@ -169,10 +169,62 @@ button { font-family: var(--sans); }
 
 .load-msg { margin: auto; color: var(--text-3); font-size: 15px; }
 
+/* OBSERVE / ANALYZE switch (student header) */
+.view-seg { display: flex; flex-shrink: 0; border: 1.5px solid var(--border-mid); border-radius: 9px; overflow: hidden; background: var(--surface2); }
+.view-btn { padding: 8px 18px; border: none; background: transparent; color: var(--text-2); font-size: 14px; font-weight: 600; cursor: pointer; transition: background .12s, color .12s; }
+.view-btn + .view-btn { border-left: 1.5px solid var(--border-mid); }
+.view-btn:hover { color: var(--brand); }
+.view-btn.on { background: var(--brand); color: #fff; }
+
+/* ANALYZE */
+.ana-stack { display: flex; flex-direction: column; gap: 16px; }
+.ana-controls { padding: 16px 20px; display: grid; grid-template-columns: minmax(220px, 1.4fr) 170px 170px auto; gap: 16px; align-items: end; }
+.ana-warn { padding: 0 20px 14px; color: var(--danger); font-size: 14px; font-weight: 500; }
+.ana-saved { padding: 0 20px 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; }
+.note-link { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface2); color: var(--text-2); font-size: 13px; font-weight: 600; cursor: pointer; }
+.note-link:hover { border-color: var(--brand); color: var(--brand); }
+.note-link.on { background: var(--brand-dim); border-color: var(--brand); color: var(--brand); }
+.fn-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 20px; padding: 16px 20px; align-items: center; }
+.fn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fn-box { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+.fn-box-hdr { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 700; }
+.fn-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.fn-pct { margin-left: auto; font-size: 18px; color: var(--text); }
+.fn-line { padding: 8px 12px 4px; font-size: 13px; font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.fn-comp { list-style: none; padding: 4px 12px 10px; }
+.fn-comp li { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13px; }
+.fn-comp li > span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; }
+.fn-comp li.zero { color: var(--text-3); }
+.fn-tag { display: inline-block; width: 16px; margin-right: 6px; font-size: 11px; font-weight: 700; color: var(--text-3); }
+.fn-chart-wrap { display: flex; align-items: center; justify-content: center; }
+.fn-chart { width: 100%; max-width: 380px; height: auto; }
+.fn-note { padding: 12px 20px 16px; font-size: 13px; color: var(--text-2); line-height: 1.5; border-top: 1px solid var(--border); }
+.tally-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tally { padding: 14px 20px 16px; }
+.tally + .tally { border-left: 1px solid var(--border); }
+.tally-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+.tally-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tally-table td { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.tally-table td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; width: 48px; }
+.tally-table tr.zero td { color: var(--text-3); font-weight: 400; }
+.tally-other { margin-top: 10px; font-size: 13px; color: var(--text-2); overflow-wrap: anywhere; }
+.write-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.write-col { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.write-col + .write-col { border-left: 1px solid var(--border); }
+.write-col-title { font-size: 15px; font-weight: 700; }
+.fta { resize: vertical; line-height: 1.5; min-height: 64px; }
+.ana-dirty { color: var(--accent-dark); font-size: 14px; font-weight: 600; }
+
 /* Tablet widths: stack the entry form above the entry list. */
 @media (max-width: 1200px) {
   .abc-grid { grid-template-columns: 1fr; }
   .session-body { grid-template-columns: 1fr 1fr; }
+  .fn-layout { grid-template-columns: 1fr; }
+  .ana-controls { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 1000px) {
+  .tally-grid, .write-grid { grid-template-columns: 1fr; }
+  .tally + .tally, .write-col + .write-col { border-left: none; border-top: 1px solid var(--border); }
 }
 /* Phones (secondary): roster becomes a short scrollable strip on top. */
 @media (max-width: 768px) {
@@ -187,6 +239,12 @@ button { font-family: var(--sans); }
   .abc-sec, .sc-head, .abc-form-ftr { padding-left: 14px; padding-right: 14px; }
   .fin, .fsel { font-size: 16px; } /* keeps iOS from zooming on focus */
   .abc-kbd { display: none; }
+  .stu-header { flex-wrap: wrap; }
+  .view-seg { width: 100%; }
+  .view-btn { flex: 1; }
+  .ana-controls { grid-template-columns: 1fr; }
+  .fn-grid { grid-template-columns: 1fr; }
+  .ana-controls, .tally, .write-col, .fn-layout, .fn-note, .ana-saved, .ana-warn { padding-left: 14px; padding-right: 14px; }
 }
 </style>
 </head>
@@ -321,6 +379,8 @@ function teacherSortIndex(name){
 let currentUser = null;
 const A = {
   students: [], subjects: [], options: [],
+  functions: [], mapping: [],   // function list + option→function mapping (reference data)
+  view: 'observe',        // 'observe' | 'analyze'
   cur: null,              // selected student id
   date: localDateStr(),   // observation date (the observer's local date)
   classSel: '',           // '' (none) | subject id | '__other__'
@@ -337,6 +397,21 @@ let formError = '', formFlash = '', _flashTimer = null, _saving = false;
 let _addingBehavior = false, _newBehaviorName = '';
 let _timer = null;        // { startedAt, interval } while the duration timer runs
 let _pendingDeleteId = null;
+
+// Analyze view state, reset whenever the selected student changes.
+function blankAnalysis(){
+  return {
+    loading: false, loadedFor: null, error: '',
+    entries: [],        // the student's entries, in the shape abc-analysis.js expects
+    notes: [],          // the student's saved write-ups (abc_analysis_notes rows)
+    behaviorId: null, start: '', end: '',
+    rangeAuto: true,    // range follows the behavior's full date span until dates are picked by hand
+    draft: null,        // the editable write-up currently on screen
+    noteId: null,       // id of the saved write-up it came from, if any
+    dirty: false, saving: false, msg: '', saveError: '',
+  };
+}
+let Z = blankAnalysis();
 
 function blankForm(keep = {}){
   return {
@@ -366,13 +441,15 @@ function classLabel(session){
 // DATA
 // ═══════════════════════════════════════════════════════════════
 async function loadReference(){
-  const [stu, sub, opt] = await Promise.all([
+  const [stu, sub, opt, fns, map] = await Promise.all([
     sb.from('students').select('id, first_name, last_name, grade, status, campus, classroom, teacher')
       .eq('active', true).order('last_name').order('first_name'),
     sb.from('subjects').select('id, name').order('name'),
     sb.from('abc_options').select('category, code, label, hint, narrative, has_text, display_order, active').order('display_order'),
+    sb.from('abc_functions').select('code, label, fba_phrase, display_order').order('display_order'),
+    sb.from('abc_function_mapping').select('function_code, option_code'),
   ]);
-  for(const [what, res] of [['students', stu], ['subjects', sub], ['abc_options', opt]]){
+  for(const [what, res] of [['students', stu], ['subjects', sub], ['abc_options', opt], ['abc_functions', fns], ['abc_function_mapping', map]]){
     if(res.error){ console.error('load ' + what + ':', res.error); throw res.error; }
   }
   A.students = stu.data.map(r => ({
@@ -386,6 +463,8 @@ async function loadReference(){
     category: r.category, code: r.code, label: r.label, hint: r.hint || '',
     narrative: r.narrative || '', hasText: r.has_text, displayOrder: r.display_order, active: r.active,
   }));
+  A.functions = fns.data.map(r => ({ code: r.code, label: r.label, fbaPhrase: r.fba_phrase, displayOrder: r.display_order }));
+  A.mapping = map.data.map(r => ({ functionCode: r.function_code, optionCode: r.option_code }));
 }
 
 async function loadBehaviors(sid, seq){
@@ -536,6 +615,127 @@ function startEdit(id){
   document.getElementById('abc-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// ── Analysis ────────────────────────────────────────────────────
+const analysisRef = () => ({ options: A.options, functions: A.functions, mapping: A.mapping });
+const behaviorName = id => A.behaviors.find(b => b.id === id)?.name || '';
+
+// Loads everything the Analyze view needs for the selected student: all of
+// their sessions (for dates), entries, behaviors, and saved write-ups.
+async function loadAnalysis(){
+  const seq = ++_loadSeq;
+  const sid = A.cur;
+  Z.loading = true; Z.error = '';
+  renderAnalysis();
+  const [ses, ent, beh, notes] = await Promise.all([
+    sb.from('abc_sessions').select('id, session_date').eq('student_id', sid),
+    sb.from('abc_observation_entries').select('session_id, behavior_id, activity_code, activity_other, antecedent_codes, antecedent_other, consequence_codes, consequence_other').eq('student_id', sid),
+    sb.from('abc_behaviors').select('id, name, active').eq('student_id', sid).order('name'),
+    sb.from('abc_analysis_notes').select('*').eq('student_id', sid),
+  ]);
+  if(seq !== _loadSeq) return;
+  const failed = [['sessions', ses], ['entries', ent], ['behaviors', beh], ['write-ups', notes]].find(([, r]) => r.error);
+  Z.loading = false;
+  if(failed){ console.error('load analysis ' + failed[0] + ':', failed[1].error); Z.error = "Couldn't load this student's observations."; renderAnalysis(); return; }
+  const dateOf = new Map(ses.data.map(s => [s.id, s.session_date]));
+  Z.entries = ent.data.map(e => ({
+    behaviorId: e.behavior_id, date: dateOf.get(e.session_id),
+    activityCode: e.activity_code, activityOther: e.activity_other || '',
+    antecedentCodes: e.antecedent_codes || [], antecedentOther: e.antecedent_other || '',
+    consequenceCodes: e.consequence_codes || [], consequenceOther: e.consequence_other || '',
+  }));
+  A.behaviors = beh.data;
+  Z.notes = notes.data;
+  Z.loadedFor = sid;
+  if(!A.behaviors.some(b => b.id === Z.behaviorId)){
+    // Default to the behavior with the most observations.
+    const counts = new Map();
+    Z.entries.forEach(e => counts.set(e.behaviorId, (counts.get(e.behaviorId) || 0) + 1));
+    Z.behaviorId = [...A.behaviors].sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0))[0]?.id || null;
+  }
+  if(!Z.start || !Z.end) setAllDates();
+  loadDraft();
+  renderAnalysis();
+}
+
+// Range covering every observation of the selected behavior, through today.
+function setAllDates(){
+  const dates = Z.entries.filter(e => e.behaviorId === Z.behaviorId && e.date).map(e => e.date).sort();
+  Z.end = localDateStr();
+  Z.start = dates[0] && dates[0] < Z.end ? dates[0] : Z.end;
+}
+
+function currentAnalysis(){
+  if(!Z.behaviorId || !Z.start || !Z.end || Z.start > Z.end) return null;
+  return ABC.analyzeBehavior(Z.entries, analysisRef(), { behaviorId: Z.behaviorId, start: Z.start, end: Z.end });
+}
+
+function generatedDrafts(result){
+  const args = {
+    childName: selectedStudent()?.firstName || 'CHILD',
+    behaviorName: behaviorName(Z.behaviorId),
+    functions: result.functions, tallies: result.tallies, otherText: result.otherText,
+  };
+  return {
+    functionStatement: ABC.draftFunctionStatement(args),
+    hypothesis: ABC.draftHypothesis(args),
+    antecedents: ABC.draftAntecedentsParagraph(args),
+    consequences: ABC.draftConsequencesParagraph(args),
+  };
+}
+
+// Shows the saved write-up for exactly this behavior + range if one
+// exists; otherwise fresh drafts generated from the data.
+function loadDraft(){
+  Z.dirty = false; Z.msg = ''; Z.saveError = '';
+  const note = Z.notes.find(n => n.behavior_id === Z.behaviorId && n.range_start === Z.start && n.range_end === Z.end);
+  const result = currentAnalysis();
+  if(note){
+    Z.noteId = note.id;
+    Z.draft = {
+      functionStatement: note.draft_function_statement, hypothesis: note.draft_hypothesis,
+      antecedents: note.draft_antecedents_paragraph, consequences: note.draft_consequences_paragraph,
+      setting: note.setting_notes, environmental: note.environmental_notes, indirect: note.indirect_assessment_notes,
+    };
+  } else {
+    Z.noteId = null;
+    Z.draft = { ...(result ? generatedDrafts(result) : { functionStatement: '', hypothesis: '', antecedents: '', consequences: '' }),
+      setting: '', environmental: '', indirect: '' };
+  }
+}
+
+function regenerateDrafts(){
+  const result = currentAnalysis();
+  if(!result) return;
+  Object.assign(Z.draft, generatedDrafts(result));
+  Z.dirty = true; Z.msg = '';
+  renderAnalysis();
+}
+
+// Changing behavior/range swaps in a different write-up, so don't silently
+// drop unsaved edits.
+function confirmDiscard(){
+  return !Z.dirty || confirm('Discard your unsaved changes to this write-up?');
+}
+
+async function saveWriteup(){
+  if(Z.saving || !Z.draft || !currentAnalysis()) return;
+  Z.saving = true; Z.saveError = ''; renderAnalysis();
+  const d = Z.draft;
+  const row = {
+    student_id: A.cur, behavior_id: Z.behaviorId, range_start: Z.start, range_end: Z.end,
+    setting_notes: d.setting, environmental_notes: d.environmental, indirect_assessment_notes: d.indirect,
+    draft_function_statement: d.functionStatement, draft_hypothesis: d.hypothesis,
+    draft_antecedents_paragraph: d.antecedents, draft_consequences_paragraph: d.consequences,
+  };
+  const { data, error } = await sb.from('abc_analysis_notes')
+    .upsert(row, { onConflict: 'student_id,behavior_id,range_start,range_end' }).select().single();
+  Z.saving = false;
+  if(error){ console.error('save write-up:', error); Z.saveError = "Couldn't save the write-up. Check your connection and try again."; renderAnalysis(); return; }
+  Z.notes = Z.notes.filter(n => n.id !== data.id).concat(data);
+  Z.noteId = data.id; Z.dirty = false; Z.msg = 'Write-up saved';
+  renderAnalysis();
+}
+
 function flash(msg){
   formFlash = msg;
   clearTimeout(_flashTimer);
@@ -605,15 +805,25 @@ function renderPane(){
     return;
   }
   const chips = [gradeChipHTML(s.grade), metaChip('teacher', s.teacher), metaChip('campus', s.campus), metaChip('classroom', s.classroom)].filter(Boolean);
-  const subjectOpts = A.subjects.map(sub => `<option value="${esc(sub.id)}"${A.classSel === sub.id ? ' selected' : ''}>${esc(sub.name)}</option>`).join('');
-  el.innerHTML = `
+  const header = `
     <div class="stu-header">
       <div class="stu-header-avatar">${esc(initials(s.name))}</div>
       <div class="stu-header-info">
         <div class="stu-header-name">${esc(s.name)}</div>
         ${chips.length ? `<div class="stu-meta-fields">${chips.join('')}</div>` : ''}
       </div>
-    </div>
+      <div class="view-seg" role="tablist" aria-label="View">
+        <button type="button" role="tab" class="view-btn${A.view === 'observe' ? ' on' : ''}" aria-selected="${A.view === 'observe'}" data-action="view" data-view="observe">Observe</button>
+        <button type="button" role="tab" class="view-btn${A.view === 'analyze' ? ' on' : ''}" aria-selected="${A.view === 'analyze'}" data-action="view" data-view="analyze">Analyze</button>
+      </div>
+    </div>`;
+  if(A.view === 'analyze'){
+    el.innerHTML = header + `<div id="abc-analysis" class="ana-stack"></div>`;
+    renderAnalysis();
+    return;
+  }
+  const subjectOpts = A.subjects.map(sub => `<option value="${esc(sub.id)}"${A.classSel === sub.id ? ' selected' : ''}>${esc(sub.name)}</option>`).join('');
+  el.innerHTML = header + `
     <div class="section-card">
       <div class="sc-head"><span class="sc-title">Observation Session</span><span class="sc-meta">Set once — applies to every entry below</span></div>
       <div class="session-body">
@@ -755,18 +965,190 @@ function renderEntries(){
   }).join('') + `</div>`;
 }
 
+// ── Analyze view ────────────────────────────────────────────────
+const FN_COLORS = { sensory: '#9333ea', escape: '#ca8a04', attention: '#3b82f6', tangible: '#16a34a' };
+const fnColor = code => FN_COLORS[code] || '#323B87';
+function fmtRange(start, end){
+  const d = s => new Date(s + 'T12:00:00');
+  const a = d(start), b = d(end);
+  const md = { month: 'short', day: 'numeric' }, mdy = { month: 'short', day: 'numeric', year: 'numeric' };
+  if(start === end) return b.toLocaleDateString([], mdy);
+  return a.getFullYear() === b.getFullYear()
+    ? `${a.toLocaleDateString([], md)} – ${b.toLocaleDateString([], mdy)}`
+    : `${a.toLocaleDateString([], mdy)} – ${b.toLocaleDateString([], mdy)}`;
+}
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+// Plain-SVG bar chart of the four function percentages (no chart library).
+function chartSVG(functions){
+  const W = 340, H = 230, L = 38, R = 8, T = 22, B = 40;
+  const pw = W - L - R, ph = H - T - B, slot = pw / functions.length, bw = Math.min(48, slot * 0.6);
+  const y = v => T + ph - (v / 100) * ph;
+  const grid = [0, 25, 50, 75, 100].map(v =>
+    `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e8e5e1"/>` +
+    `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#5f6368">${v}%</text>`).join('');
+  const bars = functions.map((f, i) => {
+    const x = L + i * slot + (slot - bw) / 2, pct = f.percent || 0, top = y(pct);
+    return `<rect x="${x}" y="${top}" width="${bw}" height="${T + ph - top}" rx="4" fill="${fnColor(f.code)}"/>` +
+      `<text x="${x + bw / 2}" y="${top - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="#1c1917">${f.percent == null ? '—' : f.percent + '%'}</text>` +
+      `<text x="${x + bw / 2}" y="${H - B + 18}" text-anchor="middle" font-size="12" fill="#57534e">${esc(f.label.split(' ')[0])}</text>`;
+  }).join('');
+  const summary = functions.map(f => `${f.label} ${f.percent == null ? 'no data' : f.percent + '%'}`).join(', ');
+  return `<svg class="fn-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc('Function percentages: ' + summary)}">${grid}${bars}</svg>`;
+}
+
+function fnBoxHTML(f, total){
+  const tag = code => optionFor(code)?.category === 'antecedent' ? 'A' : 'C';
+  return `<div class="fn-box">
+    <div class="fn-box-hdr"><span class="fn-dot" style="background:${fnColor(f.code)}"></span><span>${esc(f.label)}</span><span class="fn-pct">${f.percent == null ? '—' : f.percent + '%'}</span></div>
+    <div class="fn-line">${esc(ABC.formatScoreLine(f, total))}</div>
+    <ul class="fn-comp">${f.components.map(c => `<li class="${c.count ? '' : 'zero'}"><span><span class="fn-tag" title="${tag(c.code) === 'A' ? 'Antecedent' : 'Consequence'}">${tag(c.code)}</span>${esc(c.label)}</span><span>${c.count}</span></li>`).join('')}</ul>
+  </div>`;
+}
+
+function tallyTableHTML(title, rows, otherText){
+  return `<div class="tally">
+    <div class="tally-title">${title}</div>
+    <table class="tally-table"><tbody>
+      ${rows.map(r => `<tr class="${r.count ? '' : 'zero'}"><td>${esc(r.label)}</td><td>${r.count}</td></tr>`).join('')}
+    </tbody></table>
+    ${otherText.length ? `<div class="tally-other"><b>Other, as described:</b> ${esc(otherText.join('; '))}</div>` : ''}
+  </div>`;
+}
+
+function writeFieldHTML(key, label, rows, placeholder = ''){
+  return `<div class="write-field"><label class="fl" for="w-${key}">${label}</label>
+    <textarea class="fin fta" id="w-${key}" rows="${rows}" data-field="w-${key}" placeholder="${esc(placeholder)}">${esc(Z.draft?.[key] ?? '')}</textarea></div>`;
+}
+
+function writeStatusHTML(){
+  if(Z.saveError) return `<span class="abc-error" role="alert">${esc(Z.saveError)}</span>`;
+  if(Z.dirty) return `<span class="ana-dirty">Unsaved changes</span>`;
+  if(Z.msg) return `<span class="abc-flash" role="status">${esc(Z.msg)}</span>`;
+  return Z.noteId ? `<span class="abc-kbd">Saved for this behavior and date range</span>` : `<span class="abc-kbd">Not saved yet</span>`;
+}
+
+function renderAnalysis(){
+  const el = document.getElementById('abc-analysis');
+  if(!el) return;
+  const box = msg => `<div class="section-card"><div class="entries-empty">${esc(msg)}</div></div>`;
+  if(Z.error){ el.innerHTML = box(Z.error); return; }
+  if(Z.loading || Z.loadedFor !== A.cur){ el.innerHTML = box('Loading observations…'); return; }
+  if(!A.behaviors.length){ el.innerHTML = box('No behaviors have been recorded for this student yet. Log observations in the Observe view first.'); return; }
+
+  const counts = new Map();
+  Z.entries.forEach(e => counts.set(e.behaviorId, (counts.get(e.behaviorId) || 0) + 1));
+  const behOpts = A.behaviors.map(b => `<option value="${esc(b.id)}"${b.id === Z.behaviorId ? ' selected' : ''}>${esc(b.name)} (${counts.get(b.id) || 0})${b.active ? '' : ' — retired'}</option>`).join('');
+  const result = currentAnalysis();
+  const bname = behaviorName(Z.behaviorId);
+  const saved = Z.notes.filter(n => n.behavior_id === Z.behaviorId).sort((a, b) => b.range_end.localeCompare(a.range_end) || b.range_start.localeCompare(a.range_start));
+  const savedLinks = saved.map(n => {
+    const current = n.range_start === Z.start && n.range_end === Z.end;
+    return `<button type="button" class="note-link${current ? ' on' : ''}" data-action="ana-load-note" data-id="${esc(n.id)}">${esc(fmtRange(n.range_start, n.range_end))}</button>`;
+  }).join('');
+
+  const controls = `<div class="section-card">
+    <div class="sc-head"><span class="sc-title">Analysis</span><span class="sc-meta">${result ? `${esc(plural(result.entryCount, 'observation'))} of ${esc(bname)} · ${esc(fmtRange(Z.start, Z.end))}` : ''}</span></div>
+    <div class="ana-controls">
+      <div><label class="fl" for="ana-behavior">Behavior</label><select class="fsel" id="ana-behavior" data-field="ana-behavior">${behOpts}</select></div>
+      <div><label class="fl" for="ana-start">From</label><input class="fin" type="date" id="ana-start" data-field="ana-start" value="${esc(Z.start)}"></div>
+      <div><label class="fl" for="ana-end">To</label><input class="fin" type="date" id="ana-end" data-field="ana-end" value="${esc(Z.end)}"></div>
+      <div><button type="button" class="mbtn mbtn-ghost" data-action="ana-all-dates">All dates</button></div>
+    </div>
+    ${Z.start > Z.end ? `<div class="ana-warn" role="alert">The From date is after the To date.</div>` : ''}
+    ${savedLinks ? `<div class="ana-saved"><span class="fl-note">Saved write-ups for ${esc(bname)}:</span>${savedLinks}</div>` : ''}
+  </div>`;
+  if(!result){ el.innerHTML = controls; return; }
+
+  const functionCard = `<div class="section-card">
+    <div class="sc-head"><span class="sc-title">Function Analysis</span><span class="sc-meta">Total of all function scores: ${result.total}</span></div>
+    <div class="fn-layout">
+      <div class="fn-grid">${result.functions.map(f => fnBoxHTML(f, result.total)).join('')}</div>
+      <div class="fn-chart-wrap">${result.total ? chartSVG(result.functions)
+        : `<div class="entries-empty">${result.entryCount ? 'None of the antecedents or consequences observed in this range count toward a function.' : 'No observations of this behavior in this date range.'}</div>`}</div>
+    </div>
+    <div class="fn-note">Each percentage is that function's score divided by the <b>total of all four function scores (${result.total})</b>, not by the number of observations — one antecedent or consequence can count toward more than one function. Percentages are truncated, so they can add up to slightly less than 100%.</div>
+  </div>`;
+
+  const talliesCard = `<div class="section-card">
+    <div class="sc-head"><span class="sc-title">Observation Tallies</span><span class="sc-meta">Across all observers and sessions</span></div>
+    <div class="tally-grid">
+      ${tallyTableHTML('Activity', result.tallies.activity, result.otherText.activity)}
+      ${tallyTableHTML('Antecedents', result.tallies.antecedent, result.otherText.antecedent)}
+      ${tallyTableHTML('Consequences', result.tallies.consequence, result.otherText.consequence)}
+    </div>
+  </div>`;
+
+  const writeCard = `<div class="section-card">
+    <div class="sc-head"><span class="sc-title">FBA Write-up</span><span class="sc-meta">${esc(bname)} · ${esc(fmtRange(Z.start, Z.end))}</span></div>
+    <div class="write-grid">
+      <div class="write-col">
+        <div class="write-col-title">Draft language <span class="fl-note">— generated from the data above; edit freely</span></div>
+        ${writeFieldHTML('functionStatement', 'Function statement', 3)}
+        ${writeFieldHTML('hypothesis', 'Hypothesis', 3)}
+        ${writeFieldHTML('antecedents', 'Antecedents', 5)}
+        ${writeFieldHTML('consequences', 'Consequences', 5)}
+      </div>
+      <div class="write-col">
+        <div class="write-col-title">Assessment notes</div>
+        ${writeFieldHTML('setting', 'Setting', 4)}
+        ${writeFieldHTML('environmental', 'Environmental variables', 4)}
+        ${writeFieldHTML('indirect', 'Indirect assessment results', 6, 'e.g. FAST, QABF, MAS results')}
+      </div>
+    </div>
+    <div class="abc-form-ftr">
+      <span id="ana-status">${writeStatusHTML()}</span>
+      <span class="spacer"></span>
+      <button type="button" class="mbtn mbtn-ghost" data-action="ana-regenerate" title="Rebuild the four draft statements from the current data">Regenerate drafts</button>
+      <button type="button" class="mbtn mbtn-brand" data-action="ana-save"${Z.saving ? ' disabled' : ''}>${Z.saving ? 'Saving…' : 'Save write-up'}</button>
+    </div>
+  </div>`;
+
+  el.innerHTML = controls + functionCard + talliesCard + writeCard;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // EVENTS (delegated — no dynamic values in inline handlers)
 // ═══════════════════════════════════════════════════════════════
 function selectStudent(sid){
-  if(sid === A.cur) return;
+  if(sid === A.cur || !confirmDiscard()) return;
   if(_timer) stopTimer(true);
   A.cur = sid;
   A.behaviors = []; A.sessions = []; A.entries = [];
   A.classSel = ''; A.classText = '';
   form = blankForm(); formError = ''; _addingBehavior = false; _newBehaviorName = '';
+  Z = blankAnalysis();
   renderRoster(); renderPane();
-  loadDay();
+  A.view === 'analyze' ? loadAnalysis() : loadDay();
+}
+
+function switchView(view){
+  if(view === A.view || (A.view === 'analyze' && !confirmDiscard())) return;
+  if(_timer) stopTimer(true);
+  A.view = view;
+  Z.dirty = false;
+  renderPane();
+  // Reload each time so the other view's edits (new entries, behaviors) show.
+  view === 'analyze' ? loadAnalysis() : loadDay();
+}
+
+// Behavior / From / To changes. A declined "discard changes?" puts the
+// control back to its previous value.
+function changeAnalysisScope(field, value){
+  if(!confirmDiscard()){ renderAnalysis(); return; }
+  if(field === 'ana-behavior'){ Z.behaviorId = value; if(Z.rangeAuto) setAllDates(); }
+  else if(value){ Z[field === 'ana-start' ? 'start' : 'end'] = value; Z.rangeAuto = false; }
+  loadDraft();
+  renderAnalysis();
+}
+
+function regenerateWithConfirm(){
+  const result = currentAnalysis();
+  if(!result || !Z.draft) return;
+  const fresh = generatedDrafts(result);
+  const edited = ['functionStatement', 'hypothesis', 'antecedents', 'consequences'].some(k => Z.draft[k] !== fresh[k]);
+  if(edited && !confirm('Replace the four draft statements with freshly generated text? Your assessment notes are kept.')) return;
+  regenerateDrafts();
 }
 
 function toggleChip(group, code){
@@ -809,8 +1191,25 @@ document.addEventListener('click', e => {
       if(id) deleteEntry(id);
       break;
     }
+    case 'view': switchView(t.dataset.view); break;
+    case 'ana-all-dates':
+      if(!confirmDiscard()) break;
+      Z.rangeAuto = true; setAllDates(); loadDraft(); renderAnalysis();
+      break;
+    case 'ana-load-note': {
+      const note = Z.notes.find(n => n.id === t.dataset.id);
+      if(!note || !confirmDiscard()) break;
+      Z.start = note.range_start; Z.end = note.range_end; Z.rangeAuto = false;
+      loadDraft(); renderAnalysis();
+      break;
+    }
+    case 'ana-regenerate': regenerateWithConfirm(); break;
+    case 'ana-save': saveWriteup(); break;
   }
 });
+
+// Unsaved write-up edits are easy to lose by closing the tab.
+window.addEventListener('beforeunload', e => { if(Z.dirty){ e.preventDefault(); e.returnValue = ''; } });
 
 document.addEventListener('input', e => {
   const field = e.target.dataset?.field;
@@ -826,6 +1225,15 @@ document.addEventListener('input', e => {
     case 'consequence-other': form.consequenceOther = v; break;
     case 'new-behavior': _newBehaviorName = v; break;
     case 'class-text': A.classText = v; break;
+    default:
+      // Write-up textareas (data-field="w-<key>"): update state in place —
+      // re-rendering would steal focus mid-typing.
+      if(field.startsWith('w-') && Z.draft){
+        Z.draft[field.slice(2)] = v;
+        Z.dirty = true; Z.msg = ''; Z.saveError = '';
+        const st = document.getElementById('ana-status');
+        if(st) st.innerHTML = writeStatusHTML();
+      }
   }
 });
 
@@ -839,6 +1247,8 @@ document.addEventListener('change', e => {
   } else if(field === 'class-sel'){
     A.classSel = e.target.value;
     renderPane();
+  } else if(field === 'ana-behavior' || field === 'ana-start' || field === 'ana-end'){
+    changeAnalysisScope(field, e.target.value);
   }
 });
 
