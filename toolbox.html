@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
+<script src="tool-switcher.js" defer></script>
 <style>
 /* Tokens and components mirror index.html / abc.html. */
 :root {
@@ -102,7 +103,9 @@ button { font-family: var(--sans); }
 
 <div id="app" hidden>
   <div class="topbar">
-    <div class="topbar-brand"><img src="icon.png" alt="">Toolbox</div>
+    <div class="tool-switch" data-current="toolbox">
+      <button type="button" class="topbar-brand tool-switch-btn"><img src="icon.png" alt=""><span class="tool-switch-name">Toolbox</span></button>
+    </div>
     <div class="topbar-right">
       <div class="tb-user" title="Signed in">
         <div class="tb-avatar" id="tb-avatar" aria-hidden="true"></div>

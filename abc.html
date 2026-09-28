@@ -17,6 +17,7 @@
      browser refuses to run anything but this exact reviewed file. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script src="abc-analysis.js"></script>
+<script src="tool-switcher.js" defer></script>
 <style>
 /* Tokens and base components mirror index.html so the two tools read as one app. */
 :root {
@@ -45,8 +46,6 @@ button { font-family: var(--sans); }
 .topbar-brand { font-size: 24px; font-weight: 700; letter-spacing: .02em; display: flex; align-items: center; gap: 10px; min-width: 0; white-space: nowrap; }
 .topbar-brand img { width: 32px; height: 32px; border-radius: 7px; background: #fff; object-fit: contain; padding: 3px; flex-shrink: 0; }
 .topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.topbar-back { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; background: rgba(255,255,255,.15); color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; flex-shrink: 0; transition: background .15s; }
-.topbar-back:hover { background: rgba(255,255,255,.25); }
 .topbar-account { position: relative; flex-shrink: 0; }
 .topbar-avatar-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); background: rgba(255,255,255,.2); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .topbar-account-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 200; min-width: 220px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.15); overflow: hidden; display: none; }
@@ -230,7 +229,6 @@ button { font-family: var(--sans); }
 @media (max-width: 768px) {
   .topbar { padding: 0 12px; }
   .topbar-brand { font-size: 18px; }
-  .topbar-back span { display: none; }
   .shell { flex-direction: column; overflow-y: auto; }
   .sidebar { width: 100%; max-height: 34vh; border-right: none; border-bottom: 1px solid var(--border); }
   .pane { overflow: visible; }
@@ -251,12 +249,10 @@ button { font-family: var(--sans); }
 <body>
 
 <div class="topbar">
-  <div class="topbar-brand"><img src="icon.png" alt="">SPEDsight</div>
+  <div class="tool-switch" data-current="spedsight">
+    <button type="button" class="topbar-brand tool-switch-btn"><img src="icon.png" alt=""><span class="tool-switch-name">SPEDsight</span></button>
+  </div>
   <div class="topbar-right">
-    <a class="topbar-back" href="toolbox.html" title="Back to toolbox">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      <span>Back to toolbox</span>
-    </a>
     <div class="topbar-account">
       <button type="button" class="topbar-avatar-btn" id="avatar-btn" data-action="account-menu" aria-label="Account menu"></button>
       <div class="topbar-account-menu" id="account-menu">
