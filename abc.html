@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#323B87">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap" rel="stylesheet">
 <!-- Pinned (with an integrity hash) rather than the floating @2 tag, so the
      browser refuses to run anything but this exact reviewed file. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
@@ -56,18 +56,34 @@ button { font-family: var(--sans); }
 .topbar-account-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px; font-size: 14px; color: var(--danger); background: none; border: none; cursor: pointer; text-align: left; }
 .topbar-account-item:hover { background: var(--surface2); }
 
-/* SHELL + SIDEBAR ROSTER */
+/* Sidebar toggle (same Material Symbols icon as SPEDsheet) */
+.material-symbols-outlined { font-family: "Material Symbols Outlined"; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; font-feature-settings: "liga"; -webkit-font-feature-settings: "liga"; -webkit-font-smoothing: antialiased; user-select: none; }
+.topbar-hamburger { width: 36px; height: 36px; border-radius: 8px; border: none; background: transparent; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: -2px; transition: background .15s; }
+.topbar-hamburger:hover { background: rgba(255,255,255,.15); }
+
+/* SHELL + SIDEBAR ROSTER — mirrors SPEDsheet's (index.html) sidebar */
 .shell { display: flex; flex: 1; overflow: hidden; }
-.sidebar { width: 308px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-.sidebar-head { height: 56px; padding: 0 14px; display: flex; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sidebar { width: 308px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transition: width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1); }
+.sidebar.collapsed { width: 100px; min-width: 100px; }
+.sidebar-head { height: 56px; padding: 0 14px; display: flex; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; transition: padding .22s; }
+.sidebar.collapsed .sidebar-head { padding: 0 6px; gap: 8px; justify-content: center; }
+.sidebar.collapsed .search-wrap { display: none; }
+.search-collapsed-btn { display: none; flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text-2); align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
+.search-collapsed-btn:hover { background: var(--surface); border-color: var(--border-mid); color: var(--text); }
+.sidebar.collapsed .search-collapsed-btn { display: flex; }
+.sidebar.collapsed .student-item { justify-content: center; padding: 8px 6px; gap: 6px; }
+.sidebar.collapsed .stu-info { display: none; }
+.sidebar.collapsed .roster-campus,
+.sidebar.collapsed .roster-teacher-hdr { display: none; }
 .search-wrap { position: relative; width: 100%; }
 .search-wrap > svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
-.search-input { -webkit-appearance: none; appearance: none; width: 100%; padding: 7px 10px 7px 28px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
+.search-input { -webkit-appearance: none; appearance: none; width: 100%; padding: 7px 26px 7px 28px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--sans); font-size: 14px; background: var(--surface2); color: var(--text); }
 .search-input::placeholder { color: var(--text-3); }
 .search-input:focus { outline: none; border-color: var(--brand); }
+.search-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; border: none; background: transparent; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--text-3); border-radius: 4px; padding: 0; }
+.search-clear:hover { background: var(--border); color: var(--text); }
+.search-input:not(:placeholder-shown) ~ .search-clear { display: flex; }
 .student-list { flex: 1; overflow-y: auto; }
-.roster-teacher-hdr { position: sticky; top: 0; z-index: 10; height: 38px; padding: 0 12px; font-size: 14px; font-weight: 700; color: var(--text-2); background: var(--surface2); display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); }
-.roster-hdr-count { margin-left: auto; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--brand-dim); color: var(--brand); }
 .student-item { display: flex; align-items: center; gap: 9px; padding: 12px 9px; cursor: pointer; transition: background .12s; margin-bottom: 1px; width: 100%; border: none; background: transparent; text-align: left; color: var(--text); font-size: 15px; }
 .student-item:hover { background: var(--surface2); }
 .student-item.active { background: var(--brand-dim); }
@@ -76,7 +92,43 @@ button { font-family: var(--sans); }
 .stu-info { flex: 1; min-width: 0; }
 .stu-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .status-chip { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin-top: 3px; white-space: nowrap; }
-.roster-empty { padding: 20px 16px; font-size: 14px; color: var(--text-3); font-style: italic; }
+.roster-empty { text-align: center; padding: 22px 14px; color: var(--text-3); font-size: 13px; }
+
+/* Teacher filter dropdown (under the search box) */
+.roster-campus { position: relative; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.roster-campus-btn { width: 100%; padding: 12px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; border: none; background: var(--surface2); color: var(--text); font-family: var(--sans); }
+.roster-campus-btn:hover { background: #f0ede9; }
+.roster-campus-btn svg { width: 13px; height: 13px; margin-left: auto; flex-shrink: 0; color: var(--text-3); transition: transform .15s; }
+.roster-campus.open .roster-campus-btn svg { transform: rotate(180deg); }
+.roster-campus-panel { position: absolute; left: 0; right: 0; top: 100%; z-index: 60; background: var(--surface); border: 1px solid var(--border); border-top: none; box-shadow: 0 8px 24px rgba(0,0,0,.14); max-height: 320px; overflow-y: auto; display: none; }
+.roster-campus.open .roster-campus-panel { display: block; }
+.roster-campus-opt { width: 100%; padding: 12px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; border: none; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); font-family: var(--sans); text-align: left; }
+.roster-campus-opt:last-child { border-bottom: none; }
+.roster-campus-opt:hover { background: var(--surface2); }
+.roster-campus-opt.active { background: var(--brand-dim); color: var(--brand); }
+.roster-campus-count, .roster-campus-opt-count { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface2); color: var(--text-3); flex-shrink: 0; }
+.roster-campus-btn .roster-campus-count { background: var(--brand-dim); color: var(--brand); }
+.roster-campus-opt-count { margin-left: auto; }
+.roster-campus-opt.active .roster-campus-opt-count { background: var(--brand); color: #fff; }
+
+/* Teacher group headers: click to filter to that teacher, drag to reorder */
+.roster-teacher-hdr { position: sticky; top: 0; left: 0; z-index: 10; width: 100%; height: 38px; padding: 0 12px; font-size: 14px; font-weight: 700; color: var(--text-2); background: var(--surface2); display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s, color .12s; }
+.roster-teacher-hdr:hover { background: #f0ede9; }
+.roster-teacher-hdr.isolated { background: var(--brand-dim); color: var(--brand); }
+.roster-teacher-icon { margin-left: auto; display: flex; align-items: center; color: var(--text-3); flex-shrink: 0; }
+.roster-teacher-icon svg { width: 13px; height: 13px; }
+.roster-teacher-hdr.isolated .roster-teacher-icon { color: var(--brand); }
+.roster-hdr-count { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--brand-dim); color: var(--brand); flex-shrink: 0; }
+.roster-teacher-hdr.isolated .roster-hdr-count { background: var(--brand); color: #fff; }
+.roster-teacher-hdr.draggable-hdr { cursor: grab; }
+.roster-teacher-hdr.draggable-hdr.dragging { opacity: .4; cursor: grabbing; }
+.roster-teacher-grip { display: flex; align-items: center; color: var(--text-3); opacity: .5; flex-shrink: 0; }
+.roster-teacher-hdr.isolated .roster-teacher-grip { color: var(--brand); }
+
+/* Phone-only student picker (top-bar button + slide-in drawer) */
+.mob-stu-btn { display: none; }
+.mob-drawer-backdrop { display: none; }
+.mob-drawer { display: none; }
 
 /* PANE */
 .pane { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
@@ -227,12 +279,27 @@ button { font-family: var(--sans); }
 }
 /* Phones (secondary): roster becomes a short scrollable strip on top. */
 @media (max-width: 768px) {
-  .topbar { padding: 0 12px; }
-  .topbar-brand { font-size: 18px; }
-  .shell { flex-direction: column; overflow-y: auto; }
-  .sidebar { width: 100%; max-height: 34vh; border-right: none; border-bottom: 1px solid var(--border); }
-  .pane { overflow: visible; }
-  .pane-body { overflow: visible; padding: 12px; }
+  /* Same phone pattern as SPEDsheet: the sidebar hides and a "Students"
+     button in the top bar opens a slide-in drawer with the same list. */
+  .topbar { padding: 0 12px; gap: 10px; }
+  .topbar-hamburger { display: none; }
+  .tool-switch-name { display: none; }   /* logo + ▾ only, leaving room for the Students button */
+  .sidebar { display: none !important; }
+  .pane-body { padding: 12px; }
+  .mob-stu-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(255,255,255,.15); border: none; color: #fff; font-family: var(--sans); font-size: 16px; font-weight: 600; cursor: pointer; flex: 1; min-width: 0; -webkit-tap-highlight-color: transparent; }
+  .mob-stu-btn:active { background: rgba(255,255,255,.28); }
+  .mob-stu-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mob-stu-chevron { flex-shrink: 0; opacity: .75; }
+  .mob-drawer-backdrop { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; opacity: 0; pointer-events: none; transition: opacity .26s; }
+  .mob-drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+  .mob-drawer { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; width: min(82vw, 320px); background: var(--surface); z-index: 501; transform: translateX(-100%); transition: transform .28s cubic-bezier(.4,0,.2,1); box-shadow: 4px 0 32px rgba(0,0,0,.18); }
+  .mob-drawer.open { transform: translateX(0); }
+  .mob-drawer-head { height: 56px; padding: 0 16px; background: var(--brand); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+  .mob-drawer-title { font-size: 16px; font-weight: 700; color: #fff; }
+  .mob-drawer-close { width: 34px; height: 34px; border: none; background: rgba(255,255,255,.18); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 19px; line-height: 1; }
+  .mob-drawer-search { padding: 12px 14px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+  .mob-drawer-search .search-input { width: 100%; }
+  .mob-drawer-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .session-body { grid-template-columns: 1fr; }
   .abc-sec, .sc-head, .abc-form-ftr { padding-left: 14px; padding-right: 14px; }
   .fin, .fsel { font-size: 16px; } /* keeps iOS from zooming on focus */
@@ -249,9 +316,18 @@ button { font-family: var(--sans); }
 <body>
 
 <div class="topbar">
+  <button type="button" class="topbar-hamburger" data-action="toggle-sidebar" title="Toggle sidebar" aria-label="Toggle student list">
+    <span class="material-symbols-outlined" id="topbar-hamburger-icon" style="font-size:26px;">menu_open</span>
+  </button>
   <div class="tool-switch" data-current="spedsight">
     <button type="button" class="topbar-brand tool-switch-btn"><img src="icon.png" alt=""><span class="tool-switch-name">SPEDsight</span></button>
   </div>
+  <!-- Phones: opens the student drawer (the sidebar is hidden there) -->
+  <button type="button" class="mob-stu-btn" data-action="open-drawer">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mob-stu-chevron"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <span class="mob-stu-name" id="mob-stu-name">Students</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mob-stu-chevron"><polyline points="6 9 12 15 18 9"/></svg>
+  </button>
   <div class="topbar-right">
     <div class="topbar-account">
       <button type="button" class="topbar-avatar-btn" id="avatar-btn" data-action="account-menu" aria-label="Account menu"></button>
@@ -266,14 +342,41 @@ button { font-family: var(--sans); }
   </div>
 </div>
 
+<!-- PHONE STUDENT DRAWER -->
+<div class="mob-drawer-backdrop" id="mob-drawer-backdrop" data-action="close-drawer"></div>
+<div class="mob-drawer" id="mob-drawer" role="dialog" aria-label="Students">
+  <div class="mob-drawer-head">
+    <span class="mob-drawer-title">Students <span id="mob-stu-count" style="font-size:13px;font-weight:400;opacity:.7"></span></span>
+    <button type="button" class="mob-drawer-close" data-action="close-drawer" aria-label="Close">✕</button>
+  </div>
+  <div class="mob-drawer-search">
+    <div class="search-wrap">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="mob-search-input" data-field="search" placeholder="Search students" autocomplete="off">
+      <button type="button" class="search-clear" data-action="clear-search" data-target="mob-search-input" aria-label="Clear search" tabindex="-1">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="roster-campus" id="mob-campus-sel"></div>
+  <div class="mob-drawer-list" id="mob-student-list"></div>
+</div>
+
 <div class="shell">
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
       <div class="search-wrap">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="search-input" id="search-input" data-field="search" placeholder="Search students" autocomplete="off">
+        <button type="button" class="search-clear" data-action="clear-search" data-target="search-input" aria-label="Clear search" tabindex="-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
+      <button type="button" class="search-collapsed-btn" data-action="expand-search" title="Search students" aria-label="Search students">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
     </div>
+    <div class="roster-campus" id="desk-campus-sel"></div>
     <div class="student-list" id="student-list"></div>
   </div>
   <div class="pane">
@@ -359,15 +462,22 @@ function fmtDuration(sec){
   const m = Math.floor(sec / 60), s = sec % 60;
   return m ? `${m}m ${s}s` : `${s}s`;
 }
-// Same teacher-group order the user has set by dragging in index.html (it's
-// stored per-browser under this key); read-only here.
+// Roster display preferences are shared with SPEDsheet (same localStorage
+// keys on this site): the dragged teacher-group order and whether the
+// sidebar is collapsed follow the user between the two tools.
+const TEACHER_ORDER_KEY = 'ppdc_teacher_order';
+const SIDEBAR_KEY = 'ppdc_sidebar';
 let teacherOrder = [];
-try { teacherOrder = JSON.parse(localStorage.getItem('ppdc_teacher_order') || '[]'); } catch(e) { teacherOrder = []; }
+try { teacherOrder = JSON.parse(localStorage.getItem(TEACHER_ORDER_KEY) || '[]'); } catch(e) { teacherOrder = []; }
+function saveTeacherOrder(){ try { localStorage.setItem(TEACHER_ORDER_KEY, JSON.stringify(teacherOrder)); } catch(e) {} }
+// Ranked teachers first (in dragged order), then the rest alphabetically,
+// with "No Teacher" always last — same rule as SPEDsheet.
 function teacherSortIndex(name){
   if(name === 'No Teacher') return Infinity;
   const i = teacherOrder.indexOf(name);
   return i === -1 ? teacherOrder.length : i;
 }
+const isMobile = () => window.innerWidth <= 768;
 
 // ═══════════════════════════════════════════════════════════════
 // STATE
@@ -384,7 +494,6 @@ const A = {
   behaviors: [],          // all of the selected student's behaviors, retired ones included
   sessions: [],           // the selected student's sessions on A.date
   entries: [],            // entries in those sessions, newest first
-  search: '',
   loadingDay: false,
 };
 let _loadSeq = 0;         // discards responses for a student/date no longer selected
@@ -771,27 +880,157 @@ setInterval(() => {
 // ═══════════════════════════════════════════════════════════════
 // RENDERING
 // ═══════════════════════════════════════════════════════════════
-function renderRoster(){
-  const el = document.getElementById('student-list');
-  const q = A.search.trim().toLowerCase();
-  const list = A.students.filter(s => !q || s.name.toLowerCase().includes(q));
-  if(!A.students.length){ el.innerHTML = `<div class="roster-empty">No students yet. Add students in SPEDsheet first.</div>`; return; }
-  if(!list.length){ el.innerHTML = `<div class="roster-empty">No students match your search.</div>`; return; }
+// ── Student roster: mirrors SPEDsheet's sidebar (search, teacher filter
+// dropdown, teacher groups you can isolate or drag to reorder). Teacher
+// names are user data, so they travel in escaped data-* attributes and are
+// read back via dataset — never spliced into inline handlers.
+const ROSTER_ALL_LABEL = 'Eastview Caseload'; // same "all teachers" label SPEDsheet uses
+const R = { search: '', teacher: null, dropdownOpen: false, renderedOrder: [], dragTeacher: null };
+
+function rosterSearchMatches(){
+  const q = R.search.trim().toLowerCase();
+  if(!q) return A.students;
+  return A.students.filter(s =>
+    s.name.toLowerCase().includes(q) || s.grade.toLowerCase().includes(q) ||
+    s.teacher.toLowerCase().includes(q) || s.classroom.toLowerCase().includes(q));
+}
+
+function teacherDropdownHTML(pre){
+  const counts = new Map();
+  pre.forEach(s => { const t = s.teacher || 'No Teacher'; counts.set(t, (counts.get(t) || 0) + 1); });
+  const list = [...counts.entries()].sort(([a], [b]) => (a === 'No Teacher') - (b === 'No Teacher') || a.localeCompare(b));
+  const selCount = R.teacher ? (counts.get(R.teacher) || 0) : pre.length;
+  const chev = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>';
+  return `<button type="button" class="roster-campus-btn" data-action="toggle-teacher-dropdown" aria-expanded="${R.dropdownOpen}">
+      <span>${esc(R.teacher || ROSTER_ALL_LABEL)}</span><span class="roster-campus-count">${selCount}</span>${chev}
+    </button>
+    <div class="roster-campus-panel">
+      <button type="button" class="roster-campus-opt${R.teacher ? '' : ' active'}" data-action="set-teacher" data-teacher="">
+        <span>${esc(ROSTER_ALL_LABEL)}</span><span class="roster-campus-opt-count">${pre.length}</span></button>
+      ${list.map(([t, n]) => `<button type="button" class="roster-campus-opt${R.teacher === t ? ' active' : ''}" data-action="set-teacher" data-teacher="${esc(t)}">
+        <span>${esc(t)}</span><span class="roster-campus-opt-count">${n}</span></button>`).join('')}
+    </div>`;
+}
+
+function rosterRowsHTML(list){
+  if(!A.students.length) return `<div class="roster-empty">No students yet. Add students in SPEDsheet first.</div>`;
+  if(!list.length) return `<div class="roster-empty">No matches</div>`;
   const groups = new Map();
-  for(const s of list){
-    const t = s.teacher || 'No Teacher';
-    if(!groups.has(t)) groups.set(t, []);
-    groups.get(t).push(s);
-  }
+  list.forEach(s => { const t = s.teacher || 'No Teacher'; if(!groups.has(t)) groups.set(t, []); groups.get(t).push(s); });
+  const entries = [...groups.entries()].sort(([a], [b]) => teacherSortIndex(a) - teacherSortIndex(b) || a.localeCompare(b));
+  // This render's visual order (minus the pinned "No Teacher" bucket), so a
+  // drop can compute the complete new order.
+  R.renderedOrder = entries.map(([t]) => t).filter(t => t !== 'No Teacher');
   const byLast = (a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name) || a.name.localeCompare(b.name);
-  el.innerHTML = [...groups.entries()]
-    .sort(([a], [b]) => teacherSortIndex(a) - teacherSortIndex(b) || a.localeCompare(b))
-    .map(([teacher, studs]) => `<div class="roster-teacher-hdr">${esc(teacher)}<span class="roster-hdr-count">${studs.length}</span></div>` +
-      studs.sort(byLast).map(s => `<button type="button" class="student-item${s.id === A.cur ? ' active' : ''}" data-action="select-student" data-sid="${esc(s.id)}">
+  const grip = `<span class="roster-teacher-grip" title="Drag to reorder"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.5"/><circle cx="7.5" cy="2.5" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13.5" r="1.5"/><circle cx="7.5" cy="13.5" r="1.5"/></svg></span>`;
+  return entries.map(([teacher, studs]) => {
+    const isolated = R.teacher === teacher;
+    const draggable = teacher !== 'No Teacher';
+    const icon = isolated
+      ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+      : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-8 8-8s8 3.5 8 8"/></svg>`;
+    const hdr = `<div class="roster-teacher-hdr${isolated ? ' isolated' : ''}${draggable ? ' draggable-hdr' : ''}"${draggable ? ' draggable="true"' : ''} data-action="isolate-teacher" data-teacher="${esc(teacher)}" title="${isolated ? 'Show all teachers' : 'Filter to this teacher'}">
+      ${draggable ? grip : ''}${esc(teacher)}
+      <span class="roster-teacher-icon">${icon}</span>
+      <span class="roster-hdr-count">${studs.length}</span>
+    </div>`;
+    return hdr + [...studs].sort(byLast).map(s => `<button type="button" class="student-item${s.id === A.cur ? ' active' : ''}" data-action="select-student" data-sid="${esc(s.id)}" title="${esc(s.name)}">
         <div class="stu-avatar">${esc(initials(s.name))}</div>
         <div class="stu-info"><div class="stu-name">${esc(s.name)}</div>${statusChipHTML(s.status)}</div>
-      </button>`).join('')).join('');
+      </button>`).join('');
+  }).join('');
 }
+
+// Renders only the visible roster — the sidebar on desktop, the drawer on
+// phones (the other is display:none); a resize across the breakpoint
+// re-renders the newly visible one.
+function renderRoster(){
+  const mobile = isMobile();
+  for(const id of ['search-input', 'mob-search-input']){
+    const el = document.getElementById(id);
+    if(el && el.value !== R.search) el.value = R.search;
+  }
+  const count = document.getElementById('mob-stu-count');
+  if(count) count.textContent = A.students.length ? `(${A.students.length})` : '';
+  const pre = rosterSearchMatches();
+  const sel = document.getElementById(mobile ? 'mob-campus-sel' : 'desk-campus-sel');
+  if(sel){ sel.classList.toggle('open', R.dropdownOpen); sel.innerHTML = teacherDropdownHTML(pre); }
+  const list = R.teacher ? pre.filter(s => (s.teacher || 'No Teacher') === R.teacher) : pre;
+  document.getElementById(mobile ? 'mob-student-list' : 'student-list').innerHTML = rosterRowsHTML(list);
+  updateMobStuBtn();
+}
+
+// Debounced like SPEDsheet: rebuilding the list on every keystroke stutters
+// on slower devices; 120ms still feels instant.
+let _searchTimer = null;
+function setRosterSearch(v){
+  R.search = v;
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(renderRoster, 120);
+}
+
+function updateMobStuBtn(){
+  const el = document.getElementById('mob-stu-name');
+  if(el) el.textContent = selectedStudent()?.name || 'Students';
+}
+function openDrawer(){
+  document.getElementById('mob-drawer-backdrop').classList.add('open');
+  document.getElementById('mob-drawer').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('mob-drawer-backdrop').classList.remove('open');
+  document.getElementById('mob-drawer').classList.remove('open');
+}
+
+// ── Sidebar collapse (desktop) — shares SPEDsheet's saved preference ──
+function setSidebarCollapsed(collapsed){
+  document.getElementById('sidebar').classList.toggle('collapsed', collapsed);
+  const icon = document.getElementById('topbar-hamburger-icon');
+  if(icon) icon.textContent = collapsed ? 'menu' : 'menu_open';
+  try { localStorage.setItem(SIDEBAR_KEY, String(collapsed)); } catch(e) {}
+}
+function restoreSidebar(){
+  let collapsed = false;
+  try { collapsed = localStorage.getItem(SIDEBAR_KEY) === 'true'; } catch(e) {}
+  document.getElementById('sidebar').classList.toggle('collapsed', collapsed);
+  const icon = document.getElementById('topbar-hamburger-icon');
+  if(icon) icon.textContent = collapsed ? 'menu' : 'menu_open';
+}
+
+// ── Drag to reorder teacher groups (desktop; HTML5 drag-and-drop doesn't
+// fire reliably on touch, so phones just show the saved order) ──
+document.addEventListener('dragstart', e => {
+  const hdr = e.target.closest?.('.roster-teacher-hdr[draggable="true"]');
+  if(!hdr) return;
+  R.dragTeacher = hdr.dataset.teacher;
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', R.dragTeacher); } catch(err) {}
+  hdr.classList.add('dragging');
+});
+document.addEventListener('dragover', e => {
+  if(R.dragTeacher === null || !e.target.closest?.('.roster-teacher-hdr')) return;
+  e.preventDefault(); // required for drop to fire
+  e.dataTransfer.dropEffect = 'move';
+});
+document.addEventListener('drop', e => {
+  const hdr = e.target.closest?.('.roster-teacher-hdr');
+  if(R.dragTeacher === null || !hdr) return;
+  e.preventDefault();
+  const target = hdr.dataset.teacher;
+  if(target !== R.dragTeacher){
+    // Insert the dragged teacher just before the drop target, then save
+    // that as the explicit order.
+    const order = R.renderedOrder.filter(t => t !== R.dragTeacher);
+    const idx = order.indexOf(target);
+    if(idx >= 0){ order.splice(idx, 0, R.dragTeacher); teacherOrder = order; saveTeacherOrder(); }
+  }
+  R.dragTeacher = null;
+  renderRoster();
+});
+document.addEventListener('dragend', () => {
+  R.dragTeacher = null;
+  document.querySelectorAll('.roster-teacher-hdr.dragging').forEach(el => el.classList.remove('dragging'));
+});
 
 function renderPane(){
   const el = document.getElementById('pane-body');
@@ -1162,12 +1401,46 @@ function toggleChip(group, code){
 document.addEventListener('click', e => {
   const menu = document.getElementById('account-menu');
   if(menu.classList.contains('open') && !e.target.closest('.topbar-account')) menu.classList.remove('open');
+  if(R.dropdownOpen && !e.target.closest('.roster-campus')){
+    R.dropdownOpen = false;
+    document.querySelectorAll('.roster-campus.open').forEach(el => el.classList.remove('open'));
+  }
   const t = e.target.closest('[data-action]');
   if(!t) return;
   switch(t.dataset.action){
     case 'account-menu': menu.classList.toggle('open'); break;
     case 'sign-out': sb.auth.signOut(); break;
-    case 'select-student': selectStudent(t.dataset.sid); break;
+    case 'select-student': {
+      // Checked first: selecting re-renders the list, detaching this button.
+      const inDrawer = !!t.closest('#mob-drawer');
+      selectStudent(t.dataset.sid);
+      if(inDrawer) closeDrawer();
+      break;
+    }
+    case 'toggle-sidebar': setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('collapsed')); break;
+    case 'expand-search': setSidebarCollapsed(false); document.getElementById('search-input').focus(); break;
+    case 'clear-search': {
+      clearTimeout(_searchTimer);
+      R.search = '';
+      renderRoster();
+      document.getElementById(t.dataset.target)?.focus();
+      break;
+    }
+    case 'open-drawer': openDrawer(); break;
+    case 'close-drawer': closeDrawer(); break;
+    case 'toggle-teacher-dropdown': {
+      R.dropdownOpen = !R.dropdownOpen;
+      t.closest('.roster-campus').classList.toggle('open', R.dropdownOpen);
+      t.setAttribute('aria-expanded', String(R.dropdownOpen));
+      break;
+    }
+    case 'set-teacher': R.teacher = t.dataset.teacher || null; R.dropdownOpen = false; renderRoster(); break;
+    case 'isolate-teacher': {
+      const teacher = t.dataset.teacher;
+      R.teacher = R.teacher === teacher ? null : teacher;
+      renderRoster();
+      break;
+    }
     case 'chip': toggleChip(t.dataset.group, t.dataset.code); break;
     case 'add-behavior-open': _addingBehavior = true; renderForm(); break;
     case 'add-behavior-cancel': _addingBehavior = false; _newBehaviorName = ''; renderForm(); break;
@@ -1212,7 +1485,7 @@ document.addEventListener('input', e => {
   if(!field) return;
   const v = e.target.value;
   switch(field){
-    case 'search': A.search = v; renderRoster(); break;
+    case 'search': setRosterSearch(v); break;
     case 'time': form.time = v; form.timeAuto = false; break;
     case 'dur-min': form.durMin = v; break;
     case 'dur-sec': form.durSec = v; break;
@@ -1254,7 +1527,21 @@ document.addEventListener('keydown', e => {
   if(e.key === 'Escape'){
     document.getElementById('delete-modal').classList.remove('open');
     _pendingDeleteId = null;
+    closeDrawer();
+    if(R.dropdownOpen){ R.dropdownOpen = false; document.querySelectorAll('.roster-campus.open').forEach(el => el.classList.remove('open')); }
   }
+});
+
+// Crossing the phone breakpoint swaps sidebar ↔ drawer; render the one that
+// just became visible.
+let _wasMobile = isMobile(), _rosterReady = false;
+window.addEventListener('resize', () => {
+  const m = isMobile();
+  if(m === _wasMobile) return;
+  _wasMobile = m;
+  if(!m) closeDrawer();
+  R.dropdownOpen = false;
+  if(_rosterReady) renderRoster();
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -1270,9 +1557,11 @@ async function init(){
     document.getElementById('pane-body').innerHTML = `<div class="pane-empty"><div class="pane-empty-title">Couldn't load ABC data</div>Check your connection and reload. If this is a new setup, make sure sql/001–003 have been run in Supabase.</div>`;
     return;
   }
+  _rosterReady = true;
   renderRoster();
   renderPane();
 }
+restoreSidebar();
 
 sb.auth.onAuthStateChange((event, session) => {
   if(!session){ location.replace('toolbox.html'); return; }
