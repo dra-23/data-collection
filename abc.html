@@ -17,6 +17,7 @@
      browser refuses to run anything but this exact reviewed file. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script src="abc-analysis.js"></script>
+<script src="grading-periods.js"></script>
 <script src="tool-switcher.js" defer></script>
 <style>
 /* Tokens and base components mirror index.html so the two tools read as one app. */
@@ -235,6 +236,10 @@ button { font-family: var(--sans); }
 .note-link { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface2); color: var(--text-2); font-size: 13px; font-weight: 600; cursor: pointer; }
 .note-link:hover { border-color: var(--brand); color: var(--brand); }
 .note-link.on { background: var(--brand-dim); border-color: var(--brand); color: var(--brand); }
+.ana-periods { padding: 0 20px 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; }
+.ana-periods-sep { width: 1px; height: 20px; background: var(--border-mid); }
+.text-link { border: none; background: none; padding: 4px 2px; color: var(--brand); font-size: 13px; font-weight: 600; cursor: pointer; }
+.text-link:hover { text-decoration: underline; }
 .fn-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 20px; padding: 16px 20px; align-items: center; }
 .fn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .fn-box { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
@@ -309,7 +314,7 @@ button { font-family: var(--sans); }
   .view-btn { flex: 1; }
   .ana-controls { grid-template-columns: 1fr; }
   .fn-grid { grid-template-columns: 1fr; }
-  .ana-controls, .tally, .write-col, .fn-layout, .fn-note, .ana-saved, .ana-warn { padding-left: 14px; padding-right: 14px; }
+  .ana-controls, .tally, .write-col, .fn-layout, .fn-note, .ana-saved, .ana-periods, .ana-warn { padding-left: 14px; padding-right: 14px; }
 }
 </style>
 </head>
@@ -336,6 +341,7 @@ button { font-family: var(--sans); }
           <div class="topbar-account-hdr-lbl">Signed in as</div>
           <div class="topbar-account-hdr-name" id="account-name"></div>
         </div>
+        <button type="button" class="topbar-account-item" data-action="school-calendar">School Calendar</button>
         <button type="button" class="topbar-account-item" data-action="sign-out">Sign Out</button>
       </div>
     </div>
@@ -517,6 +523,26 @@ function blankAnalysis(){
   };
 }
 let Z = blankAnalysis();
+
+// The account's School Calendar (quarters/semesters — grading-periods.js),
+// loaded once at sign-in. Shared with SPEDsheet's Yearly Summary.
+let _gpCal = {};
+async function loadSchoolCalendar(){
+  try { _gpCal = await GradingPeriods.load(sb); }
+  catch(e) { console.error('school calendar load:', e); _gpCal = {}; }
+}
+function openSchoolCalendar(){
+  GradingPeriods.openEditor({ sb, ownerId: currentUser.id, calendar: _gpCal, year: GradingPeriods.schoolYearOf(Z.end || localDateStr()),
+    onSaved: cal => { _gpCal = cal; if(A.view === 'analyze') renderAnalysis(); } });
+}
+// Quick ranges for the school year the To date falls in — or, if that year
+// has no calendar, the current one.
+function quickPeriods(){
+  let sy = GradingPeriods.schoolYearOf(Z.end || localDateStr());
+  let list = GradingPeriods.definedPeriods(_gpCal, sy);
+  if(!list.length){ sy = GradingPeriods.currentSchoolYear(); list = GradingPeriods.definedPeriods(_gpCal, sy); }
+  return { sy, list };
+}
 
 function blankForm(keep = {}){
   return {
@@ -1282,6 +1308,15 @@ function renderAnalysis(){
     return `<button type="button" class="note-link${current ? ' on' : ''}" data-action="ana-load-note" data-id="${esc(n.id)}">${esc(fmtRange(n.range_start, n.range_end))}</button>`;
   }).join('');
 
+  const { sy, list: periods } = quickPeriods();
+  // Period keys/dates come from validated date columns, but are escaped anyway.
+  const periodsRow = `<div class="ana-periods">
+    ${periods.length ? `<span class="fl-note">${esc(GradingPeriods.yearLabel(sy))}:</span>` : ''}
+    ${periods.map((p, i) => (p.key[0] === 'S' && i && periods[i - 1].key[0] === 'Q' ? '<span class="ana-periods-sep"></span>' : '') +
+      `<button type="button" class="note-link${p.start === Z.start && p.end === Z.end ? ' on' : ''}" data-action="ana-period" data-start="${esc(p.start)}" data-end="${esc(p.end)}" title="${esc(p.label + ': ' + GradingPeriods.formatRange(p.start, p.end))}">${esc(p.key)}</button>`).join('')}
+    <button type="button" class="text-link" data-action="school-calendar">${periods.length ? 'Edit dates' : 'Set up quarters &amp; semesters'}</button>
+  </div>`;
+
   const controls = `<div class="section-card">
     <div class="sc-head"><span class="sc-title">Analysis</span><span class="sc-meta">${result ? `${esc(plural(result.entryCount, 'observation'))} of ${esc(bname)} · ${esc(fmtRange(Z.start, Z.end))}` : ''}</span></div>
     <div class="ana-controls">
@@ -1291,6 +1326,7 @@ function renderAnalysis(){
       <div><button type="button" class="mbtn mbtn-ghost" data-action="ana-all-dates">All dates</button></div>
     </div>
     ${Z.start > Z.end ? `<div class="ana-warn" role="alert">The From date is after the To date.</div>` : ''}
+    ${periodsRow}
     ${savedLinks ? `<div class="ana-saved"><span class="fl-note">Saved write-ups for ${esc(bname)}:</span>${savedLinks}</div>` : ''}
   </div>`;
   if(!result){ el.innerHTML = controls; return; }
@@ -1461,6 +1497,12 @@ document.addEventListener('click', e => {
       break;
     }
     case 'view': switchView(t.dataset.view); break;
+    case 'school-calendar': openSchoolCalendar(); break;
+    case 'ana-period':
+      if(!confirmDiscard()) break;
+      Z.start = t.dataset.start; Z.end = t.dataset.end; Z.rangeAuto = false;
+      loadDraft(); renderAnalysis();
+      break;
     case 'ana-all-dates':
       if(!confirmDiscard()) break;
       Z.rangeAuto = true; setAllDates(); loadDraft(); renderAnalysis();
@@ -1558,6 +1600,7 @@ async function init(){
     return;
   }
   _rosterReady = true;
+  loadSchoolCalendar().then(() => { if(A.view === 'analyze') renderAnalysis(); });
   renderRoster();
   renderPane();
 }

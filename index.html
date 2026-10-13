@@ -24,6 +24,8 @@
 <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <!-- Top-bar title dropdown for switching between SPEDsheet, SPEDsight, and the Toolbox (shared with the other pages). -->
 <script defer src="tool-switcher.js"></script>
+<!-- School Calendar (quarters/semesters) — shared with SPEDsight -->
+<script src="grading-periods.js"></script>
 <style>
 :root {
   --brand:      #323B87;
@@ -1021,6 +1023,16 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 /* YEARLY SUMMARY */
 .yr-page { display: flex; flex-direction: column; margin: -18px -20px -20px; padding: 12px; gap: 12px; }
 .yr-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; flex-shrink: 0; position: relative; }
+/* Full Year / quarter / semester picker above the Yearly hero */
+.yr-range-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.yr-range-seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.yr-range-btn { min-width: 44px; padding: 6px 12px; border: none; border-radius: 7px; background: transparent; color: var(--text-2); font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s, color .15s; }
+.yr-range-btn:hover { background: var(--surface2); color: var(--text); }
+.yr-range-btn.on { background: var(--brand); color: #fff; }
+.yr-range-sep { width: 1px; margin: 4px 2px; background: var(--border-mid); }
+.yr-range-edit { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 7px; background: transparent; color: var(--brand); font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; }
+.yr-range-edit:hover { background: var(--brand-dim); }
+.yr-range-dates { font-size: 13px; font-weight: 500; color: var(--text-2); margin-top: 3px; }
 .yr-hero-profile { padding: 16px 20px; display: flex; align-items: flex-start; gap: 14px; border-bottom: 1px solid var(--border); }
 .yr-chart-dl-btn { position: absolute; top: 4px; right: 4px; z-index: 2; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--border-mid); background: var(--surface); color: var(--text-3); cursor: pointer; transition: all .15s; }
 .yr-chart-dl-btn:hover { border-color: var(--brand); background: var(--brand-dim); color: var(--brand); }
@@ -1089,7 +1101,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
   .topbar, .sidebar, .mob-drawer, .mob-drawer-backdrop,
   .day-tabs, .week-ctrl, .mob-fab-wrap, .sum-hero-actions, .yr-hero-actions,
   .sc-clear-btn, .sc-goals-btn, .yr-chart-dl-btn,
-  .sc-chevron, .modal-bg, .cnt-b { display: none !important; }
+  .sc-chevron, .modal-bg, .cnt-b, .yr-range-bar { display: none !important; }
 
   html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
   .shell, .pane { display: block !important; overflow: visible !important; }
@@ -1174,6 +1186,10 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
           Toolbox
         </a>
+        <button type="button" class="topbar-account-item" onclick="closeAccountMenu();openSchoolCalendar()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          School Calendar
+        </button>
         <button type="button" class="topbar-account-item danger" onclick="closeAccountMenu();signOut()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Sign Out
@@ -1718,6 +1734,7 @@ async function signOut(){
   await sb.auth.signOut();
   currentUser = null;
   S = { students:[], cur:null, week:null, data:{} };
+  _gpCal={}; _yrRange='year';
   document.getElementById('topbar-avatar-btn').textContent = '';
   document.getElementById('topbar-account-name').textContent = '';
   showLogin(); refresh();
@@ -3150,6 +3167,30 @@ function getSchoolYear(){
   return {start:`${sy}-07-01`, end:`${sy+1}-06-30`, label:`${sy}–${sy+1}`};
 }
 
+// ── School Calendar (quarters/semesters — see grading-periods.js) ──
+// The account's own dates, loaded once at sign-in; the Yearly tab can be
+// narrowed to any defined period of the current school year.
+let _gpCal={};        // { [schoolYear]: { Q1:{start,end}, …, S2 } }
+let _yrRange='year';  // 'year' or a period key (Q1–Q4, S1, S2)
+const schoolYearStart=()=>parseInt(getSchoolYear().start,10);
+async function loadSchoolCalendar(){
+  try{ _gpCal=await GradingPeriods.load(sb); }
+  catch(e){ console.error('school calendar load:',e); _gpCal={}; }
+}
+function openSchoolCalendar(){
+  if(!currentUser) return;
+  GradingPeriods.openEditor({sb, ownerId:currentUser.id, calendar:_gpCal, year:schoolYearStart(),
+    onSaved:cal=>{ _gpCal=cal; if(curDay==='yearly') renderPane(); }});
+}
+// The selected period, or null for the full year (also when the selected
+// period has since been cleared from the calendar).
+function yrRangePeriod(){
+  if(_yrRange==='year') return null;
+  return GradingPeriods.definedPeriods(_gpCal,schoolYearStart()).find(p=>p.key===_yrRange)||null;
+}
+function setYrRange(key){ _yrRange=key; renderPane(); }
+const yrRangeLabel=()=>yrRangePeriod()?.label||getSchoolYear().label;
+
 async function renderYearly(body){
   const s=stu(); if(!s){ body.innerHTML=''; return; }
   if(!_yearData[s.id]){
@@ -3222,7 +3263,7 @@ async function downloadYrChart(id){
   });
   const s=stu();
   const label=_yrChartLabels[id]||'Chart';
-  const parts=[s?.name,label,getSchoolYear().label].filter(Boolean).join(' - ');
+  const parts=[s?.name,label,yrRangeLabel(),getSchoolYear().label].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' - ');
   const fname=parts.replace(/[\\/:*?"<>|]/g,'').trim()+'.jpg';
   const a=document.createElement('a');
   a.href=snap.toDataURL('image/jpeg',0.95);
@@ -3415,10 +3456,14 @@ const _RTG_COLORS=['#dc2626','#ea580c','#d97706','#65a30d','#16a34a'];
 
 function _buildYearlyView(body,s){
   _destroyYrCharts(); // clean up any previous Chart.js instances
-  const rows=_yearData[s.id]||[];
+  // Narrowed to the picked quarter/semester, if any — everything below
+  // (KPIs, trends, goals, attendance) works from these rows.
+  const period=yrRangePeriod();
+  const rows=(_yearData[s.id]||[]).filter(r=>GradingPeriods.inRange(r.date,period));
   const gs=goals();
   const n=studentPeriodCount(s);
   const {label:yearLabel}=getSchoolYear();
+  const scopeNoun=period?'this '+(period.key[0]==='Q'?'quarter':'semester'):'this school year';
 
   // Aggregate into weeks
   const wkMap={};
@@ -3540,7 +3585,7 @@ function _buildYearlyView(body,s){
         ${chips.length?`<div class="stu-meta-fields">${chips.join('')}</div>`:''}
       </div>
       <div class="stu-header-right">
-        <div class="stu-header-date">${yearLabel}</div>
+        <div class="stu-header-date">${period?`${period.label} <span style="font-weight:500;color:var(--text-3)">${yearLabel}</span><div class="yr-range-dates">${GradingPeriods.formatRange(period.start,period.end)}</div>`:yearLabel}</div>
         <div class="yr-hero-actions">
           ${printActionHTML("Print or save this year's summary as a PDF")}
         </div>
@@ -3706,10 +3751,26 @@ function _buildYearlyView(body,s){
       </div>
     </div>`;
   } else {
-    attCard=`<div class="yr-card"><div class="yr-card-hdr"><span class="yr-card-title">Attendance</span></div><div class="yr-card-body" style="color:var(--text-3);font-style:italic;font-size:14px">No attendance data recorded yet for this school year.</div></div>`;
+    attCard=`<div class="yr-card"><div class="yr-card-hdr"><span class="yr-card-title">Attendance</span></div><div class="yr-card-body" style="color:var(--text-3);font-style:italic;font-size:14px">No attendance data recorded yet for ${scopeNoun}.</div></div>`;
   }
 
+  // Range picker: Full Year plus whichever periods the account has defined.
+  const defined=GradingPeriods.definedPeriods(_gpCal,schoolYearStart());
+  const curKey=period?.key||'year';
+  const rangeBtn=(key,text,title)=>`<button type="button" class="yr-range-btn${curKey===key?' on':''}" onclick="setYrRange('${key}')"${title?` title="${title}"`:''} aria-pressed="${curKey===key}">${text}</button>`;
+  const rangeBar=`<div class="yr-range-bar">
+    <div class="yr-range-seg" role="group" aria-label="Summary range">
+      ${rangeBtn('year','Full Year')}
+      ${defined.map((p,i)=>(p.key[0]==='S'&&(i===0||defined[i-1].key[0]==='Q')?'<span class="yr-range-sep"></span>':'')+rangeBtn(p.key,p.key,`${p.label}: ${GradingPeriods.formatRange(p.start,p.end)}`)).join('')}
+    </div>
+    <button type="button" class="yr-range-edit" onclick="openSchoolCalendar()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      ${defined.length?'Edit dates':'Set up quarters &amp; semesters'}
+    </button>
+  </div>`;
+
   body.innerHTML=`<div class="yr-page">
+    ${rangeBar}
     ${hero}
     ${goalsCard}
     ${trendsCard}
@@ -5415,6 +5476,8 @@ async function init(){
   // Populate every roster student's weekly score up front (see
   // loadWeekDataForRoster) so the badges are already correct on first paint,
   // not just for whichever student gets selected below.
+  // (The school calendar isn't awaited — only the Yearly tab uses it.)
+  loadSchoolCalendar().then(()=>{ if(curDay==='yearly') renderPane(); });
   await loadWeekDataForRoster(S.week);
 
   // Deep link support: /pointsheet.html?student=<id> (e.g. linked from a
