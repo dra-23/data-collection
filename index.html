@@ -1667,7 +1667,7 @@ let S = { students:[], cur:null, week:null, data:{} };
 let curDay       = 'monday';
 let tempGoals    = [];
 let _goalEditIndex = null; // index into tempGoals currently expanded for editing, or null (all collapsed)
-let _goalConfirm = null; // { action: 'archive'|'delete', i } pending confirmation
+let _goalConfirm = null; // { action: 'archive'|'restore'|'delete', i } pending confirmation
 let colSec       = {};
 let calViewMonth = null;
 let rosterFilter = { search:'', teacher:null };  // Left-pane roster search/filter
@@ -4831,10 +4831,11 @@ function closeGoalEdit(){ _goalEditIndex=null; renderGoalsList(); }
 function openGoalConfirm(action, i, text){
   _goalConfirm={action,i};
   const del=action==='delete';
-  document.getElementById('goal-confirm-title').textContent = del ? 'Delete this goal?' : 'Archive this goal?';
+  const verb={archive:'Archive',restore:'Restore',delete:'Delete'}[action];
+  document.getElementById('goal-confirm-title').textContent = `${verb} this goal?`;
   document.getElementById('goal-delete-confirm-sub').textContent = text;
   const btn=document.getElementById('goal-confirm-btn');
-  btn.textContent = del ? 'Delete' : 'Archive';
+  btn.textContent = verb;
   btn.className = del ? 'mbtn' : 'mbtn mbtn-brand';
   btn.style.cssText = del ? 'background:var(--danger);color:#fff' : '';
   openModal('goal-delete-confirm-modal');
@@ -4851,11 +4852,16 @@ function openGoalArchiveConfirm(i, evt){
   openGoalConfirm('archive', i,
     `"${g?.name||'This goal'}" will be hidden from the point sheet. Its recorded scores are kept and still appear on days and summaries where it was scored. You can restore it from Archived Goals at any time.`);
 }
+function openGoalRestoreConfirm(i){
+  const g=tempGoals[i];
+  openGoalConfirm('restore', i,
+    `"${g?.name||'This goal'}" will move back to Active Goals and show on the point sheet again. Its earlier scores are kept.`);
+}
 function confirmGoalAction(){
   if(!_goalConfirm) return;
   const {action,i}=_goalConfirm; _goalConfirm=null;
   closeModal('goal-delete-confirm-modal');
-  action==='delete' ? deleteGoal(i) : archiveGoal(i);
+  ({archive:archiveGoal, restore:restoreGoal, delete:deleteGoal})[action](i);
 }
 function archiveGoal(i){
   const g=tempGoals[i]; if(!g) return;
@@ -5069,7 +5075,7 @@ function renderArchivedGoalsList(){
         </div>
       </div>
       <div class="arch-goal-acts">
-        <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="restoreGoal(${i})">Restore</button>
+        <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="openGoalRestoreConfirm(${i})">Restore</button>
         <button type="button" class="goal-icon-btn danger" onclick="openGoalDeleteConfirm(${i},event)" title="Delete goal" aria-label="Delete goal" style="width:32px;height:32px">${delIcon}</button>
       </div>
     </div>`;
