@@ -612,7 +612,10 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 
 /* Modal tab bar (Details / Contacts / Data on the student modal) */
 .modal-card-layout .modal-tabs { flex-shrink: 0; display: flex; gap: 20px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
-.modal-tab { padding: 10px 2px; font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--text-3); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s; }
+.modal-tab { padding: 10px 2px; font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--text-3); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s; white-space: nowrap; flex-shrink: 0; }
+/* Four tabs can outgrow a phone-width modal — scroll the bar sideways rather than wrap */
+.modal-card-layout .modal-tabs { overflow-x: auto; scrollbar-width: none; }
+@media (max-width: 768px) { .modal-card-layout .modal-tabs { gap: 14px; padding: 0 16px; } }
 .modal-tab:hover { color: var(--text); }
 .modal-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
 .modal-tab-panel { display: none; }
@@ -749,6 +752,19 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .add-session-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 6px; border: 1.5px dashed var(--border-mid); background: transparent; font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--text-3); cursor: pointer; white-space: nowrap; transition: all .12s; }
 .add-session-btn:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-dim); }
 .od-badge { font-size: 10px; font-weight: 700; background: #e0e7ff; color: #3730a3; padding: 1px 5px; border-radius: 3px; letter-spacing: .04em; }
+/* Archived goals: shown read-only on days/summaries that have their scores */
+.arch-badge { font-size: 10px; font-weight: 700; background: var(--surface3); color: var(--text-3); border: 1px solid var(--border-mid); padding: 0 5px; border-radius: 3px; letter-spacing: .04em; text-transform: uppercase; }
+.goal-card.archived .goal-card-top { background: var(--surface2); }
+.goal-card.archived .goal-card-body, .mob-archived-cell { opacity: .7; }
+.goal-card.archived .add-session-btn, .goal-card.archived .session-remove,
+.mob-od-item.archived .add-session-btn, .mob-od-item.archived .session-remove { display: none; }
+/* Archived Goals tab (student modal) */
+.arch-goal-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; }
+.arch-goal-row.restoring { border-color: var(--brand); background: var(--brand-dim); }
+.arch-goal-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.arch-goal-name { font-size: 14px; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.arch-goal-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--text-3); }
+.arch-empty { padding: 18px 4px; color: var(--text-3); font-size: 14px; text-align: center; }
 
 
 /* GLANCE GOAL SECTION HEADERS */
@@ -1299,6 +1315,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <button type="button" class="modal-tab active" data-tab="details" onclick="switchStuTab('details')">Details</button>
       <button type="button" class="modal-tab" data-tab="contacts" onclick="switchStuTab('contacts')">Contacts</button>
       <button type="button" class="modal-tab" data-tab="data" onclick="switchStuTab('data')">Data Options</button>
+      <button type="button" class="modal-tab" data-tab="archived" id="stu-archived-tab" onclick="switchStuTab('archived')">Archived Goals</button>
     </div>
 
     <div class="modal-scroll-body">
@@ -1427,6 +1444,16 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
               <span class="toggle-row-label">Notes</span>
               <label class="switch"><input type="checkbox" id="stu-track-notes"><span class="switch-track"><span class="switch-thumb"></span></span></label>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-tab-panel" data-tab-panel="archived">
+        <div class="modal-card">
+          <div class="modal-card-hdr">Archived Goals</div>
+          <div class="modal-card-body">
+            <div class="fl-hint" style="margin-bottom:12px">Archived goals are hidden from the point sheet. Their recorded scores are kept and still appear on any day or summary where they were scored. Restore a goal to start tracking it again.</div>
+            <div id="archived-goals-list" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
         </div>
       </div>
@@ -2432,6 +2459,31 @@ function fmtPct(n){ return n===null?'—':Math.round(n)+'%'; }
 // fall back to the legacy index key so pre-id rows still display; writes
 // always use the id (and clean up the legacy key for that slot).
 function newGoalId(){ return 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+// ── ARCHIVED GOALS ─────────────────────────────────────────────
+// Archiving just flags the goal (g.archived, g.archivedAt) — it stays in
+// s.goals at the same index, so its id- or legacy index-keyed scores keep
+// resolving. Archived goals drop off the point sheet, except read-only on
+// days that have scores for them; summaries likewise show them only where
+// they have data. Restored from the student modal's Archived Goals tab.
+function goalHasData(bag,g,gi){
+  if(!bag) return false;
+  for(let pi=0;pi<PER.length;pi++){ const v=gRead(bag,g,gi,pi); if(v!==undefined&&v!==null&&v!=='') return true; }
+  const ses=gRead(bag,g,gi,'sessions');
+  return Array.isArray(ses)&&ses.some(x=>x&&x.v!==undefined&&x.v!==null&&x.v!=='');
+}
+// [{g,gi,num}] for goals to show, given the score bags in play (one day's
+// d.g, or every day/row of a summary). num is the display number — active
+// goals are numbered first, archived ones after.
+function shownGoals(gs,bags){
+  const act=[], arch=[];
+  gs.forEach((g,gi)=>{
+    if(!g.archived) act.push({g,gi});
+    else if(bags.some(b=>goalHasData(b,g,gi))) arch.push({g,gi});
+  });
+  return [...act,...arch].map((x,k)=>({...x,num:k+1}));
+}
+const archBadge=()=>'<span class="arch-badge">Archived</span>';
 function gKey(g,gi,suffix){ return ((g&&g.id)||String(gi))+'_'+suffix; }
 function gRead(bag,g,gi,suffix){
   if(!bag) return undefined;
@@ -2959,9 +3011,10 @@ function sessionCell(day,gi,si,type,d){
 function goalTypeLabel(type){ return {yn:'Y/N','1to4':'RTG',count:'CNT',on:'O/NO',acc:'ACC',dur:'DUR'}[type]||type; }
 function goalTypeBadge(type){ return {yn:'tbadge-yn','1to4':'tbadge-14',count:'tbadge-cnt',on:'tbadge-on',acc:'tbadge-acc',dur:'tbadge-dur'}[type]||''; }
 
-function goalsHTML(day, d, gs){
+function goalsHTML(day, d, allGs){
   const chevron=`<svg class="sc-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
-  if(!gs.length){
+  const shown=shownGoals(allGs,[d.g]);
+  if(!shown.length){
     return `<div class="section-card${colSec.goals?' sec-collapsed':''}" id="sc-goals">
       <div class="sc-head" onclick="toggleSection('goals')"><span class="sc-title">Goals</span>${goalsBtnHTML()}${chevron}</div>
       <div style="padding:18px;color:var(--text-3);font-size:14px">No goals configured — click <strong>Goals</strong> above to add goals.</div>
@@ -2972,9 +3025,9 @@ function goalsHTML(day, d, gs){
   // header strip (badge + name + type badges + total/% stats) and a
   // body below (per-period cells, or the on-demand session list).
   const n = studentPeriodCount(stu());
-  const cards = gs.map((g,gi)=>{
+  const cards = shown.map(({g,gi,num})=>{
     const isOD=(g.tracking==='ondemand');
-    const nameBadges=`<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>${isOD?'<span class="od-badge">ON DEMAND</span>':''}`;
+    const nameBadges=`<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>${isOD?'<span class="od-badge">ON DEMAND</span>':''}${g.archived?archBadge():''}`;
     const {sum,scored,max,pct} = isOD ? gStatsOnDemand(gi,g,d) : gStats(day,gi,g.type,d,n);
     const totalVal = g.type==='acc'?(max>0?`${sum}/${max}`:'—'):(goalTotalCell(g.type,g.totalMode,sum,scored)??(scored>0?sum:'—'));
     const pctVal = (g.type==='count'||g.type==='dur')?'—':fmtPct(pct);
@@ -2993,16 +3046,17 @@ function goalsHTML(day, d, gs){
       body=PER.slice(0,n).map((_,pi)=>`<div class="goal-period-cell"><span class="goal-period-lbl">${pi+1}</span>${gCell(day,gi,pi,g.type,d)}</div>`).join('');
     }
 
-    return `<div class="goal-card">
+    // Archived: read-only (inert blocks clicks and focus on its cells).
+    return `<div class="goal-card${g.archived?' archived':''}">
       <div class="goal-card-top">
-        <div class="period-num-badge">${gi+1}</div>
+        <div class="period-num-badge">${num}</div>
         <div class="goal-card-name">${esc(g.name)}${nameBadges}</div>
         <div class="goal-card-stats">
           <div class="sum-item"><span class="sum-lbl">Total</span><span class="sum-val">${totalVal}</span></div>
           <div class="sum-item"><span class="sum-lbl">%</span><span class="sum-val accent">${pctVal}</span></div>
         </div>
       </div>
-      <div class="goal-card-body">${body}</div>
+      <div class="goal-card-body"${g.archived?' inert':''}>${body}</div>
     </div>`;
   }).join('');
 
@@ -3624,9 +3678,11 @@ function _buildYearlyView(body,s){
 
   // Goals — combined per-goal cards (stats + chart in one card, 2-col grid)
   let goalsCard='';
-  if(gs.length && rows.length){
+  // Archived goals only where this range has scores for them.
+  const yrShown=shownGoals(gs,rows.map(r=>r.g));
+  if(yrShown.length && rows.length){
     const goalTypeColors={acc:'#7c3aed',dur:'#0369a1',count:'#d97706',yn:'#16a34a',on:'#0891b2'};
-    const goalCards=gs.map((g,gi)=>{
+    const goalCards=yrShown.map(({g,gi,num})=>{
       // Cumulative stats
       let sumAll=0,maxAll=0,scoredDays=0;
       rows.forEach(row=>{
@@ -3685,7 +3741,7 @@ function _buildYearlyView(body,s){
 
       // Chart
       const gcd=goalChartData[gi];
-      const chartLabel=`Goal ${gi+1}`;
+      const chartLabel=`Goal ${num}`;
       let chart='';
       if(g.type==='1to4'){
         const dist=gcd.dist;
@@ -3708,8 +3764,8 @@ function _buildYearlyView(body,s){
       const badge=`<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>`;
       return `<div class="yr-goal-card yr-exportable">
         <div class="yr-goal-card-hdr">
-          <div class="yr-goal-card-num">Goal ${gi+1}</div>
-          <div class="yr-goal-card-name">${esc(g.name)} ${badge}</div>
+          <div class="yr-goal-card-num">Goal ${num}</div>
+          <div class="yr-goal-card-name">${esc(g.name)} ${badge}${g.archived?' '+archBadge():''}</div>
         </div>
         <div class="yr-goal-card-stats">${statTiles}</div>
         <div class="yr-goal-card-chart">${chart}</div>
@@ -3827,8 +3883,10 @@ function renderGlance(body){
   const thD=DAYS.map(day=>`<th>${day.charAt(0).toUpperCase()+day.slice(1,3)}${d(day).absent?'<br><span class="sum-abs-pill" style="margin-top:2px">Abs</span>':d(day).excluded?'<br><span class="sum-abs-pill" style="margin-top:2px">Excl</span>':''}</th>`).join('');
 
   // ── Goals section ────────────────────────────────────────────
-  const periodGs=gs.map((g,gi)=>({g,gi})).filter(({g})=>g.tracking!=='ondemand');
-  const odGs    =gs.map((g,gi)=>({g,gi})).filter(({g})=>g.tracking==='ondemand');
+  // Archived goals only where this week has scores for them.
+  const shownGs =shownGoals(gs,DAYS.map(day=>d(day).g));
+  const periodGs=shownGs.filter(({g})=>g.tracking!=='ondemand');
+  const odGs    =shownGs.filter(({g})=>g.tracking==='ondemand');
 
   function gDayCell(gi,g,day){
     if(d(day).absent) return absCell;
@@ -3868,30 +3926,30 @@ function renderGlance(body){
   }
 
   let gRows='';
-  if(!gs.length){
+  if(!shownGs.length){
     gRows=`<tr><td colspan="7" style="padding:20px;color:var(--text-3);font-style:italic">No goals configured. Use the Goals button to add goals.</td></tr>`;
   } else {
     if(periodGs.length){
       gRows+=`<tr class="sum-sub-hdr"><td colspan="7">By Period</td></tr>`;
       periodGs.forEach(({g,gi},idx)=>{
         const badge=`<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>`;
-        gRows+=`<tr><td><div class="sum-goal-name"><span class="sum-goal-num">${idx+1}</span><span>${esc(g.name)}</span>${badge}</div></td>${DAYS.map(day=>gDayCell(gi,g,day)).join('')}${gWeekCell(gi,g)}</tr>`;
+        gRows+=`<tr><td><div class="sum-goal-name"><span class="sum-goal-num">${idx+1}</span><span>${esc(g.name)}</span>${badge}${g.archived?archBadge():''}</div></td>${DAYS.map(day=>gDayCell(gi,g,day)).join('')}${gWeekCell(gi,g)}</tr>`;
       });
     }
     if(odGs.length){
       gRows+=`<tr class="sum-sub-hdr"><td colspan="7">On Demand</td></tr>`;
       odGs.forEach(({g,gi},idx)=>{
         const badge=`<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>`;
-        gRows+=`<tr><td><div class="sum-goal-name"><span class="sum-goal-num">${periodGs.length+idx+1}</span><span>${esc(g.name)}</span>${badge}</div></td>${DAYS.map(day=>odDayCell(gi,g,day)).join('')}${odWeekCell(gi,g)}</tr>`;
+        gRows+=`<tr><td><div class="sum-goal-name"><span class="sum-goal-num">${periodGs.length+idx+1}</span><span>${esc(g.name)}</span>${badge}${g.archived?archBadge():''}</div></td>${DAYS.map(day=>odDayCell(gi,g,day)).join('')}${odWeekCell(gi,g)}</tr>`;
       });
     }
   }
 
-  const goalsSection=gs.length?`
+  const goalsSection=shownGs.length?`
   <div class="sum-section">
     <div class="sum-sec-hdr">
       <span class="sum-sec-title">Goals</span>
-      <span style="font-size:13px;color:var(--text-3)">${gs.length} goal${gs.length!==1?'s':''}</span>
+      <span style="font-size:13px;color:var(--text-3)">${shownGs.length} goal${shownGs.length!==1?'s':''}</span>
     </div>
     <div style="overflow-x:auto">
       <table class="sum-table" style="min-width:520px">
@@ -4709,23 +4767,23 @@ function renderPaneMobile(body){
   </div>`;
 
   // ── Goals (by period) ──
-  const periodGs = gs.filter(g=>g.tracking!=='ondemand');
+  const shownGs = shownGoals(gs,[d.g]);
+  const periodGs = shownGs.filter(({g})=>g.tracking!=='ondemand');
   let goalRows = '';
   if(!periodGs.length){
     goalRows = `<div class="mob-empty">No by-period goals configured.</div>`;
   } else {
-    goalRows = periodGs.map(g=>{
-      const gi = gs.indexOf(g);
+    goalRows = periodGs.map(({g,gi})=>{
       return `<div class="mob-score-row">
-        <div class="mob-score-lbl">${esc(g.name)}<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span></div>
-        <div>${gCell(curDay,gi,pi,g.type,d)}</div>
+        <div class="mob-score-lbl">${esc(g.name)}<span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>${g.archived?archBadge():''}</div>
+        <div${g.archived?' class="mob-archived-cell" inert':''}>${gCell(curDay,gi,pi,g.type,d)}</div>
       </div>`;
     }).join('');
   }
   const goalSec = `<div class="mob-section${_mobCollapsed.goals?' collapsed':''}" id="mob-sec-goals">
     <div class="mob-sec-hdr" onclick="toggleMobSection('goals')">
       <span class="mob-sec-title">Goals</span>
-      <div class="mob-sec-hdr-actions">${goalsBtnHTML()}${gs.length?clearBtnHTML('goals'):''}${chevSVG}</div>
+      <div class="mob-sec-hdr-actions">${goalsBtnHTML()}${gs.some(g=>!g.archived)?clearBtnHTML('goals'):''}${chevSVG}</div>
     </div>
     <div class="mob-sec-body">${goalRows}</div>
   </div>`;
@@ -4740,11 +4798,10 @@ function renderPaneMobile(body){
   </div>`;
 
   // ── On-demand goals ──
-  const odGs = gs.filter(g=>g.tracking==='ondemand');
+  const odGs = shownGs.filter(({g})=>g.tracking==='ondemand');
   let odSec = '';
   if(odGs.length){
-    const odItems = odGs.map(g=>{
-      const gi       = gs.indexOf(g);
+    const odItems = odGs.map(({g,gi})=>{
       const sessions = gRead(d.g, g, gi, 'sessions')||[];
       const chips    = sessions.map((s2,si)=>`
         <div class="session-chip">
@@ -4752,9 +4809,9 @@ function renderPaneMobile(body){
           ${sessionCell(curDay,gi,si,g.type,d)}
           <button class="session-remove" onclick="removeSession('${curDay}',${gi},${si})" title="Remove">×</button>
         </div>`).join('');
-      return `<div class="mob-od-item">
-        <div class="mob-od-lbl">${esc(g.name)}<span class="tbadge ${goalTypeBadge(g.type)}" style="margin-left:6px">${goalTypeLabel(g.type)}</span></div>
-        <div class="session-list">${chips}
+      return `<div class="mob-od-item${g.archived?' archived':''}">
+        <div class="mob-od-lbl">${esc(g.name)}<span class="tbadge ${goalTypeBadge(g.type)}" style="margin-left:6px">${goalTypeLabel(g.type)}</span>${g.archived?' '+archBadge():''}</div>
+        <div class="session-list${g.archived?' mob-archived-cell':''}"${g.archived?' inert':''}>${chips}
           <button class="add-session-btn" onclick="addSession('${curDay}',${gi})">＋ Add Session</button>
         </div>
       </div>`;
@@ -4829,8 +4886,17 @@ function openGoalDeleteConfirm(i, evt){
   _goalDeleteIdx=i;
   const g=tempGoals[i];
   document.getElementById('goal-delete-confirm-sub').textContent =
-    `This will remove "${g?.name||'Goal '+(i+1)}" from this student's goal list. Scores already recorded for it will stop being displayed (they stay in the database).`;
+    `This will remove "${g?.name||'this goal'}" from this student's goal list. Scores already recorded for it will stop being displayed (they stay in the database). To keep it viewable instead, archive it.`;
   openModal('goal-delete-confirm-modal');
+}
+function archiveGoal(i, evt){
+  if(evt) evt.stopPropagation();
+  const g=tempGoals[i]; if(!g) return;
+  if(!g.id) g.id=newGoalId();
+  g.archived=true;
+  g.archivedAt=localDateStr(new Date());
+  if(_goalEditIndex===i) _goalEditIndex=null;
+  renderGoalsList();
 }
 function confirmGoalDelete(){
   if(_goalDeleteIdx===null) return;
@@ -4849,7 +4915,10 @@ function renderGoalsList(){
   // once when the modal opens.
   const s = stu();
   const subEl = document.getElementById('goals-modal-sub');
-  if(subEl && s) subEl.textContent = tempGoals.length ? `Configure goals for ${s.name}.` : 'No goals yet — click + Add Goal to get started.';
+  const activeCount = tempGoals.filter(g=>!g.archived).length;
+  const archivedCount = tempGoals.length - activeCount;
+  const archNote = archivedCount ? ` ${archivedCount} archived goal${archivedCount!==1?'s':''} — see Edit Student › Archived Goals.` : '';
+  if(subEl && s) subEl.textContent = (activeCount ? `Configure goals for ${s.name}.` : 'No goals yet — click + Add Goal to get started.') + archNote;
 
   const typeOpts = (cur) => `
     <option value="yn"   ${cur==='yn'   ?'selected':''}>Yes / No</option>
@@ -4859,7 +4928,7 @@ function renderGoalsList(){
     <option value="acc"  ${cur==='acc'  ?'selected':''}>Accuracy</option>
     <option value="dur"  ${cur==='dur'  ?'selected':''}>Duration</option>`;
 
-  if(!tempGoals.length){
+  if(!activeCount){
     // Desktop: the subtitle above already says "No goals yet…", so the
     // list area just shows the +Add Goal button with nothing redundant
     // above it. Mobile has no subtitle line, so it keeps its own message.
@@ -4872,17 +4941,22 @@ function renderGoalsList(){
   const mobile = isMobile();
   const editIcon=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
   const delIcon=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
+  const archIcon=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="5" rx="1"/><path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><line x1="10" y1="13" x2="14" y2="13"/></svg>`;
+  const archBtn=(i,style='')=>`<button type="button" class="goal-icon-btn" onclick="archiveGoal(${i},event)" title="Archive goal (hide from the point sheet, keep its data)" aria-label="Archive goal"${style?` style="${style}"`:''}>${archIcon}</button>`;
+  // Display numbers count active goals only (archived ones are skipped).
+  const numOf={}; let k=0; tempGoals.forEach((g,i)=>{ if(!g.archived) numOf[i]=++k; });
 
   // ── Preview row — collapsed summary of an already-configured goal ──
   const previewRow=(g,i)=>{
     const trk=g.tracking||'period';
     const name=g.name?esc(g.name):`<em style="color:var(--text-3);font-style:normal">Untitled goal</em>`;
     return `<div class="goal-preview-row">
-      <div class="goal-num-badge">${i+1}</div>
+      <div class="goal-num-badge">${numOf[i]}</div>
       <div class="goal-preview-text">${name}</div>
       <span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>
       <span class="tbadge tbadge-track">${trk==='ondemand'?'On Demand':'By Period'}</span>
       <button type="button" class="goal-icon-btn" onclick="openGoalEdit(${i})" title="Edit goal">${editIcon}</button>
+      ${archBtn(i)}
       <button type="button" class="goal-icon-btn danger" onclick="openGoalDeleteConfirm(${i},event)" title="Delete goal">${delIcon}</button>
     </div>`;
   };
@@ -4912,8 +4986,9 @@ function renderGoalsList(){
     const trk=g.tracking||'period';
     return `<div class="modal-card goal-edit-block">
       <div class="modal-card-hdr goal-edit-block-hdr">
-        <div class="goal-num-badge">${i+1}</div>
-        <span class="goal-edit-block-title">Editing Goal ${i+1}</span>
+        <div class="goal-num-badge">${numOf[i]}</div>
+        <span class="goal-edit-block-title">Editing Goal ${numOf[i]}</span>
+        ${archBtn(i)}
         <button type="button" class="goal-icon-btn danger" onclick="openGoalDeleteConfirm(${i},event)" title="Delete goal">${delIcon}</button>
       </div>
       <div class="modal-card-body">
@@ -4947,8 +5022,9 @@ function renderGoalsList(){
     const trk=g.tracking||'period';
     return `<div class="mob-goal-card editing">
       <div class="mob-goal-card-hdr">
-        <div class="goal-num-badge">${i+1}</div>
-        <span class="mob-goal-card-num">Editing Goal ${i+1}</span>
+        <div class="goal-num-badge">${numOf[i]}</div>
+        <span class="mob-goal-card-num">Editing Goal ${numOf[i]}</span>
+        ${archBtn(i,'width:34px;height:34px')}
         <button class="del-b" onclick="openGoalDeleteConfirm(${i},event)" title="Delete goal" style="width:34px;height:34px">${delIcon}</button>
       </div>
       <div class="mob-goal-field">
@@ -4972,6 +5048,7 @@ function renderGoalsList(){
   };
 
   el.innerHTML=tempGoals.map((g,i)=>{
+    if(g.archived) return '';
     if(i===_goalEditIndex) return mobile?editBlockMobile(g,i):editBlock(g,i);
     return previewRow(g,i);
   }).join('');
@@ -5009,6 +5086,33 @@ async function saveGoals(){
 // ═══════════════════════════════════════════════════════════════
 let _editingStudentId = null; // id being edited, or null while adding a new student
 
+// Restores are staged here and applied by saveStudent (Cancel discards them).
+let _restoreGoalIds = new Set();
+function renderArchivedGoalsList(){
+  const el=document.getElementById('archived-goals-list'); if(!el) return;
+  const s=_editingStudentId ? S.students.find(x=>x.id===_editingStudentId) : null;
+  const arch=(s?.goals||[]).filter(g=>g.archived&&g.id);
+  if(!arch.length){ el.innerHTML='<div class="arch-empty">No archived goals. Archive a goal from the Goals button on the point sheet.</div>'; return; }
+  el.innerHTML=arch.map(g=>{
+    const restoring=_restoreGoalIds.has(g.id);
+    const when=g.archivedAt?new Date(g.archivedAt+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+    return `<div class="arch-goal-row${restoring?' restoring':''}">
+      <div class="arch-goal-main">
+        <div class="arch-goal-name">${g.name?esc(g.name):'<em style="color:var(--text-3);font-style:normal">Untitled goal</em>'}</div>
+        <div class="arch-goal-meta">
+          <span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>
+          <span class="tbadge tbadge-track">${(g.tracking||'period')==='ondemand'?'On Demand':'By Period'}</span>
+          <span>${restoring?'Will be restored when you save':(when?'Archived '+esc(when):'Archived')}</span>
+        </div>
+      </div>
+      <button type="button" class="mbtn ${restoring?'mbtn-ghost':'mbtn-outline'} mbtn-sm" data-goal-id="${esc(g.id)}" onclick="toggleGoalRestore(this.dataset.goalId)">${restoring?'Undo':'Restore'}</button>
+    </div>`;
+  }).join('');
+}
+function toggleGoalRestore(id){
+  _restoreGoalIds.has(id) ? _restoreGoalIds.delete(id) : _restoreGoalIds.add(id);
+  renderArchivedGoalsList();
+}
 function switchStuTab(tab){
   document.querySelectorAll('#student-modal .modal-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.querySelectorAll('#student-modal .modal-tab-panel').forEach(p=>p.classList.toggle('active', p.dataset.tabPanel===tab));
@@ -5035,6 +5139,10 @@ async function openStudentModal(id){
   document.getElementById('stu-track-notes').checked         = s?.trackNotes         !== false;
   document.getElementById('stu-track-goals').checked         = s?.trackGoals         !== false;
   document.getElementById('stu-deactivate-btn').style.display = s ? 'inline-flex' : 'none';
+  // Archived Goals only applies to an existing student.
+  document.getElementById('stu-archived-tab').style.display = s ? '' : 'none';
+  _restoreGoalIds = new Set();
+  renderArchivedGoalsList();
   switchStuTab('details');
   renderManagePeriodsList();
   await loadContactsForModal(id);
@@ -5063,6 +5171,15 @@ async function saveStudent(){
     track_notes:         document.getElementById('stu-track-notes').checked,
     track_goals:         document.getElementById('stu-track-goals').checked
   };
+  // Staged restores from the Archived Goals tab.
+  const editing = _editingStudentId ? S.students.find(x=>x.id===_editingStudentId) : null;
+  if(editing && _restoreGoalIds.size){
+    payload.goals = (editing.goals||[]).map(g=>{
+      if(!_restoreGoalIds.has(g.id)) return g;
+      const { archived, archivedAt, ...rest } = g;
+      return rest;
+    });
+  }
   let error, newId;
   if(_editingStudentId){
     ({ error } = await sb.from('students').update(payload).eq('id', _editingStudentId));
@@ -5286,7 +5403,12 @@ function confirmClearSection(){
   _clearSectionTarget = null;
   closeModal('clear-confirm-modal');
   if(!d) return;
-  if(key==='goals') d.g = {};
+  if(key==='goals'){
+    // Archived goals are read-only here — keep their scores, clear the rest.
+    const keep=[]; goals().forEach((g,gi)=>{ if(g.archived){ if(g.id) keep.push(g.id+'_'); keep.push(gi+'_'); } });
+    const kept={}; Object.keys(d.g||{}).forEach(k=>{ if(keep.some(pre=>k.startsWith(pre))) kept[k]=d.g[k]; });
+    d.g = kept;
+  }
   else if(key==='schedule'){ d.p = {}; d.sup = {}; d.pNotes = {}; d.loc = {}; }
   persist(); refreshData();
 }
