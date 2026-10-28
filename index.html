@@ -577,9 +577,8 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 
 /* MODALS — matches components/ui/ConfirmDialog.tsx's chrome */
 .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 300; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
-/* Opened from inside the Goals modal, so it needs to stack above it rather
-   than relying on DOM order (which would otherwise put goals-modal on top,
-   since it's declared later in the document). */
+/* Opened from the student modal's Goals tab, so it needs to stack above it
+   rather than relying on DOM order (student-modal is declared later). */
 #goal-delete-confirm-modal { z-index: 310; }
 .modal-bg.open { opacity: 1; pointer-events: all; }
 .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 24px; width: 520px; max-width: 96vw; max-height: 90vh; overflow-y: auto; transform: translateY(10px); transition: transform .2s; box-shadow: 0 24px 64px rgba(0,0,0,.25); }
@@ -765,6 +764,9 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .arch-goal-name { font-size: 14px; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
 .arch-goal-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--text-3); }
 .arch-empty { padding: 18px 4px; color: var(--text-3); font-size: 14px; text-align: center; }
+.goal-bank-body { background: var(--surface3); display: flex; flex-direction: column; gap: 10px; }
+.goal-bank-count { margin-left: 6px; font-weight: 600; color: var(--text-3); }
+.arch-goal-acts { display: flex; gap: 6px; flex-shrink: 0; }
 
 
 /* GLANCE GOAL SECTION HEADERS */
@@ -822,10 +824,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
 .mob-drawer         { display: none; }
 .mob-period-nav     { display: none; }
 .mob-cal-btn        { display: none; }
-.mob-goals-hdr      { display: none; }
-.goals-scroll-body  { flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 14px; background: var(--surface3); } /* card-per-section scroll body on desktop; mobile override below replaces this */
 #goals-list { display: flex; flex-direction: column; gap: 10px; }
-.mob-goals-footer   { display: none; }
 .tab-short          { display: none; }
 
 @media (max-width: 768px) {
@@ -955,15 +954,7 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
      padding:0 moved from .modal down onto the header/body/footer. ── */
   #student-modal .modal-acts { padding-bottom: env(safe-area-inset-bottom, 16px); }
 
-  /* ── Goals modal: full-screen on mobile ── */
-  #goals-modal { align-items: stretch; }
-  #goals-modal .modal { height: 100%; max-height: 100%; border-radius: 0; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
-  .mob-goals-hdr { display: flex !important; align-items: center; gap: 10px; padding: 0 14px; height: 56px; background: var(--brand); color: #fff; flex-shrink: 0; }
-  .desk-goals-hdr { display: none !important; }
-  .desk-goals-acts { display: none !important; }
-  #goals-modal #add-goal-btn { margin: 4px 0 0; width: 100%; justify-content: center; }
-  .goals-scroll-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
-  .mob-goals-footer { padding: 10px 14px 28px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+  #add-goal-btn { width: 100%; justify-content: center; }
 
   /* ── Goal cards (mobile) ── */
   .mob-goal-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; }
@@ -976,8 +967,6 @@ body { height: 100%; font-family: var(--sans); background: var(--bg); color: var
   .mob-goal-field .fsel { font-size: 16px; padding: 11px 32px 11px 12px; height: 50px; width: 100%; }
   .mob-goal-field .tg { width: 100%; display: flex; }
   .mob-goal-field .tg-btn { flex: 1; height: 48px; font-size: 15px; font-weight: 600; }
-  .mob-goals-back { width: 36px; height: 36px; border: none; background: rgba(255,255,255,.18); border-radius: 8px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-  .mob-goals-title { font-size: 17px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ── Glance view ── */
   .glance-grid { grid-template-columns: 1fr; }
@@ -1306,16 +1295,16 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
     <div class="modal-hdr">
       <div class="modal-title-row">
         <div class="modal-title" id="student-modal-title">Add Student</div>
-        <button type="button" class="modal-close-x" onclick="closeModal('student-modal')" aria-label="Close">&#10005;</button>
+        <button type="button" class="modal-close-x" onclick="cancelStudentModal()" aria-label="Close">&#10005;</button>
       </div>
       <div class="modal-sub">Only visible to you.</div>
     </div>
 
     <div class="modal-tabs">
       <button type="button" class="modal-tab active" data-tab="details" onclick="switchStuTab('details')">Details</button>
+      <button type="button" class="modal-tab" data-tab="goals" onclick="switchStuTab('goals')">Goals</button>
       <button type="button" class="modal-tab" data-tab="contacts" onclick="switchStuTab('contacts')">Contacts</button>
       <button type="button" class="modal-tab" data-tab="data" onclick="switchStuTab('data')">Data Options</button>
-      <button type="button" class="modal-tab" data-tab="archived" id="stu-archived-tab" onclick="switchStuTab('archived')">Archived Goals</button>
     </div>
 
     <div class="modal-scroll-body">
@@ -1448,9 +1437,16 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
         </div>
       </div>
 
-      <div class="modal-tab-panel" data-tab-panel="archived">
+      <div class="modal-tab-panel" data-tab-panel="goals">
         <div class="modal-card">
-          <div class="modal-card-hdr">Archived Goals</div>
+          <div class="modal-card-hdr">Active Goals<span class="goal-bank-count" id="active-goals-count"></span></div>
+          <div class="modal-card-body goal-bank-body">
+            <div id="goals-list"></div>
+            <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="addGoalRow()" id="add-goal-btn" style="align-self:flex-start">+ Add Goal</button>
+          </div>
+        </div>
+        <div class="modal-card">
+          <div class="modal-card-hdr">Archived Goals<span class="goal-bank-count" id="archived-goals-count"></span></div>
           <div class="modal-card-body">
             <div class="fl-hint" style="margin-bottom:12px">Archived goals are hidden from the point sheet. Their recorded scores are kept and still appear on any day or summary where they were scored. Restore a goal to start tracking it again.</div>
             <div id="archived-goals-list" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -1464,7 +1460,7 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
         <button class="mbtn mbtn-ghost" id="stu-deactivate-btn" style="display:none;color:var(--danger)" onclick="openStudentDeactivateConfirm()">Deactivate Student</button>
       </div>
       <div style="display:flex;gap:8px;margin-left:auto">
-        <button class="mbtn mbtn-ghost" onclick="closeModal('student-modal')">Cancel</button>
+        <button class="mbtn mbtn-ghost" onclick="cancelStudentModal()">Cancel</button>
         <button class="mbtn mbtn-brand" onclick="saveStudent()">Save</button>
       </div>
     </div>
@@ -1495,54 +1491,6 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
       <button class="mbtn mbtn-ghost" onclick="closeModal('welcome-modal')">Maybe Later</button>
       <button class="mbtn mbtn-brand" onclick="closeModal('welcome-modal');openStudentModal(null)">+ Add Your First Student</button>
     </div>
-  </div>
-</div>
-
-<!-- GOALS MODAL -->
-<div class="modal-bg" id="goals-modal">
-  <div class="modal modal-wide modal-card-layout">
-
-    <!-- Mobile header (full-screen top bar) -->
-    <div class="mob-goals-hdr">
-      <button class="mob-goals-back" onclick="cancelGoals()" aria-label="Cancel">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <span class="mob-goals-title" id="mob-goals-title">Goals</span>
-      <button class="mbtn mbtn-brand mbtn-sm" onclick="saveGoals()">Save</button>
-    </div>
-
-    <!-- Desktop header -->
-    <div class="modal-hdr desk-goals-hdr">
-      <div class="modal-title-row">
-        <div>
-          <div class="modal-title">Goals</div>
-          <div class="modal-sub" id="goals-modal-sub">Configure goals for this student.</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
-          <button type="button" class="modal-help-btn" title="Help" aria-label="Help">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 1.7-2 3.5"/><line x1="12" y1="16.5" x2="12" y2="16.51"/></svg>
-          </button>
-          <button type="button" class="modal-close-x" onclick="cancelGoals()" aria-label="Close">&#10005;</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Goal list — scrollable body on mobile -->
-    <div class="goals-scroll-body">
-      <div id="goals-list"></div>
-      <button class="mbtn mbtn-outline mbtn-sm" onclick="addGoalRow()" id="add-goal-btn">+ Add Goal</button>
-    </div>
-
-    <!-- Mobile footer -->
-    <div class="mob-goals-footer">
-    </div>
-
-    <!-- Desktop footer -->
-    <div class="modal-acts desk-goals-acts">
-      <button class="mbtn mbtn-ghost" onclick="cancelGoals()">Cancel</button>
-      <button class="mbtn mbtn-brand" onclick="saveGoals()">Save Goals</button>
-    </div>
-
   </div>
 </div>
 
@@ -4869,16 +4817,15 @@ async function selectStu(id){
   refresh();
 }
 // ═══════════════════════════════════════════════════════════════
-// GOALS MODAL
+// GOAL BANK (student modal → Goals tab)
+// tempGoals is edited in memory and saved with the rest of the student
+// form (saveStudent); Cancel discards it.
 // ═══════════════════════════════════════════════════════════════
 function openGoalsModal(){
   const s=stu(); if(!s){ alert('Select a student first.'); return; }
-  const mobTitle = document.getElementById('mob-goals-title');
-  if(mobTitle) mobTitle.textContent = s.name + '\u2019s Goals';
-  tempGoals=JSON.parse(JSON.stringify(s.goals||[]));
-  _goalEditIndex=null;
-  renderGoalsList(); openModal('goals-modal');
+  openStudentModal(s.id,'goals');
 }
+function renderGoalBank(){ renderGoalsList(); renderArchivedGoalsList(); }
 function openGoalEdit(i){ _goalEditIndex=i; renderGoalsList(); }
 function closeGoalEdit(){ _goalEditIndex=null; renderGoalsList(); }
 function openGoalDeleteConfirm(i, evt){
@@ -4886,7 +4833,7 @@ function openGoalDeleteConfirm(i, evt){
   _goalDeleteIdx=i;
   const g=tempGoals[i];
   document.getElementById('goal-delete-confirm-sub').textContent =
-    `This will remove "${g?.name||'this goal'}" from this student's goal list. Scores already recorded for it will stop being displayed (they stay in the database). To keep it viewable instead, archive it.`;
+    `This will remove "${g?.name||'this goal'}" from this student's goal list. Scores already recorded for it will stop being displayed (they stay in the database).${g?.archived?'':' To keep it viewable instead, archive it.'}`;
   openModal('goal-delete-confirm-modal');
 }
 function archiveGoal(i, evt){
@@ -4896,7 +4843,12 @@ function archiveGoal(i, evt){
   g.archived=true;
   g.archivedAt=localDateStr(new Date());
   if(_goalEditIndex===i) _goalEditIndex=null;
-  renderGoalsList();
+  renderGoalBank();
+}
+function restoreGoal(i){
+  const g=tempGoals[i]; if(!g) return;
+  delete g.archived; delete g.archivedAt;
+  renderGoalBank();
 }
 function confirmGoalDelete(){
   if(_goalDeleteIdx===null) return;
@@ -4905,20 +4857,13 @@ function confirmGoalDelete(){
   tempGoals.splice(i,1);
   if(_goalEditIndex===i) _goalEditIndex=null;
   else if(_goalEditIndex!==null && _goalEditIndex>i) _goalEditIndex--;
-  renderGoalsList();
+  renderGoalBank();
 }
 function renderGoalsList(){
   const el  = document.getElementById('goals-list');
 
-  // Desktop's subtitle doubles as the empty-state message, so it needs to
-  // stay in sync with tempGoals as goals are added/removed, not just set
-  // once when the modal opens.
-  const s = stu();
-  const subEl = document.getElementById('goals-modal-sub');
   const activeCount = tempGoals.filter(g=>!g.archived).length;
-  const archivedCount = tempGoals.length - activeCount;
-  const archNote = archivedCount ? ` ${archivedCount} archived goal${archivedCount!==1?'s':''} — see Edit Student › Archived Goals.` : '';
-  if(subEl && s) subEl.textContent = (activeCount ? `Configure goals for ${s.name}.` : 'No goals yet — click + Add Goal to get started.') + archNote;
+  document.getElementById('active-goals-count').textContent = activeCount ? `(${activeCount})` : '';
 
   const typeOpts = (cur) => `
     <option value="yn"   ${cur==='yn'   ?'selected':''}>Yes / No</option>
@@ -4929,12 +4874,7 @@ function renderGoalsList(){
     <option value="dur"  ${cur==='dur'  ?'selected':''}>Duration</option>`;
 
   if(!activeCount){
-    // Desktop: the subtitle above already says "No goals yet…", so the
-    // list area just shows the +Add Goal button with nothing redundant
-    // above it. Mobile has no subtitle line, so it keeps its own message.
-    el.innerHTML = isMobile()
-      ? `<div style="color:var(--text-3);font-size:16px;padding:20px 4px;text-align:center">No goals yet.<br>Tap <strong>+ Add Goal</strong> below.</div>`
-      : '';
+    el.innerHTML = `<div class="arch-empty">No active goals. ${isMobile()?'Tap':'Click'} <strong>+ Add Goal</strong> to add one.</div>`;
     return;
   }
 
@@ -5058,24 +4998,30 @@ function addGoalRow(){
   _goalEditIndex=tempGoals.length-1;
   renderGoalsList();
 }
-async function saveGoals(){
-  const s=stu(); if(!s) return;
+// Returns the goals to save, or null if the user backs out of the
+// data-type-change warning.
+function goalsForSave(prevGoals){
   // Adopt legacy goals (created before stable ids existed) so everything
   // saved from here on is id-keyed. Their old index-keyed scores stay
   // readable via gRead's fallback.
   tempGoals.forEach(g=>{ if(!g.id) g.id=newGoalId(); });
   // Changing a goal's data type doesn't convert entries already recorded
   // under the old type — they'd render/aggregate incorrectly. Warn first.
-  const prevById={}; (s.goals||[]).forEach(g=>{ if(g.id) prevById[g.id]=g; });
+  const prevById={}; (prevGoals||[]).forEach(g=>{ if(g.id) prevById[g.id]=g; });
   const retyped=tempGoals.filter(g=>prevById[g.id] && prevById[g.id].type!==g.type);
   if(retyped.length){
     const names=retyped.map(g=>`"${g.name||'Untitled goal'}"`).join(', ');
-    if(!confirm(`You changed the data type of ${names}. Scores already recorded under the old type will not be converted and may display incorrectly. Continue?`)) return;
+    if(!confirm(`You changed the data type of ${names}. Scores already recorded under the old type will not be converted and may display incorrectly. Continue?`)) return null;
   }
-  s.goals=JSON.parse(JSON.stringify(tempGoals));
-  const { error } = await sb.from('students').update({ goals: s.goals }).eq('id', s.id);
-  if(error) console.error('saveGoals:', error);
-  closeModal('goals-modal'); refreshData();
+  return JSON.parse(JSON.stringify(tempGoals));
+}
+function goalsDirty(){
+  const s=_editingStudentId ? S.students.find(x=>x.id===_editingStudentId) : null;
+  return JSON.stringify(tempGoals)!==JSON.stringify(s?.goals||[]);
+}
+function cancelStudentModal(){
+  if(goalsDirty() && !confirm('You have unsaved goal changes. Discard them?')) return;
+  closeModal('student-modal');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5086,39 +5032,38 @@ async function saveGoals(){
 // ═══════════════════════════════════════════════════════════════
 let _editingStudentId = null; // id being edited, or null while adding a new student
 
-// Restores are staged here and applied by saveStudent (Cancel discards them).
-let _restoreGoalIds = new Set();
+// Archived goals card — Restore puts a goal back on the point sheet;
+// Delete removes it from the list (both take effect on Save).
 function renderArchivedGoalsList(){
   const el=document.getElementById('archived-goals-list'); if(!el) return;
-  const s=_editingStudentId ? S.students.find(x=>x.id===_editingStudentId) : null;
-  const arch=(s?.goals||[]).filter(g=>g.archived&&g.id);
-  if(!arch.length){ el.innerHTML='<div class="arch-empty">No archived goals. Archive a goal from the Goals button on the point sheet.</div>'; return; }
-  el.innerHTML=arch.map(g=>{
-    const restoring=_restoreGoalIds.has(g.id);
+  const arch=tempGoals.map((g,i)=>({g,i})).filter(({g})=>g.archived);
+  document.getElementById('archived-goals-count').textContent = arch.length ? `(${arch.length})` : '';
+  if(!arch.length){ el.innerHTML='<div class="arch-empty">No archived goals.</div>'; return; }
+  const delIcon=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
+  el.innerHTML=arch.map(({g,i})=>{
     const when=g.archivedAt?new Date(g.archivedAt+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
-    return `<div class="arch-goal-row${restoring?' restoring':''}">
+    return `<div class="arch-goal-row">
       <div class="arch-goal-main">
         <div class="arch-goal-name">${g.name?esc(g.name):'<em style="color:var(--text-3);font-style:normal">Untitled goal</em>'}</div>
         <div class="arch-goal-meta">
           <span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>
           <span class="tbadge tbadge-track">${(g.tracking||'period')==='ondemand'?'On Demand':'By Period'}</span>
-          <span>${restoring?'Will be restored when you save':(when?'Archived '+esc(when):'Archived')}</span>
+          <span>${when?'Archived '+esc(when):'Archived'}</span>
         </div>
       </div>
-      <button type="button" class="mbtn ${restoring?'mbtn-ghost':'mbtn-outline'} mbtn-sm" data-goal-id="${esc(g.id)}" onclick="toggleGoalRestore(this.dataset.goalId)">${restoring?'Undo':'Restore'}</button>
+      <div class="arch-goal-acts">
+        <button type="button" class="mbtn mbtn-outline mbtn-sm" onclick="restoreGoal(${i})">Restore</button>
+        <button type="button" class="goal-icon-btn danger" onclick="openGoalDeleteConfirm(${i},event)" title="Delete goal" aria-label="Delete goal" style="width:32px;height:32px">${delIcon}</button>
+      </div>
     </div>`;
   }).join('');
-}
-function toggleGoalRestore(id){
-  _restoreGoalIds.has(id) ? _restoreGoalIds.delete(id) : _restoreGoalIds.add(id);
-  renderArchivedGoalsList();
 }
 function switchStuTab(tab){
   document.querySelectorAll('#student-modal .modal-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.querySelectorAll('#student-modal .modal-tab-panel').forEach(p=>p.classList.toggle('active', p.dataset.tabPanel===tab));
 }
 
-async function openStudentModal(id){
+async function openStudentModal(id, tab='details'){
   _editingStudentId = id || null;
   const s = id ? S.students.find(x=>x.id===id) : null;
   document.getElementById('student-modal-title').textContent = s ? 'Edit Student' : 'Add Student';
@@ -5139,11 +5084,10 @@ async function openStudentModal(id){
   document.getElementById('stu-track-notes').checked         = s?.trackNotes         !== false;
   document.getElementById('stu-track-goals').checked         = s?.trackGoals         !== false;
   document.getElementById('stu-deactivate-btn').style.display = s ? 'inline-flex' : 'none';
-  // Archived Goals only applies to an existing student.
-  document.getElementById('stu-archived-tab').style.display = s ? '' : 'none';
-  _restoreGoalIds = new Set();
-  renderArchivedGoalsList();
-  switchStuTab('details');
+  tempGoals = JSON.parse(JSON.stringify(s?.goals||[]));
+  _goalEditIndex = null;
+  renderGoalBank();
+  switchStuTab(tab);
   renderManagePeriodsList();
   await loadContactsForModal(id);
   openModal('student-modal');
@@ -5171,15 +5115,11 @@ async function saveStudent(){
     track_notes:         document.getElementById('stu-track-notes').checked,
     track_goals:         document.getElementById('stu-track-goals').checked
   };
-  // Staged restores from the Archived Goals tab.
+  // Goals tab (active + archived), saved with the rest of the form.
   const editing = _editingStudentId ? S.students.find(x=>x.id===_editingStudentId) : null;
-  if(editing && _restoreGoalIds.size){
-    payload.goals = (editing.goals||[]).map(g=>{
-      if(!_restoreGoalIds.has(g.id)) return g;
-      const { archived, archivedAt, ...rest } = g;
-      return rest;
-    });
-  }
+  const goalsToSave = goalsForSave(editing?.goals);
+  if(!goalsToSave) return;
+  payload.goals = goalsToSave;
   let error, newId;
   if(_editingStudentId){
     ({ error } = await sb.from('students').update(payload).eq('id', _editingStudentId));
@@ -5534,13 +5474,6 @@ async function changeWeek(dir){
 // ═══════════════════════════════════════════════════════════════
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-function cancelGoals(){
-  const s=stu();
-  if(JSON.stringify(tempGoals)!==JSON.stringify(s?.goals||[])){
-    if(!confirm('You have unsaved goal changes. Discard them?')) return;
-  }
-  closeModal('goals-modal');
-}
 document.addEventListener('click',e=>{
   // Close accuracy popup on outside click
   const accPopup=document.getElementById('acc-popup');
@@ -5564,12 +5497,7 @@ document.addEventListener('click',e=>{
   }
   // Close modals on backdrop click
   if(!e.target.classList.contains('modal-bg')) return;
-  if(e.target.id==='goals-modal'){
-    const s=stu();
-    if(JSON.stringify(tempGoals)!==JSON.stringify(s?.goals||[])){
-      if(!confirm('You have unsaved goal changes. Discard them?')) return;
-    }
-  }
+  if(e.target.id==='student-modal' && goalsDirty() && !confirm('You have unsaved goal changes. Discard them?')) return;
   e.target.classList.remove('open');
 });
 
