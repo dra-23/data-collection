@@ -1277,14 +1277,14 @@ canvas[id^="yr-ch-"] { max-width: 100% !important; }
   </div>
 </div>
 
-<!-- DELETE GOAL CONFIRMATION -->
+<!-- ARCHIVE / DELETE GOAL CONFIRMATION (title, text, and button set per action) -->
 <div class="modal-bg" id="goal-delete-confirm-modal">
   <div class="modal" style="width:400px">
-    <div class="modal-title">Delete this goal?</div>
+    <div class="modal-title" id="goal-confirm-title">Delete this goal?</div>
     <div class="modal-sub" id="goal-delete-confirm-sub"></div>
     <div class="modal-acts">
       <button class="mbtn mbtn-ghost" onclick="closeModal('goal-delete-confirm-modal')">Cancel</button>
-      <button class="mbtn" style="background:var(--danger);color:#fff" onclick="confirmGoalDelete()">Delete</button>
+      <button class="mbtn" id="goal-confirm-btn" onclick="confirmGoalAction()">Delete</button>
     </div>
   </div>
 </div>
@@ -1667,7 +1667,7 @@ let S = { students:[], cur:null, week:null, data:{} };
 let curDay       = 'monday';
 let tempGoals    = [];
 let _goalEditIndex = null; // index into tempGoals currently expanded for editing, or null (all collapsed)
-let _goalDeleteIdx = null; // index pending delete confirmation
+let _goalConfirm = null; // { action: 'archive'|'delete', i } pending confirmation
 let colSec       = {};
 let calViewMonth = null;
 let rosterFilter = { search:'', teacher:null };  // Left-pane roster search/filter
@@ -4828,16 +4828,36 @@ function openGoalsModal(){
 function renderGoalBank(){ renderGoalsList(); renderArchivedGoalsList(); }
 function openGoalEdit(i){ _goalEditIndex=i; renderGoalsList(); }
 function closeGoalEdit(){ _goalEditIndex=null; renderGoalsList(); }
-function openGoalDeleteConfirm(i, evt){
-  if(evt) evt.stopPropagation();
-  _goalDeleteIdx=i;
-  const g=tempGoals[i];
-  document.getElementById('goal-delete-confirm-sub').textContent =
-    `This will remove "${g?.name||'this goal'}" from this student's goal list. Scores already recorded for it will stop being displayed (they stay in the database).${g?.archived?'':' To keep it viewable instead, archive it.'}`;
+function openGoalConfirm(action, i, text){
+  _goalConfirm={action,i};
+  const del=action==='delete';
+  document.getElementById('goal-confirm-title').textContent = del ? 'Delete this goal?' : 'Archive this goal?';
+  document.getElementById('goal-delete-confirm-sub').textContent = text;
+  const btn=document.getElementById('goal-confirm-btn');
+  btn.textContent = del ? 'Delete' : 'Archive';
+  btn.className = del ? 'mbtn' : 'mbtn mbtn-brand';
+  btn.style.cssText = del ? 'background:var(--danger);color:#fff' : '';
   openModal('goal-delete-confirm-modal');
 }
-function archiveGoal(i, evt){
+function openGoalDeleteConfirm(i, evt){
   if(evt) evt.stopPropagation();
+  const g=tempGoals[i];
+  openGoalConfirm('delete', i,
+    `This will remove "${g?.name||'this goal'}" from this student's goal list. Scores already recorded for it will stop being displayed (they stay in the database).${g?.archived?'':' To keep it viewable instead, archive it.'}`);
+}
+function openGoalArchiveConfirm(i, evt){
+  if(evt) evt.stopPropagation();
+  const g=tempGoals[i];
+  openGoalConfirm('archive', i,
+    `"${g?.name||'This goal'}" will be hidden from the point sheet. Its recorded scores are kept and still appear on days and summaries where it was scored. You can restore it from Archived Goals at any time.`);
+}
+function confirmGoalAction(){
+  if(!_goalConfirm) return;
+  const {action,i}=_goalConfirm; _goalConfirm=null;
+  closeModal('goal-delete-confirm-modal');
+  action==='delete' ? deleteGoal(i) : archiveGoal(i);
+}
+function archiveGoal(i){
   const g=tempGoals[i]; if(!g) return;
   if(!g.id) g.id=newGoalId();
   g.archived=true;
@@ -4850,10 +4870,7 @@ function restoreGoal(i){
   delete g.archived; delete g.archivedAt;
   renderGoalBank();
 }
-function confirmGoalDelete(){
-  if(_goalDeleteIdx===null) return;
-  const i=_goalDeleteIdx; _goalDeleteIdx=null;
-  closeModal('goal-delete-confirm-modal');
+function deleteGoal(i){
   tempGoals.splice(i,1);
   if(_goalEditIndex===i) _goalEditIndex=null;
   else if(_goalEditIndex!==null && _goalEditIndex>i) _goalEditIndex--;
@@ -4882,7 +4899,7 @@ function renderGoalsList(){
   const editIcon=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
   const delIcon=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
   const archIcon=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="5" rx="1"/><path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><line x1="10" y1="13" x2="14" y2="13"/></svg>`;
-  const archBtn=(i,style='')=>`<button type="button" class="goal-icon-btn" onclick="archiveGoal(${i},event)" title="Archive goal (hide from the point sheet, keep its data)" aria-label="Archive goal"${style?` style="${style}"`:''}>${archIcon}</button>`;
+  const archBtn=(i,style='')=>`<button type="button" class="goal-icon-btn" onclick="openGoalArchiveConfirm(${i},event)" title="Archive goal (hide from the point sheet, keep its data)" aria-label="Archive goal"${style?` style="${style}"`:''}>${archIcon}</button>`;
   // Display numbers count active goals only (archived ones are skipped).
   const numOf={}; let k=0; tempGoals.forEach((g,i)=>{ if(!g.archived) numOf[i]=++k; });
 
