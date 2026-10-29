@@ -4918,6 +4918,7 @@ function renderGoalsList(){
       <div class="goal-preview-text">${name}</div>
       <span class="tbadge ${goalTypeBadge(g.type)}">${goalTypeLabel(g.type)}</span>
       <span class="tbadge tbadge-track">${trk==='ondemand'?'On Demand':'By Period'}</span>
+      ${g.target!==undefined&&g.target!==''?`<span class="tbadge tbadge-track" title="Progress report target">${g.direction==='decrease'?'≤':'≥'} ${esc(String(g.target))}${['acc','yn','on'].includes(g.type)?'%':g.type==='dur'?' min':''}</span>`:''}
       <button type="button" class="goal-icon-btn" onclick="openGoalEdit(${i})" title="Edit goal">${editIcon}</button>
       ${archBtn(i)}
       <button type="button" class="goal-icon-btn danger" onclick="openGoalDeleteConfirm(${i},event)" title="Delete goal">${delIcon}</button>
@@ -4942,6 +4943,29 @@ function renderGoalsList(){
       </div>`
     ):'';
     return labelsField+totalField;
+  };
+
+  // ── Progress-report fields (used by SPEDreport) — all optional ──
+  // Entered in the goal's display units; duration is in minutes.
+  const targetUnit=t=>({acc:'%',yn:'%',on:'%','1to4':'rating 1–5',count:'per period/session',dur:'minutes'}[t]||'');
+  const targetFields=(g,i,mobile)=>{
+    const dir=g.direction==='decrease'?'decrease':'increase';
+    const num=(key,lbl)=>`<div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+        <label class="${mobile?'mob-goal-fl':'fl'}" style="margin-bottom:0">${lbl} <span style="font-weight:500;text-transform:none;letter-spacing:0">(${targetUnit(g.type)})</span></label>
+        <input class="fin" type="number" step="any" inputmode="decimal" value="${esc(String(g[key]??''))}" oninput="if(this.value==='')delete tempGoals[${i}].${key};else tempGoals[${i}].${key}=Number(this.value)">
+      </div>`;
+    const body=`<div style="display:flex;gap:10px;flex-wrap:wrap">${num('baseline','Baseline')}${num('target','Target')}</div>
+      <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px">
+        <label class="${mobile?'mob-goal-fl':'fl'}" style="margin-bottom:0">Goal is to</label>
+        <div class="tg-seg" style="height:${mobile?'auto':'32px'}">
+          <button type="button" class="tg-btn${dir==='increase'?' sel-b':''}" style="font-size:12px" onclick="tempGoals[${i}].direction='increase';renderGoalsList()">Increase</button>
+          <button type="button" class="tg-btn${dir==='decrease'?' sel-b':''}" style="font-size:12px" onclick="tempGoals[${i}].direction='decrease';renderGoalsList()">Decrease</button>
+        </div>
+      </div>
+      <div class="fl-hint" style="margin-top:6px">Optional. Used by SPEDreport to suggest a progress rating.</div>`;
+    return mobile
+      ? `<div class="mob-goal-field"><label class="mob-goal-fl">Progress Report</label>${body}</div>`
+      : `<div class="fi" style="margin-top:4px"><label class="fl">Progress Report</label>${body}</div>`;
   };
 
   // ── Expanded edit block — desktop ──
@@ -4973,6 +4997,7 @@ function renderGoalsList(){
             </div>
           </div>
         </div>
+        ${targetFields(g,i,false)}
         <div class="goal-edit-block-ftr">
           <button type="button" class="mbtn mbtn-brand mbtn-sm" onclick="closeGoalEdit()">Done</button>
         </div>
@@ -5006,6 +5031,7 @@ function renderGoalsList(){
           <button type="button" class="tg-btn${trk==='ondemand'?' sel-b':''}" onclick="tempGoals[${i}].tracking='ondemand';renderGoalsList()">On Demand</button>
         </div>
       </div>
+      ${targetFields(g,i,true)}
       <button type="button" class="mbtn mbtn-brand mbtn-sm" style="width:100%;justify-content:center;margin-top:4px" onclick="closeGoalEdit()">Done</button>
     </div>`;
   };
