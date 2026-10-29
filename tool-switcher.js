@@ -1,10 +1,10 @@
 // Tool switcher — turns each page's top-bar title into a dropdown for moving
-// between SPEDsheet, SPEDsight, and the Toolbox. Shared by index.html,
+// between SPEDsheet, SPEDsight, SPEDreport, and the Toolbox. Shared by index.html,
 // abc.html, and toolbox.html so the list of tools lives in one place.
 //
 // Markup each page provides (the name/logo stay in the page so there's no
 // flash before this script runs):
-//   <div class="tool-switch" data-current="spedsheet|spedsight|toolbox">
+//   <div class="tool-switch" data-current="spedsheet|spedsight|spedreport|toolbox">
 //     <button type="button" class="topbar-brand tool-switch-btn">
 //       <img src="icon.png" alt=""><span class="tool-switch-name">Name</span>
 //     </button>
@@ -17,11 +17,13 @@
   const ICONS = {
     spedsheet: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
     spedsight: '<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/>',
+    spedreport: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
     toolbox: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   };
   const TOOLS = [
     { id: 'spedsheet', name: 'SPEDsheet', desc: 'Daily point sheets', href: 'index.html' },
     { id: 'spedsight', name: 'SPEDsight', desc: 'ABC data collection', href: 'abc.html' },
+    { id: 'spedreport', name: 'SPEDreport', desc: 'IEP progress reports', href: 'progress.html' },
   ];
   const TOOLBOX = { id: 'toolbox', name: 'Toolbox', desc: 'All tools', href: 'toolbox.html' };
 

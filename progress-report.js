@@ -191,12 +191,19 @@
     if (rate === null || !iepEnd || !asOf) {
       return { code: 'on_track', reason: `${fmt(v)} vs target ${fmt(target)}; improving.` };
     }
+    // Compare the weeks needed at the current rate with the weeks left —
+    // rather than quoting a straight-line projection, which overshoots
+    // into impossible values (e.g. 181%) over a long IEP.
     const weeksLeft = Math.max(0, weeksBetween(asOf, iepEnd));
-    const projected = v + rate * weeksLeft;
-    const onTrack = sign * (projected - target) >= 0;
+    const perWeek = Math.abs(rate);
+    const weeksNeeded = Math.ceil(Math.abs(target - v) / perWeek);
+    const rateTxt = goal.type === 'dur' ? fmtDuration(perWeek)
+      : (goal.type === 'acc' || goal.type === 'yn' || goal.type === 'on') ? `${trim1(perWeek)} percentage points`
+      : trim1(perWeek);
+    const onTrack = weeksNeeded <= weeksLeft;
     return {
       code: onTrack ? 'on_track' : 'not_on_track',
-      reason: `${fmt(v)} vs target ${fmt(target)}; at the current trend, about ${fmt(projected)} by the IEP end date.`,
+      reason: `${fmt(v)} vs target ${fmt(target)}; improving about ${rateTxt} per week, so the target would be reached in about ${weeksNeeded} week${weeksNeeded !== 1 ? 's' : ''} (${weeksLeft} week${weeksLeft !== 1 ? 's' : ''} until the IEP end date).`,
     };
   }
 

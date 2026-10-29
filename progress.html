@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SPEDreport · Progress Reports</title>
+<!-- Defense in depth for FERPA data: scripts only from this site and the
+     pinned CDN, and network requests only to this Supabase project. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://owuqtnapskzionawmjkm.supabase.co wss://owuqtnapskzionawmjkm.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'">
+<link rel="icon" type="image/png" href="icon.png">
+<meta name="theme-color" content="#323B87">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Pinned (with an integrity hash), same file as SPEDsight. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
+<script src="abc-analysis.js"></script>
+<script src="grading-periods.js"></script>
+<script src="progress-report.js"></script>
+<script src="tool-switcher.js" defer></script>
+<style>
+/* Tokens and base components mirror index.html / abc.html so the tools read as one app. */
+:root {
+  --brand: #323B87; --brand-dark: #262c65; --brand-dim: rgba(50,59,135,0.10);
+  --accent: #F7BD00;
+  --bg: #e9e6e1; --surface: #ffffff; --surface2: #f8f7f5; --surface3: #edeae6;
+  --border: #e8e5e1; --border-mid: #d6d2cc;
+  --text: #1c1917; --text-2: #57534e; --text-3: #5f6368;
+  --danger: rgb(220,38,38); --danger-bg: rgba(220,38,38,0.08); --danger-border: rgba(220,38,38,0.25);
+  --success: rgb(22,163,74); --success-bg: rgba(22,163,74,0.1);
+  --amber: #b45309; --amber-bg: #fef3c7;
+  --shadow-card: 0 1px 2px rgba(28,25,23,.04), 0 2px 8px rgba(28,25,23,.06);
+  --sans: 'Roboto', sans-serif;
+  --r: 10px; --r-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 15px; display: flex; flex-direction: column; overflow: hidden; }
+button, input, select, textarea { font-family: var(--sans); }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 99px; }
+
+/* TOP BAR */
+.topbar { height: 64px; background: var(--brand); color: #fff; display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; box-shadow: 0 1px 0 rgba(0,0,0,.15); gap: 12px; }
+.topbar-brand { font-size: 24px; font-weight: 700; letter-spacing: .02em; display: flex; align-items: center; gap: 10px; min-width: 0; white-space: nowrap; }
+.topbar-brand img { width: 32px; height: 32px; border-radius: 7px; background: #fff; object-fit: contain; padding: 3px; flex-shrink: 0; }
+.topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.topbar-account { position: relative; flex-shrink: 0; }
+.topbar-avatar-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); background: rgba(255,255,255,.2); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.topbar-account-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 200; min-width: 220px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.15); overflow: hidden; display: none; }
+.topbar-account-menu.open { display: block; }
+.topbar-account-hdr { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.topbar-account-hdr-lbl { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 2px; }
+.topbar-account-hdr-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-account-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px; font-size: 14px; color: var(--text-2); background: none; border: none; cursor: pointer; text-align: left; }
+.topbar-account-item:hover { background: var(--surface2); }
+.topbar-account-item.danger { color: var(--danger); }
+
+/* PAGE */
+.main { flex: 1; overflow-y: auto; }
+.page { max-width: 980px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.load-msg { padding: 60px 20px; text-align: center; color: var(--text-3); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+.card-head { padding: 14px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.card-title { font-size: 15px; font-weight: 700; }
+.card-meta { font-size: 13px; color: var(--text-3); margin-left: auto; }
+.card-body { padding: 16px 20px; }
+.empty { padding: 28px 20px; text-align: center; color: var(--text-3); font-size: 14px; line-height: 1.5; }
+.empty-title { font-size: 18px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; }
+
+.fl { display: block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+.fin, .fsel { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-size: 14px; background: var(--surface2); color: var(--text); }
+.fsel { appearance: none; -webkit-appearance: none; padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235f6368' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+.fin:focus, .fsel:focus { outline: none; border-color: var(--brand); background: #fff; }
+.mbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; border: none; transition: all .15s; white-space: nowrap; }
+.mbtn:disabled { opacity: .55; cursor: default; }
+.mbtn-ghost { background: var(--surface2); color: var(--text-2); border: 1px solid var(--border-mid); }
+.mbtn-ghost:hover:not(:disabled) { background: var(--border); }
+.mbtn-brand { background: var(--brand); color: #fff; }
+.mbtn-brand:hover:not(:disabled) { background: var(--brand-dark); }
+.mbtn-outline { background: transparent; border: 1px solid var(--border-mid); color: var(--text-2); }
+.mbtn-outline:hover:not(:disabled) { background: var(--surface2); }
+.mbtn-sm { padding: 6px 12px; font-size: 14px; }
+.text-link { border: none; background: none; padding: 0; color: var(--brand); font-size: 13px; font-weight: 600; cursor: pointer; }
+.text-link:hover { text-decoration: underline; }
+
+/* Overview */
+.ov-controls { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(200px, 280px); gap: 16px; align-items: end; padding: 16px 20px; }
+.ov-range { font-size: 13px; color: var(--text-3); margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.ov-group { padding: 8px 20px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); background: var(--surface2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+.ov-row { width: 100%; display: grid; grid-template-columns: 40px 1fr 90px 110px 120px; gap: 12px; align-items: center; padding: 10px 20px; background: none; border: none; border-bottom: 1px solid var(--border); text-align: left; cursor: pointer; color: var(--text); }
+.ov-row:hover { background: var(--surface2); }
+.ov-row:last-child { border-bottom: none; }
+.ov-hdr { display: grid; grid-template-columns: 40px 1fr 90px 110px 120px; gap: 12px; padding: 8px 20px; font-size: 12px; font-weight: 600; color: var(--text-3); border-bottom: 1px solid var(--border); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--brand-dim); color: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+.ov-name { font-weight: 600; font-size: 15px; }
+.ov-sub { font-size: 13px; color: var(--text-3); }
+.ov-num { font-size: 14px; color: var(--text-2); }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.pill-none { background: var(--surface3); color: var(--text-3); }
+.pill-draft { background: var(--amber-bg); color: var(--amber); }
+.pill-final { background: var(--success-bg); color: var(--success); }
+.pill-warn { background: var(--danger-bg); color: var(--danger); }
+
+/* Student editor */
+.ed-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ed-nav { display: flex; gap: 6px; margin-left: auto; }
+.ed-head { padding: 16px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.ed-head .avatar { width: 44px; height: 44px; font-size: 16px; }
+.ed-name { font-size: 20px; font-weight: 700; }
+.ed-period { font-size: 14px; color: var(--text-2); margin-top: 3px; }
+.ed-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.ed-msg { padding: 10px 20px; font-size: 14px; border-top: 1px solid var(--border); }
+.ed-msg.ok { color: var(--success); }
+.ed-msg.err { color: var(--danger); background: var(--danger-bg); }
+.ed-final-note { padding: 10px 20px; font-size: 14px; color: var(--text-2); background: var(--success-bg); border-top: 1px solid var(--border); }
+
+.goal-num { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+.goal-name { font-size: 15px; font-weight: 600; flex: 1; min-width: 200px; overflow-wrap: anywhere; }
+.badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: var(--surface3); color: var(--text-2); letter-spacing: .03em; }
+.badge-arch { border: 1px solid var(--border-mid); text-transform: uppercase; }
+.stats { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+.stat-val { font-size: 22px; font-weight: 700; color: var(--brand); line-height: 1.1; }
+.stat-lbl { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.spark { display: block; }
+.rate-row { padding: 14px 20px 6px; }
+.rate-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.rate-btn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface); color: var(--text-2); font-size: 13px; font-weight: 600; cursor: pointer; }
+.rate-btn:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+.rate-btn.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.rate-btn:disabled { cursor: default; }
+.rate-btn.sugg:not(.on) { border-style: dashed; border-color: var(--brand); }
+.suggest { font-size: 13px; color: var(--text-3); margin-top: 8px; line-height: 1.45; }
+.narr-row { padding: 8px 20px 16px; }
+.narr { width: 100%; min-height: 96px; resize: vertical; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; line-height: 1.5; background: var(--surface2); color: var(--text); }
+.narr:focus { outline: none; border-color: var(--brand); background: #fff; }
+.narr[readonly] { background: var(--surface2); }
+.narr-foot { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.narr-count { font-size: 12px; color: var(--text-3); margin-right: auto; }
+.copied { color: var(--success) !important; border-color: var(--success) !important; }
+.incl { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); margin-left: auto; cursor: pointer; }
+
+/* Print: only the generated report. */
+#print-area { display: none; }
+@media print {
+  @page { margin: 14mm; }
+  body { display: block; height: auto; overflow: visible; background: #fff; }
+  .topbar, .main, .modal-bg { display: none !important; }
+  #print-area { display: block; color: #000; font-size: 12pt; line-height: 1.45; }
+  #print-area h1 { font-size: 16pt; margin-bottom: 2pt; }
+  #print-area .p-sub { font-size: 11pt; color: #333; margin-bottom: 12pt; }
+  #print-area .p-goal { margin-bottom: 12pt; break-inside: avoid; }
+  #print-area .p-goal h2 { font-size: 12pt; margin-bottom: 2pt; }
+  #print-area .p-rating { font-weight: 700; margin-bottom: 3pt; }
+  #print-area .p-data { font-size: 10pt; color: #444; margin-top: 3pt; }
+  #print-area .p-foot { margin-top: 18pt; font-size: 10pt; color: #444; }
+}
+
+@media (max-width: 768px) {
+  .topbar { padding: 0 12px; }
+  .tool-switch-name { display: none; }
+  .page { padding: 12px; }
+  .ov-controls { grid-template-columns: 1fr; }
+  .ov-hdr { display: none; }
+  .ov-row { grid-template-columns: 36px 1fr auto; padding: 10px 14px; }
+  .ov-row .ov-num { display: none; }
+  .card-head, .card-body, .stats, .rate-row, .narr-row, .ed-head { padding-left: 14px; padding-right: 14px; }
+  .ed-actions { margin-left: 0; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tool-switch" data-current="spedreport">
+    <button type="button" class="topbar-brand tool-switch-btn"><img src="icon.png" alt=""><span class="tool-switch-name">SPEDreport</span></button>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-account">
+      <button type="button" class="topbar-avatar-btn" id="avatar-btn" data-action="account-menu" aria-label="Account menu"></button>
+      <div class="topbar-account-menu" id="account-menu">
+        <div class="topbar-account-hdr">
+          <div class="topbar-account-hdr-lbl">Signed in as</div>
+          <div class="topbar-account-hdr-name" id="account-name"></div>
+        </div>
+        <button type="button" class="topbar-account-item" data-action="school-calendar">School Calendar</button>
+        <button type="button" class="topbar-account-item danger" data-action="sign-out">Sign Out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main" id="main"><div class="page" id="page"><div class="load-msg">Loading…</div></div></div>
+<div id="print-area" aria-hidden="true"></div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════════
+// SUPABASE — public anon key; row-level security limits every query to
+// the signed-in account's own students (see sql/005_progress_reports.sql).
+// ═══════════════════════════════════════════════════════════════
+const SB_URL = 'https://owuqtnapskzionawmjkm.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93dXF0bmFwc2t6aW9uYXdtamttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4OTEyNjcsImV4cCI6MjEwMjQ2NzI2N30.9CyuI3kiDHVqy6pNr1CuAKdqCzYBhzrmy7bTI1X3ACo';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+const PR = window.ProgressReport, GP = window.GradingPeriods;
+
+// ── Helpers ──
+function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function initials(name){ return (name||'').split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase()||'?'; }
+function acctInitials(name){
+  if(!name) return '?';
+  const local = name.includes('@') ? name.split('@')[0] : name;
+  const parts = local.trim().split(/[\s._-]+/).filter(Boolean);
+  if(parts.length>=2) return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+  return local.slice(0,2).toUpperCase();
+}
+const pad2 = n => String(n).padStart(2,'0');
+function localDateStr(d = new Date()){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+// UI ranges use an en dash; copied text uses a plain hyphen.
+const asciiRange = (a, b) => GP.formatRange(a, b).replace(/–/g, '-');
+const plural = (n, w) => `${n} ${w}${n !== 1 ? 's' : ''}`;
+function parseGoals(v){
+  if(Array.isArray(v)) return v;
+  if(typeof v === 'string'){ try { const x = JSON.parse(v); return Array.isArray(x) ? x : []; } catch(e){ return []; } }
+  return [];
+}
+const RATING_LABEL = Object.fromEntries(PR.RATINGS.map(r => [r.code, r.label]));
+const PREV_PERIOD = { Q2: 'Q1', Q3: 'Q2', Q4: 'Q3', S2: 'S1' };
+const TYPE_LABEL = { yn: 'Y/N', on: 'O/NO', '1to4': 'Rating', count: 'Count', acc: 'Accuracy', dur: 'Duration' };
+
+// Teacher-group order dragged in SPEDsheet/SPEDsight (read-only here).
+let teacherOrder = [];
+try { teacherOrder = JSON.parse(localStorage.getItem('ppdc_teacher_order') || '[]'); } catch(e) { teacherOrder = []; }
+function teacherSortIndex(name){
+  if(name === 'No Teacher') return Infinity;
+  const i = teacherOrder.indexOf(name);
+  return i === -1 ? teacherOrder.length : i;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let currentUser = null;
+const P = {
+  students: [], cal: {}, ref: null,
+  sy: null, key: null,           // selected grading period
+  reports: new Map(),            // student id → saved progress_reports row (this period)
+  dataDays: new Map(),           // student id → days with goal data (this period)
+  loadingPeriod: false, periodError: '',
+  view: 'overview', sid: null, search: '',
+};
+let R = null;                    // the open student report (editor state)
+let _seq = 0;                    // discards responses for a period/student no longer selected
+
+function period(){
+  if(P.sy === null || !P.key) return null;
+  return GP.definedPeriods(P.cal, P.sy).find(p => p.key === P.key) || null;
+}
+const studentById = id => P.students.find(s => s.id === id);
+
+// ═══════════════════════════════════════════════════════════════
+// LOADING
+// ═══════════════════════════════════════════════════════════════
+async function loadBase(){
+  const [stu, opt, fns, map] = await Promise.all([
+    sb.from('students').select('id, first_name, last_name, grade, teacher, goals, iep_end_date')
+      .eq('active', true).order('last_name').order('first_name'),
+    sb.from('abc_options').select('category, code, label, narrative, has_text, display_order, active').order('display_order'),
+    sb.from('abc_functions').select('code, label, fba_phrase, display_order').order('display_order'),
+    sb.from('abc_function_mapping').select('function_code, option_code'),
+  ]);
+  if(stu.error){ console.error('load students:', stu.error); throw stu.error; }
+  P.students = stu.data.map(r => ({
+    id: r.id, firstName: r.first_name || '', lastName: r.last_name || '',
+    name: [r.first_name, r.last_name].filter(Boolean).join(' '),
+    grade: r.grade || '', teacher: r.teacher || '', goals: parseGoals(r.goals), iepEnd: r.iep_end_date || null,
+  }));
+  // SPEDsight reference data is optional — the report still works without it.
+  if(opt.error || fns.error || map.error){
+    console.error('load ABC reference:', opt.error || fns.error || map.error);
+    P.ref = null;
+  } else {
+    P.ref = {
+      options: opt.data.map(r => ({ category: r.category, code: r.code, label: r.label, narrative: r.narrative || '', hasText: r.has_text, displayOrder: r.display_order, active: r.active })),
+      functions: fns.data.map(r => ({ code: r.code, label: r.label, fbaPhrase: r.fba_phrase, displayOrder: r.display_order })),
+      mapping: map.data.map(r => ({ functionCode: r.function_code, optionCode: r.option_code })),
+    };
+  }
+  try { P.cal = await GP.load(sb); } catch(e) { console.error('school calendar load:', e); P.cal = {}; }
+}
+
+// Default period: the latest quarter (else semester) that has started.
+function pickDefaultPeriod(){
+  const today = localDateStr();
+  const sy = GP.currentSchoolYear();
+  const cands = [sy, sy - 1].flatMap(y => GP.definedPeriods(P.cal, y).map(p => ({ ...p, sy: y })));
+  const started = cands.filter(p => p.start <= today);
+  const pick = list => list.sort((a, b) => b.start.localeCompare(a.start))[0];
+  const best = pick(started.filter(p => p.key[0] === 'Q')) || pick(started) || pick(cands.filter(p => p.key[0] === 'Q')) || pick(cands);
+  if(best){ P.sy = best.sy; P.key = best.key; } else { P.sy = sy; P.key = null; }
+}
+
+// Saved reports + days-with-data for every student, for the selected period.
+async function loadPeriod(){
+  const seq = ++_seq, per = period();
+  P.reports = new Map(); P.dataDays = new Map(); P.periodError = '';
+  if(!per){ render(); return; }
+  P.loadingPeriod = true; render();
+  const ids = P.students.map(s => s.id);
+  const [reps, days] = await Promise.all([
+    sb.from('progress_reports').select('*').eq('school_year', P.sy).eq('period', P.key),
+    ids.length ? sb.from('daily_points').select('student_id, date, scores, goal_scores').in('student_id', ids).gte('date', per.start).lte('date', per.end)
+               : Promise.resolve({ data: [], error: null }),
+  ]);
+  if(seq !== _seq) return;
+  P.loadingPeriod = false;
+  if(reps.error || days.error){
+    console.error('load period:', reps.error || days.error);
+    P.periodError = reps.error ? "Couldn't load saved reports. If this is a new setup, make sure sql/005 has been run in Supabase." : "Couldn't load point-sheet data.";
+    render(); return;
+  }
+  reps.data.forEach(r => P.reports.set(r.student_id, r));
+  for(const r of days.data){
+    const sc = r.scores || {};
+    if(sc._absent || sc._excluded) continue;
+    const g = r.goal_scores || {};
+    const has = Object.values(g).some(v => Array.isArray(v) ? v.some(x => x && x.v !== '' && x.v != null) : v !== '' && v != null);
+    if(has) P.dataDays.set(r.student_id, (P.dataDays.get(r.student_id) || 0) + 1);
+  }
+  render();
+}
+
+// Everything one student's report needs: the school year's point-sheet
+// rows (so the previous period can be compared) and SPEDsight data.
+async function loadStudentData(sid){
+  const per = period();
+  const yearStart = GP.yearBounds(P.sy).start;
+  const [dp, beh, ses, ent] = await Promise.all([
+    sb.from('daily_points').select('date, scores, goal_scores').eq('student_id', sid).gte('date', yearStart).lte('date', per.end).order('date'),
+    sb.from('abc_behaviors').select('id, name, active').eq('student_id', sid).order('name'),
+    sb.from('abc_sessions').select('id, session_date').eq('student_id', sid),
+    sb.from('abc_observation_entries').select('session_id, behavior_id, activity_code, activity_other, antecedent_codes, antecedent_other, consequence_codes, consequence_other').eq('student_id', sid),
+  ]);
+  if(dp.error){ console.error('load point sheets:', dp.error); throw dp.error; }
+  const rows = dp.data.map(r => {
+    const sc = r.scores || {};
+    return { date: r.date, g: r.goal_scores || {}, absent: !!sc._absent, excluded: !!sc._excluded };
+  });
+  let behaviors = [], entries = [];
+  if(beh.error || ses.error || ent.error){ console.error('load SPEDsight data:', beh.error || ses.error || ent.error); }
+  else {
+    const dateOf = new Map(ses.data.map(s => [s.id, s.session_date]));
+    behaviors = beh.data;
+    entries = ent.data.map(e => ({
+      behaviorId: e.behavior_id, date: dateOf.get(e.session_id),
+      activityCode: e.activity_code, activityOther: e.activity_other || '',
+      antecedentCodes: e.antecedent_codes || [], antecedentOther: e.antecedent_other || '',
+      consequenceCodes: e.consequence_codes || [], consequenceOther: e.consequence_other || '',
+    }));
+  }
+  return { rows, behaviors, entries };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REPORT EDITOR STATE
+// ═══════════════════════════════════════════════════════════════
+// A goal item: { goalId, name, type, num, archived, snap, suggestion,
+//   rating, narrative, generated } — snap holds the numbers shown (and
+//   saved), generated the last auto-drafted narrative (so a rating change
+//   can re-draft text the teacher hasn't edited).
+function buildReport(stu, data, saved, forceDraft){
+  const per = period();
+  const final = saved?.status === 'final' && !forceDraft;
+  const savedGoals = new Map((saved?.goals || []).map(g => [g.goalId, g]));
+  const savedBeh = new Map((saved?.behaviors || []).map(b => [b.behaviorId, b]));
+  const r = {
+    sid: stu.id, status: final ? 'final' : 'draft', finalizedAt: saved?.finalized_at || null,
+    saved: !!saved, dirty: !!forceDraft, saving: false, msg: '', msgKind: '',
+    goals: [], behaviors: [],
+  };
+
+  if(final){
+    // Exactly what was finalized — frozen numbers, saved text.
+    r.goals = (saved.goals || []).map((g, k) => ({
+      goalId: g.goalId, name: g.goalName, type: g.snapshot?.type, num: k + 1, archived: !!g.archived,
+      snap: g.snapshot || {}, suggestion: null, rating: g.rating || null, narrative: g.narrative || '', generated: g.narrative || '',
+    }));
+    r.behaviors = (saved.behaviors || []).map(b => ({
+      behaviorId: b.behaviorId, name: b.behaviorName, include: b.include !== false,
+      snap: b.snapshot || {}, narrative: b.narrative || '', generated: b.narrative || '',
+    }));
+    return r;
+  }
+
+  // Live: active goals, plus archived ones that have data this period.
+  const prevKey = PREV_PERIOD[P.key];
+  const prevPer = prevKey ? GP.definedPeriods(P.cal, P.sy).find(p => p.key === prevKey) : null;
+  const items = [];
+  stu.goals.forEach((g, gi) => {
+    const s = PR.summarizeGoal(data.rows, g, gi, { start: per.start, end: per.end });
+    if(g.archived && !s.entries) return;
+    let comparison = null;
+    if(prevPer){
+      const ps = PR.summarizeGoal(data.rows, g, gi, { start: prevPer.start, end: prevPer.end });
+      if(ps.entries) comparison = { label: GP.LABELS[prevKey], value: ps.value };
+    }
+    if(!comparison && PR.baselineValue(g) !== null) comparison = { label: 'baseline', value: PR.baselineValue(g) };
+    const suggestion = PR.suggestRating({ goal: g, summary: s, prev: comparison ? comparison.value : null, iepEnd: stu.iepEnd, asOf: per.end });
+    items.push({ g, gi, s, comparison, suggestion });
+  });
+  items.sort((a, b) => (!!a.g.archived - !!b.g.archived) || a.gi - b.gi);
+  r.goals = items.map(({ g, gi, s, comparison, suggestion }, k) => {
+    const sg = g.id ? savedGoals.get(g.id) : null;
+    const rating = sg ? (sg.rating || null) : (suggestion.code || null);
+    const generated = PR.draftGoalNarrative({ firstName: stu.firstName || 'The student', periodLabel: per.label, goal: g, summary: s, comparison, ratingCode: rating });
+    return {
+      goalId: g.id || String(gi), name: g.name || 'Untitled goal', type: g.type, num: k + 1, archived: !!g.archived,
+      goal: g, summary: s, comparison, suggestion,
+      snap: {
+        type: g.type, value: s.value, entries: s.entries, days: s.days, sum: s.sum, max: s.max,
+        target: PR.targetValue(g), direction: g.direction === 'decrease' ? 'decrease' : 'increase',
+        comparison, weeks: s.weeks.map(w => w.value),
+      },
+      rating, narrative: sg ? sg.narrative : generated, generated: sg ? sg.narrative : generated,
+    };
+  });
+
+  // SPEDsight behaviors observed this period.
+  if(P.ref){
+    for(const b of data.behaviors){
+      const out = PR.draftBehaviorSummary({
+        firstName: stu.firstName || 'The student', periodLabel: per.label, behaviorName: b.name,
+        entries: data.entries, ref: P.ref, behaviorId: b.id, start: per.start, end: per.end,
+      });
+      if(!out) continue;
+      const sb2 = savedBeh.get(b.id);
+      r.behaviors.push({
+        behaviorId: b.id, name: b.name, include: sb2 ? sb2.include !== false : true,
+        snap: { count: out.count, days: out.days },
+        narrative: sb2 ? sb2.narrative : out.text, generated: sb2 ? sb2.narrative : out.text, fresh: out.text,
+      });
+    }
+  }
+  return r;
+}
+
+function regenerate(k){
+  const it = R.goals[k], stu = studentById(R.sid), per = period();
+  if(!it.goal) return;
+  const text = PR.draftGoalNarrative({ firstName: stu.firstName || 'The student', periodLabel: per.label, goal: it.goal, summary: it.summary, comparison: it.comparison, ratingCode: it.rating });
+  it.narrative = text; it.generated = text;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function render(){
+  const page = document.getElementById('page');
+  if(P.view === 'student' && R) { page.innerHTML = editorHTML(); renderPrintArea(); return; }
+  page.innerHTML = overviewHTML();
+}
+
+function periodOptionsHTML(){
+  const sy = GP.currentSchoolYear();
+  return [sy, sy - 1].map(y => {
+    const list = GP.definedPeriods(P.cal, y);
+    if(!list.length) return '';
+    return `<optgroup label="${esc(GP.yearLabel(y))}">${list.map(p =>
+      `<option value="${y}|${p.key}"${y === P.sy && p.key === P.key ? ' selected' : ''}>${esc(p.label)} · ${esc(GP.formatRange(p.start, p.end))}</option>`).join('')}</optgroup>`;
+  }).join('');
+}
+
+function statusPill(row, days){
+  if(row?.status === 'final') return '<span class="pill pill-final">✓ Final</span>';
+  if(row) return '<span class="pill pill-draft">Draft</span>';
+  if(!days) return '<span class="pill pill-warn">No data</span>';
+  return '<span class="pill pill-none">Not started</span>';
+}
+
+function overviewHTML(){
+  const per = period();
+  const opts = periodOptionsHTML();
+  if(!opts){
+    return `<div class="card"><div class="empty">
+      <div class="empty-title">Set up your School Calendar</div>
+      Progress reports follow your quarter and semester dates. Add them once and they'll be used here and in SPEDsheet's Yearly Summary.<br><br>
+      <button type="button" class="mbtn mbtn-brand" data-action="school-calendar">Set up quarters &amp; semesters</button>
+    </div></div>`;
+  }
+  const controls = `<div class="card">
+    <div class="card-head"><span class="card-title">Progress Reports</span>
+      <span class="card-meta">${P.reports.size ? `${[...P.reports.values()].filter(r => r.status === 'final').length} of ${P.students.length} finalized` : ''}</span></div>
+    <div class="ov-controls">
+      <div>
+        <label class="fl" for="period-sel">Grading period</label>
+        <select class="fsel" id="period-sel" data-field="period">${opts}</select>
+        <div class="ov-range">${per ? esc(GP.formatRange(per.start, per.end)) : ''}<button type="button" class="text-link" data-action="school-calendar">Edit dates</button></div>
+      </div>
+      <div>
+        <label class="fl" for="ov-search">Find a student</label>
+        <input class="fin" id="ov-search" data-field="search" placeholder="Name or teacher" autocomplete="off" value="${esc(P.search)}">
+      </div>
+    </div>
+  </div>`;
+
+  if(P.periodError) return controls + `<div class="card"><div class="empty">${esc(P.periodError)}</div></div>`;
+  if(P.loadingPeriod) return controls + `<div class="card"><div class="empty">Loading…</div></div>`;
+  if(!P.students.length) return controls + `<div class="card"><div class="empty">No students yet. Add students in SPEDsheet first.</div></div>`;
+
+  const q = P.search.trim().toLowerCase();
+  const list = P.students.filter(s => !q || s.name.toLowerCase().includes(q) || s.teacher.toLowerCase().includes(q));
+  if(!list.length) return controls + `<div class="card"><div class="empty">No students match your search.</div></div>`;
+  const groups = new Map();
+  list.forEach(s => { const t = s.teacher || 'No Teacher'; if(!groups.has(t)) groups.set(t, []); groups.get(t).push(s); });
+  const rows = [...groups.entries()].sort(([a], [b]) => teacherSortIndex(a) - teacherSortIndex(b) || a.localeCompare(b))
+    .map(([t, studs]) => `<div class="ov-group">${esc(t)}<span>(${studs.length})</span></div>` + studs.map(s => {
+      const active = s.goals.filter(g => !g.archived).length, days = P.dataDays.get(s.id) || 0;
+      return `<button type="button" class="ov-row" data-action="open-student" data-sid="${esc(s.id)}">
+        <span class="avatar">${esc(initials(s.name))}</span>
+        <span><div class="ov-name">${esc(s.name)}</div><div class="ov-sub">${esc(s.grade || '')}</div></span>
+        <span class="ov-num">${esc(plural(active, 'goal'))}</span>
+        <span class="ov-num">${esc(plural(days, 'day'))} of data</span>
+        <span>${statusPill(P.reports.get(s.id), days)}</span>
+      </button>`;
+    }).join('')).join('');
+  return controls + `<div class="card"><div class="ov-hdr"><span></span><span>Student</span><span>Goals</span><span>Data</span><span>Report</span></div>${rows}</div>`;
+}
+
+// Inline sparkline of weekly values (numbers only — no user text).
+function sparkSVG(vals, type){
+  const pts = vals.map((v, i) => [i, v]).filter(([, v]) => v !== null && v !== undefined);
+  if(pts.length < 2) return '';
+  const W = 140, H = 34, n = vals.length - 1 || 1;
+  let lo, hi;
+  if(type === 'acc' || type === 'yn' || type === 'on'){ lo = 0; hi = 100; }
+  else { lo = Math.min(...pts.map(p => p[1])); hi = Math.max(...pts.map(p => p[1])); if(hi === lo){ hi = lo + 1; } }
+  const xy = pts.map(([i, v]) => `${(i / n * (W - 6) + 3).toFixed(1)},${(H - 3 - (v - lo) / (hi - lo) * (H - 6)).toFixed(1)}`);
+  return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="Weekly trend"><polyline points="${xy.join(' ')}" fill="none" stroke="#323B87" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${xy.length ? `<circle cx="${xy[xy.length-1].split(',')[0]}" cy="${xy[xy.length-1].split(',')[1]}" r="2.5" fill="#323B87"/>` : ''}</svg>`;
+}
+
+function goalCardHTML(it, k, locked){
+  const snap = it.snap || {}, type = snap.type || it.type;
+  const fmt = v => PR.formatValue(type, v);
+  const stats = snap.entries
+    ? `<div><div class="stat-val">${esc(fmt(snap.value))}</div><div class="stat-lbl">This period</div></div>
+       ${snap.comparison && snap.comparison.value != null ? `<div><div class="stat-val" style="color:var(--text-2)">${esc(fmt(snap.comparison.value))}</div><div class="stat-lbl">${esc(snap.comparison.label === 'baseline' ? 'Baseline' : snap.comparison.label)}</div></div>` : ''}
+       ${snap.target != null ? `<div><div class="stat-val" style="color:var(--text-2)">${esc(fmt(snap.target))}</div><div class="stat-lbl">Target${snap.direction === 'decrease' ? ' (decrease)' : ''}</div></div>` : ''}
+       <div><div class="stat-val" style="color:var(--text-2);font-size:18px">${esc(String(snap.days))}</div><div class="stat-lbl">${snap.days === 1 ? 'Day' : 'Days'} of data</div></div>
+       ${sparkSVG(snap.weeks || [], type)}`
+    : `<div class="stat-lbl" style="font-size:14px">No data recorded for this goal during this period.</div>`;
+  const sugg = it.suggestion;
+  const rateBtns = PR.RATINGS.map(r => `<button type="button" class="rate-btn${it.rating === r.code ? ' on' : ''}${sugg && sugg.code === r.code ? ' sugg' : ''}" data-action="rate" data-k="${k}" data-code="${r.code}" aria-pressed="${it.rating === r.code}"${locked ? ' disabled' : ''}>${esc(r.label)}</button>`).join('');
+  return `<div class="card">
+    <div class="card-head">
+      <span class="goal-num">Goal ${it.num}</span>
+      <span class="goal-name">${esc(it.name)}</span>
+      <span class="badge">${esc(TYPE_LABEL[type] || type || '')}</span>
+      ${it.archived ? '<span class="badge badge-arch">Archived</span>' : ''}
+    </div>
+    <div class="stats">${stats}</div>
+    <div class="rate-row">
+      <label class="fl">Progress</label>
+      <div class="rate-opts">${rateBtns}</div>
+      ${!locked && sugg ? `<div class="suggest">${sugg.code ? `Suggested: <strong>${esc(RATING_LABEL[sugg.code])}</strong> — ` : ''}${esc(sugg.reason)}</div>` : ''}
+    </div>
+    <div class="narr-row">
+      <label class="fl" for="narr-${k}">Comment</label>
+      <textarea class="narr" id="narr-${k}" data-field="narr" data-k="${k}"${locked ? ' readonly' : ''}>${esc(it.narrative)}</textarea>
+      <div class="narr-foot">
+        <span class="narr-count" id="count-${k}">${it.narrative.length} characters</span>
+        ${!locked && it.goal ? `<button type="button" class="mbtn mbtn-outline mbtn-sm" data-action="regen" data-k="${k}">↻ Regenerate</button>` : ''}
+        <button type="button" class="mbtn mbtn-ghost mbtn-sm" data-action="copy" data-what="goal" data-k="${k}">Copy</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function behaviorCardHTML(b, k, locked){
+  return `<div class="card">
+    <div class="card-head">
+      <span class="goal-num">Behavior</span>
+      <span class="goal-name">${esc(b.name)}</span>
+      <span class="badge">SPEDsight</span>
+      <label class="incl"><input type="checkbox" data-field="incl" data-k="${k}"${b.include ? ' checked' : ''}${locked ? ' disabled' : ''}> Include in report</label>
+    </div>
+    <div class="stats"><div><div class="stat-val">${esc(String(b.snap.count ?? '-'))}</div><div class="stat-lbl">Observations</div></div>
+      <div><div class="stat-val" style="color:var(--text-2);font-size:18px">${esc(String(b.snap.days ?? '-'))}</div><div class="stat-lbl">Days</div></div></div>
+    <div class="narr-row" style="padding-top:14px">
+      <label class="fl" for="bnarr-${k}">Comment</label>
+      <textarea class="narr" id="bnarr-${k}" data-field="bnarr" data-k="${k}"${locked ? ' readonly' : ''}>${esc(b.narrative)}</textarea>
+      <div class="narr-foot">
+        <span class="narr-count" id="bcount-${k}">${b.narrative.length} characters</span>
+        ${!locked && b.fresh ? `<button type="button" class="mbtn mbtn-outline mbtn-sm" data-action="bregen" data-k="${k}">↻ Regenerate</button>` : ''}
+        <button type="button" class="mbtn mbtn-ghost mbtn-sm" data-action="copy" data-what="beh" data-k="${k}">Copy</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function editorHTML(){
+  const stu = studentById(R.sid), per = period(), locked = R.status === 'final';
+  const order = visibleStudents(), idx = order.findIndex(s => s.id === R.sid);
+  const prev = order[idx - 1], next = order[idx + 1];
+  const pill = R.status === 'final' ? '<span class="pill pill-final">✓ Final</span>' : R.saved ? '<span class="pill pill-draft">Draft</span>' : '<span class="pill pill-none">Not saved</span>';
+  const acts = locked
+    ? `<button type="button" class="mbtn mbtn-ghost" data-action="copy-all">Copy all</button>
+       <button type="button" class="mbtn mbtn-ghost" data-action="print">Print</button>
+       <button type="button" class="mbtn mbtn-outline" data-action="reopen">Reopen to edit</button>`
+    : `<button type="button" class="mbtn mbtn-ghost" data-action="copy-all">Copy all</button>
+       <button type="button" class="mbtn mbtn-ghost" data-action="print">Print</button>
+       <button type="button" class="mbtn mbtn-outline" data-action="save"${R.saving ? ' disabled' : ''}>${R.saving ? 'Saving…' : 'Save draft'}</button>
+       <button type="button" class="mbtn mbtn-brand" data-action="finalize"${R.saving ? ' disabled' : ''}>Finalize</button>`;
+  const goals = R.goals.length ? R.goals.map((it, k) => goalCardHTML(it, k, locked)).join('')
+    : `<div class="card"><div class="empty">${esc(stu.firstName || 'This student')} has no goals yet. Add goals in SPEDsheet (Edit Student → Goals).</div></div>`;
+  const behs = R.behaviors.map((b, k) => behaviorCardHTML(b, k, locked)).join('');
+  return `<div class="ed-bar">
+      <button type="button" class="mbtn mbtn-ghost mbtn-sm" data-action="back">← All students</button>
+      <div class="ed-nav">
+        <button type="button" class="mbtn mbtn-ghost mbtn-sm" data-action="goto" data-sid="${esc(prev?.id || '')}"${prev ? '' : ' disabled'} aria-label="Previous student">‹ Prev</button>
+        <button type="button" class="mbtn mbtn-ghost mbtn-sm" data-action="goto" data-sid="${esc(next?.id || '')}"${next ? '' : ' disabled'} aria-label="Next student">Next ›</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ed-head">
+        <span class="avatar">${esc(initials(stu.name))}</span>
+        <div>
+          <div class="ed-name">${esc(stu.name)}</div>
+          <div class="ed-period">${esc(per.label)} · ${esc(GP.formatRange(per.start, per.end))} · ${pill}</div>
+        </div>
+        <div class="ed-actions">${acts}</div>
+      </div>
+      ${locked ? `<div class="ed-final-note">Finalized${R.finalizedAt ? ' ' + esc(new Date(R.finalizedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : ''}. The numbers and text are locked as they were; reopen to make changes.</div>` : ''}
+      ${R.msg ? `<div class="ed-msg ${R.msgKind}" role="status">${esc(R.msg)}</div>` : ''}
+    </div>
+    ${goals}
+    ${behs}`;
+}
+
+// Plain-text version of the whole report, for "Copy all".
+function reportText(){
+  const stu = studentById(R.sid), per = period();
+  const out = [`${stu.name} - ${per.label} (${asciiRange(per.start, per.end)})`, ''];
+  R.goals.forEach(it => {
+    out.push(`Goal ${it.num}: ${it.name}`);
+    if(it.rating) out.push(`Progress: ${RATING_LABEL[it.rating]}`);
+    out.push(it.narrative, '');
+  });
+  R.behaviors.filter(b => b.include).forEach(b => { out.push(`Behavior: ${b.name}`, b.narrative, ''); });
+  return out.join('\n').trim() + '\n';
+}
+
+// Print-only copy of the report (hidden on screen).
+function renderPrintArea(){
+  const el = document.getElementById('print-area');
+  if(!R){ el.innerHTML = ''; return; }
+  const stu = studentById(R.sid), per = period();
+  const dataLine = it => {
+    const s = it.snap || {}; if(!s.entries) return '';
+    const fmt = v => PR.formatValue(s.type, v);
+    return [`${fmt(s.value)} this period`, s.target != null ? `target ${fmt(s.target)}` : '', `${plural(s.days, 'day')} of data`].filter(Boolean).join(' · ');
+  };
+  el.innerHTML = `<h1>${esc(stu.name)} — IEP Progress Report</h1>
+    <div class="p-sub">${esc(per.label)}, ${esc(GP.yearLabel(P.sy))} school year (${esc(GP.formatRange(per.start, per.end))})${stu.grade ? ' · ' + esc(stu.grade) : ''}${stu.teacher ? ' · ' + esc(stu.teacher) : ''}</div>
+    ${R.goals.map(it => `<div class="p-goal"><h2>Goal ${it.num}: ${esc(it.name)}</h2>
+      ${it.rating ? `<div class="p-rating">Progress: ${esc(RATING_LABEL[it.rating])}</div>` : ''}
+      <div>${esc(it.narrative)}</div>
+      ${dataLine(it) ? `<div class="p-data">${esc(dataLine(it))}</div>` : ''}</div>`).join('')}
+    ${R.behaviors.filter(b => b.include).map(b => `<div class="p-goal"><h2>Behavior: ${esc(b.name)}</h2><div>${esc(b.narrative)}</div></div>`).join('')}
+    <div class="p-foot">Prepared ${esc(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))}${R.status === 'final' ? ' · Final' : ' · Draft'}</div>`;
+}
+
+function visibleStudents(){
+  const q = P.search.trim().toLowerCase();
+  const list = P.students.filter(s => !q || s.name.toLowerCase().includes(q) || s.teacher.toLowerCase().includes(q));
+  const t = s => s.teacher || 'No Teacher';
+  return list.slice().sort((a, b) => teacherSortIndex(t(a)) - teacherSortIndex(t(b)) || t(a).localeCompare(t(b)) || P.students.indexOf(a) - P.students.indexOf(b));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════════
+function confirmLeave(){ return !R || !R.dirty || confirm('You have unsaved changes to this report. Discard them?'); }
+
+async function openStudent(sid, forceDraft = false){
+  const stu = studentById(sid); if(!stu || !period()) return;
+  const seq = ++_seq;
+  P.view = 'student'; P.sid = sid; R = null;
+  document.getElementById('page').innerHTML = '<div class="load-msg">Loading report…</div>';
+  document.getElementById('main').scrollTop = 0;
+  let data;
+  try { data = await loadStudentData(sid); }
+  catch(e){ if(seq !== _seq) return; document.getElementById('page').innerHTML = `<div class="card"><div class="empty">Couldn't load this student's data. Check your connection and try again.<br><br><button type="button" class="mbtn mbtn-ghost" data-action="back">← All students</button></div></div>`; return; }
+  if(seq !== _seq) return;
+  R = buildReport(stu, data, P.reports.get(sid), forceDraft);
+  R.data = data;
+  render();
+}
+
+function backToOverview(){
+  if(!confirmLeave()) return;
+  R = null; P.view = 'overview'; P.sid = null;
+  render(); renderPrintArea();
+  document.getElementById('main').scrollTop = 0;
+}
+
+async function saveReport(status){
+  if(!R || R.saving) return;
+  const per = period(), stu = studentById(R.sid);
+  if(status === 'final'){
+    const unrated = R.goals.filter(it => !it.rating).length;
+    if(unrated && !confirm(`${plural(unrated, 'goal')} ${unrated === 1 ? 'has' : 'have'} no progress rating. Finalize anyway?`)) return;
+  }
+  R.saving = true; R.msg = ''; render();
+  const payload = {
+    student_id: R.sid, school_year: P.sy, period: P.key, range_start: per.start, range_end: per.end,
+    status, finalized_at: status === 'final' ? new Date().toISOString() : null,
+    goals: R.goals.map(it => ({ goalId: it.goalId, goalName: it.name, archived: it.archived, rating: it.rating, narrative: it.narrative, snapshot: it.snap })),
+    behaviors: R.behaviors.map(b => ({ behaviorId: b.behaviorId, behaviorName: b.name, include: b.include, narrative: b.narrative, snapshot: b.snap })),
+  };
+  const { data, error } = await sb.from('progress_reports').upsert(payload, { onConflict: 'student_id,school_year,period' }).select().single();
+  R.saving = false;
+  if(error){
+    console.error('save progress report:', error);
+    R.msg = "Couldn't save. Check your connection and try again."; R.msgKind = 'err';
+    render(); return;
+  }
+  P.reports.set(R.sid, data);
+  if(status === 'final'){
+    const keep = R.data;
+    R = buildReport(stu, keep, data, false); R.data = keep;
+    R.msg = 'Finalized.'; R.msgKind = 'ok';
+  } else {
+    R.saved = true; R.dirty = false; R.status = 'draft';
+    R.msg = 'Draft saved.'; R.msgKind = 'ok';
+  }
+  render();
+}
+
+async function copyText(text, btn){
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; }
+  catch(e){
+    // Fallback for browsers that block the async clipboard API.
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch(e2){ ok = false; }
+    ta.remove();
+  }
+  if(!btn) return;
+  const orig = btn.textContent;
+  btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
+  btn.classList.toggle('copied', ok);
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1600);
+}
+
+function openSchoolCalendar(){
+  GP.openEditor({ sb, ownerId: currentUser.id, calendar: P.cal, year: P.sy ?? GP.currentSchoolYear(),
+    onSaved: cal => {
+      P.cal = cal;
+      if(!period()) pickDefaultPeriod();
+      if(P.view === 'overview') loadPeriod(); else render();
+    } });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENTS (delegated — no dynamic values in inline handlers)
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('click', e => {
+  const menu = document.getElementById('account-menu');
+  if(menu.classList.contains('open') && !e.target.closest('.topbar-account')) menu.classList.remove('open');
+  const t = e.target.closest('[data-action]');
+  if(!t || t.disabled) return;
+  switch(t.dataset.action){
+    case 'account-menu': menu.classList.toggle('open'); break;
+    case 'sign-out': if(confirmLeave()){ if(R) R.dirty = false; sb.auth.signOut(); } break;
+    case 'school-calendar': menu.classList.remove('open'); openSchoolCalendar(); break;
+    case 'open-student': openStudent(t.dataset.sid); break;
+    case 'back': backToOverview(); break;
+    case 'goto': if(t.dataset.sid && confirmLeave()) openStudent(t.dataset.sid); break;
+    case 'rate': {
+      const it = R.goals[+t.dataset.k]; if(!it) break;
+      const code = t.dataset.code;
+      const untouched = it.narrative === it.generated;
+      it.rating = it.rating === code ? null : code;
+      if(untouched) regenerate(+t.dataset.k); // keep auto-drafted text in step with the rating
+      R.dirty = true; R.msg = '';
+      render(); break;
+    }
+    case 'regen': {
+      const k = +t.dataset.k, it = R.goals[k];
+      if(it.narrative !== it.generated && !confirm('Replace this comment with freshly generated text?')) break;
+      regenerate(k); R.dirty = true; render(); break;
+    }
+    case 'bregen': {
+      const b = R.behaviors[+t.dataset.k];
+      if(b.narrative !== b.fresh && !confirm('Replace this comment with freshly generated text?')) break;
+      b.narrative = b.fresh; b.generated = b.fresh; R.dirty = true; render(); break;
+    }
+    case 'copy': {
+      const item = t.dataset.what === 'beh' ? R.behaviors[+t.dataset.k] : R.goals[+t.dataset.k];
+      if(item) copyText(item.narrative, t);
+      break;
+    }
+    case 'copy-all': copyText(reportText(), t); break;
+    case 'print': renderPrintArea(); window.print(); break;
+    case 'save': saveReport('draft'); break;
+    case 'finalize': saveReport('final'); break;
+    case 'reopen': {
+      const sid = R.sid;
+      openStudent(sid, true);
+      break;
+    }
+  }
+});
+
+document.addEventListener('input', e => {
+  const f = e.target.dataset?.field; if(!f) return;
+  if(f === 'search'){ P.search = e.target.value; const pos = e.target.selectionStart; render(); const el = document.getElementById('ov-search'); if(el){ el.focus(); el.setSelectionRange(pos, pos); } return; }
+  if(!R) return;
+  const k = +e.target.dataset.k;
+  if(f === 'narr'){ R.goals[k].narrative = e.target.value; document.getElementById('count-' + k).textContent = `${e.target.value.length} characters`; }
+  else if(f === 'bnarr'){ R.behaviors[k].narrative = e.target.value; document.getElementById('bcount-' + k).textContent = `${e.target.value.length} characters`; }
+  else return;
+  R.dirty = true;
+});
+
+document.addEventListener('change', e => {
+  const f = e.target.dataset?.field;
+  if(f === 'period'){
+    const [y, key] = e.target.value.split('|');
+    P.sy = Number(y); P.key = key;
+    loadPeriod();
+  } else if(f === 'incl' && R){
+    R.behaviors[+e.target.dataset.k].include = e.target.checked; R.dirty = true; renderPrintArea();
+  }
+});
+
+window.addEventListener('beforeunload', e => { if(R && R.dirty){ e.preventDefault(); e.returnValue = ''; } });
+
+// ═══════════════════════════════════════════════════════════════
+// BOOTSTRAP — the session is shared with the other tools via this site's
+// localStorage; signed-out visitors go to the toolbox to sign in.
+// ═══════════════════════════════════════════════════════════════
+async function init(){
+  document.getElementById('avatar-btn').textContent = acctInitials(currentUser.email);
+  document.getElementById('account-name').textContent = currentUser.email;
+  try { await loadBase(); }
+  catch(e){
+    document.getElementById('page').innerHTML = `<div class="card"><div class="empty"><div class="empty-title">Couldn't load your students</div>Check your connection and reload.</div></div>`;
+    return;
+  }
+  pickDefaultPeriod();
+  await loadPeriod();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if(!session){ location.replace('toolbox.html'); return; }
+  if(currentUser?.id === session.user.id) return;
+  currentUser = session.user;
+  // Deferred: Supabase advises against awaiting its own calls inside this callback.
+  setTimeout(init, 0);
+});
+</script>
+</body>
+</html>
