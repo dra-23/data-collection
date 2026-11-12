@@ -1709,6 +1709,11 @@ async function signIn(evt){
 }
 
 async function signOut(){
+  if(_pending.size){
+    clearTimeout(_syncTimer); await runSync();
+    if(_pending.size && !confirm("Some point-sheet changes haven't saved yet. Sign out anyway and lose them?")) return;
+    _pending.clear(); clearTimeout(_retryTimer);
+  }
   if(_realtimeChannel) await sb.removeChannel(_realtimeChannel);
   await sb.auth.signOut();
   currentUser = null;
@@ -1737,7 +1742,23 @@ document.addEventListener('click', e=>{
 // ═══════════════════════════════════════════════════════════════
 let _syncTimer = null, _stuSyncTimer = null;
 
+// Days with local changes not yet confirmed saved. A failed save stays here
+// and is retried (with backoff, when the connection returns, or on a click
+// of the status) — it is no longer lost when the user moves to another day
+// or student. v counts edits so a change made while a save is in flight
+// isn't dropped when that save succeeds.
+const _pending = new Map(); // "sid|week|day" → { sid, week, day, v }
+let _syncing = false, _syncAgain = false, _retryTimer = null, _retryN = 0;
+const RETRY_SECS = [5, 15, 30, 60];
+
+function markPending(sid, week, day){
+  const k = sid + '|' + week + '|' + day;
+  const cur = _pending.get(k);
+  _pending.set(k, { sid, week, day, v: (cur ? cur.v : 0) + 1 });
+}
+
 function persist(){
+  if(S.cur && S.week) (curDay === 'glance' ? DAYS : [curDay]).forEach(day => markPending(S.cur, S.week, day));
   showSaveStatus('saving');
   queueSync();
 }
@@ -1751,15 +1772,55 @@ function queueSync(){
   _syncTimer = setTimeout(runSync, 2500);
 }
 
+// Why a save failed, so the status can say something useful.
+function saveErrorKind(e){
+  if(navigator.onLine === false) return 'offline';
+  const msg = String(e?.message || '');
+  if(e?.code === 'PGRST301' || e?.status === 401 || /jwt|token|not authenticated/i.test(msg)) return 'auth';
+  if(/failed to fetch|networkerror|load failed|network/i.test(msg)) return 'offline';
+  return 'error';
+}
+
 async function runSync(){
   _syncTimer = null;
-  if(!S.cur){ showSaveStatus('saved'); return; }
-  try{
-    const days = curDay === 'glance' ? DAYS : [curDay];
-    await Promise.all(days.map(day => syncToSupabase(S.cur, day)));
-    showSaveStatus('saved');
-  } catch(e){ showSaveStatus('error'); console.error('sync error', e); }
+  clearTimeout(_retryTimer); _retryTimer = null;
+  if(_syncing){ _syncAgain = true; return; }
+  if(!_pending.size){ _retryN = 0; showSaveStatus('saved'); return; }
+  _syncing = true;
+  showSaveStatus('saving');
+  const jobs = [..._pending.entries()].map(([k, j]) => ({ k, ...j }));
+  let failure = null;
+  await Promise.all(jobs.map(async j => {
+    try {
+      await syncToSupabase(j.sid, j.day, j.week);
+      if(_pending.get(j.k)?.v === j.v) _pending.delete(j.k); // unchanged since it was sent
+    } catch(e){ failure = failure || e; }
+  }));
+  _syncing = false;
+  if(failure){
+    const kind = saveErrorKind(failure);
+    console.error('sync error', failure);
+    // An expired sign-in (e.g. a laptop waking from sleep) usually just
+    // needs a token refresh: try once, then retry straight away.
+    if(kind === 'auth' && _retryN === 0){
+      _retryN++;
+      const { data, error } = await sb.auth.refreshSession();
+      if(!error && data?.session) return runSync();
+    }
+    showSaveStatus(kind);
+    const wait = RETRY_SECS[Math.min(_retryN, RETRY_SECS.length - 1)];
+    _retryN++;
+    _retryTimer = setTimeout(runSync, wait * 1000);
+    return;
+  }
+  _retryN = 0;
+  if(_syncAgain || _pending.size){ _syncAgain = false; return runSync(); }
+  showSaveStatus('saved');
 }
+function retrySaveNow(){ if(_pending.size){ _retryN = 0; runSync(); } }
+window.addEventListener('online', retrySaveNow);
+// Never let a tab with unsaved point-sheet data close without a warning.
+window.addEventListener('beforeunload', e => { if(_pending.size){ e.preventDefault(); e.returnValue = ''; } });
 
 // A debounced save queued by persist()/setPt() is silently dropped if the
 // tab closes/backgrounds before its timer fires — the edit right before
@@ -1769,6 +1830,7 @@ async function runSync(){
 let _stuSyncTarget = null;
 function flushPendingSync(){
   if(_syncTimer){ clearTimeout(_syncTimer); runSync(); }
+  else if(_pending.size && !_syncing){ runSync(); }
   if(_stuSyncTimer){ clearTimeout(_stuSyncTimer); runStuScheduleSync(); }
 }
 document.addEventListener('visibilitychange', () => {
@@ -1776,12 +1838,22 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', flushPendingSync);
 
+const SAVE_PROBLEM = {
+  error:   ['Save failed – retrying', "Couldn't save the latest changes. They're kept on this page and will be retried automatically. Click to retry now. Don't close this tab until it says Saved."],
+  offline: ['Offline – not saved',    "No connection. Your changes are kept on this page and will save when the connection returns. Click to retry now. Don't close this tab until it says Saved."],
+  auth:    ['Sign-in expired',        "Your sign-in expired, so changes couldn't be saved. They're kept on this page. Click to retry; if it keeps failing, sign in again in another tab, then click here."],
+};
 function showSaveStatus(state){
   const el=document.getElementById('save-status'); if(!el) return;
-  el.className='save-status '+state;
+  const problem=SAVE_PROBLEM[state];
+  el.className='save-status '+(problem?'error':state);
+  el.title=problem?problem[1]:'';
+  el.setAttribute('role','status');
+  el.onclick=problem?retrySaveNow:null;
+  el.style.cursor=problem?'pointer':'';
+  if(problem){ el.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>${problem[0]}</span>`; return; }
   if(state==='saving')     el.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg><span>Saving…</span>`;
   else if(state==='saved') el.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>Saved</span>`;
-  else if(state==='error') el.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Save failed</span>`;
 }
 
 // ── DATE HELPER ────────────────────────────────────────────────
@@ -2071,6 +2143,10 @@ function applyWeekRows(sid, week, rows){
   Object.keys(_lastSynced).forEach(k=>{ if(k.startsWith(sid+'|')) delete _lastSynced[k]; });
 
   S.data[sid]       = S.data[sid] || {};
+  // Days with unsaved local changes keep the local copy — a reload (week
+  // switch, roster refresh) must never overwrite edits still waiting to save.
+  const keep = {};
+  for(const j of _pending.values()) if(j.sid===sid && j.week===week && S.data[sid][week]?.[j.day]) keep[j.day] = S.data[sid][week][j.day];
   S.data[sid][week] = {};
   (rows || []).forEach(row => {
     const dayName = dateToDayName(row.date);
@@ -2093,6 +2169,7 @@ function applyWeekRows(sid, week, rows){
       excluded: excluded0
     };
   });
+  Object.assign(S.data[sid][week], keep);
 }
 
 async function loadWeekData(sid, week){
@@ -2156,11 +2233,11 @@ function stableStringify(v){
   return JSON.stringify(v);
 }
 
-async function syncToSupabase(sid, day){
+async function syncToSupabase(sid, day, week=S.week){
   const s = stu(sid); if(!s) return;
-  const d = S.data[sid]?.[S.week]?.[day];
+  const d = S.data[sid]?.[week]?.[day];
   if(!d) return;
-  const dateStr = dayToDate(S.week, day); if(!dateStr) return;
+  const dateStr = dayToDate(week, day); if(!dateStr) return;
   // Backstop: the UI already disables entry on non-school days and before a
   // Starting student's start date, but never let a write reach the DB for
   // either case regardless of how it was triggered.
@@ -2246,6 +2323,7 @@ function subscribeRealtime(sid){
       if(row.date < S.week || row.date > weekEndStr) return;
       const dayName = dateToDayName(row.date);
       if(!dayName) return;
+      if(_pending.has(sid + '|' + S.week + '|' + dayName)) return; // local edits waiting to save win
       S.data[sid] = S.data[sid] || {};
       S.data[sid][S.week] = S.data[sid][S.week] || {};
       if(payload.eventType === 'DELETE'){
