@@ -1714,6 +1714,7 @@ async function signOut(){
     if(_pending.size && !confirm("Some point-sheet changes haven't saved yet. Sign out anyway and lose them?")) return;
     _pending.clear(); clearTimeout(_retryTimer);
   }
+  clearUnsavedOnDevice();
   if(_realtimeChannel) await sb.removeChannel(_realtimeChannel);
   await sb.auth.signOut();
   currentUser = null;
@@ -1759,8 +1760,51 @@ function markPending(sid, week, day){
 
 function persist(){
   if(S.cur && S.week) (curDay === 'glance' ? DAYS : [curDay]).forEach(day => markPending(S.cur, S.week, day));
+  saveUnsavedToDevice();
   showSaveStatus('saving');
   queueSync();
+}
+
+// A copy of ONLY the days still waiting to save is kept in this browser
+// (per account), so a change survives the tab closing, a reload, or a dead
+// battery mid-failure, and is saved the next time SPEDsheet opens. Removed
+// the moment everything saves, cleared at sign-out, and discarded after
+// UNSAVED_MAX_DAYS so student data doesn't linger on a shared device.
+const UNSAVED_MAX_DAYS = 14;
+const unsavedKey = () => currentUser ? 'ppdc_unsaved_' + currentUser.id : null;
+function saveUnsavedToDevice(){
+  const key = unsavedKey(); if(!key) return;
+  try{
+    const items = [..._pending.values()]
+      .map(j => ({ sid: j.sid, week: j.week, day: j.day, d: S.data[j.sid]?.[j.week]?.[j.day] }))
+      .filter(x => x.d);
+    if(!items.length) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify({ at: Date.now(), items }));
+  }catch(e){ /* storage full or blocked — the in-page queue still retries */ }
+}
+function clearUnsavedOnDevice(){
+  const key = unsavedKey(); if(!key) return;
+  try{ localStorage.removeItem(key); }catch(e){}
+}
+// Runs once after sign-in, when the roster and this week are loaded.
+async function restoreUnsavedFromDevice(){
+  const key = unsavedKey(); if(!key) return;
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){ saved = null; }
+  if(!saved || !Array.isArray(saved.items) || !saved.items.length){ clearUnsavedOnDevice(); return; }
+  if(!(Date.now() - saved.at <= UNSAVED_MAX_DAYS * 864e5)){ clearUnsavedOnDevice(); return; }
+  let n = 0;
+  for(const it of saved.items){
+    if(!it || !it.d || !DAYS.includes(it.day) || !S.students.some(x => x.id === it.sid)) continue;
+    if(!S.data[it.sid]?.[it.week]) await loadWeekData(it.sid, it.week);
+    S.data[it.sid] = S.data[it.sid] || {};
+    S.data[it.sid][it.week] = S.data[it.sid][it.week] || {};
+    S.data[it.sid][it.week][it.day] = it.d;
+    markPending(it.sid, it.week, it.day);
+    n++;
+  }
+  saveUnsavedToDevice();
+  if(n){ refresh(); runSync(); }
 }
 
 function queueSync(){
@@ -1797,6 +1841,7 @@ async function runSync(){
     } catch(e){ failure = failure || e; }
   }));
   _syncing = false;
+  saveUnsavedToDevice();
   if(failure){
     const kind = saveErrorKind(failure);
     console.error('sync error', failure);
@@ -1839,9 +1884,9 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', flushPendingSync);
 
 const SAVE_PROBLEM = {
-  error:   ['Save failed – retrying', "Couldn't save the latest changes. They're kept on this page and will be retried automatically. Click to retry now. Don't close this tab until it says Saved."],
-  offline: ['Offline – not saved',    "No connection. Your changes are kept on this page and will save when the connection returns. Click to retry now. Don't close this tab until it says Saved."],
-  auth:    ['Sign-in expired',        "Your sign-in expired, so changes couldn't be saved. They're kept on this page. Click to retry; if it keeps failing, sign in again in another tab, then click here."],
+  error:   ['Save failed – retrying', "Couldn't save the latest changes. They're kept on this device and retried automatically (and again the next time SPEDsheet opens, if this tab closes). Click to retry now."],
+  offline: ['Offline – not saved',    "No connection. Your changes are kept on this device and will save when the connection returns (or the next time SPEDsheet opens). Click to retry now."],
+  auth:    ['Sign-in expired',        "Your sign-in expired, so changes couldn't be saved. They're kept on this device. Click to retry; if it keeps failing, reload the page and sign in. They'll save then."],
 };
 function showSaveStatus(state){
   const el=document.getElementById('save-status'); if(!el) return;
@@ -5691,6 +5736,7 @@ async function init(){
   // every student has since been deactivated/removed, either way there's
   // nothing to work with yet, so point them at the "+ Add" button.
   if(S.students.length === 0) openModal('welcome-modal');
+  await restoreUnsavedFromDevice();
 }
 
 // Bootstrap: onAuthStateChange fires once with INITIAL_SESSION on load
